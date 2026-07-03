@@ -1,0 +1,11 @@
+partidas:
+  - id: "muro_ha"
+    nombre: "Muro de Hormigón Armado"
+    unidad: "m3"
+    costo_base_uf: 12.50
+    ajuste_zona: 1.05
+  - id: "pintura_interior"
+    nombre: "Pintura Látex Interior"
+    unidad: "m2"
+    costo_base_uf: 0.45
+    ajuste_zona: 1.00

@@ -1,0 +1,7 @@
+{
+  "obra_id": "STGO-001",
+  "items": {
+    "muro_ha": {"cantidad_base": 45, "precio_base_clp": 24000000},
+    "pintura_interior": {"cantidad_base": 220, "precio_base_clp": 4000000}
+  }
+}

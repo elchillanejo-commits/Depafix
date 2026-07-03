@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firma Digital</title>
+<style>
+body{font-family:Arial;max-width:400px;margin:20px auto;padding:10px;text-align:center}
+canvas{border:2px solid #333;border-radius:8px;touch-action:none;width:100%;background:#fff}
+button{background:#1a73e8;color:#fff;border:none;padding:12px 30px;border-radius:6px;font-size:16px;margin:5px}
+select{padding:8px;border-radius:6px;border:1px solid #ccc;margin:5px;width:90%}
+</style>
+</head>
+<body>
+<h2>Firma Digital</h2>
+<select id="alumno"><option value="">Seleccioná tu nombre</option></select>
+<p>Firmá abajo:</p>
+<canvas id="canvas" width="800" height="300"></canvas>
+<br>
+<button onclick="limpiar()">Borrar</button>
+<button onclick="descargar()">Descargar</button>
+<script>
+var alumnos=["Alicia Paulina Soto Marcich","Marco Esteban Pasache Aliaga","Francisco Javier Arancibia Álvarez","Pablo Andrés Rojas Holch","Valentín Eugenio Solís Epuñán","Rodrigo Ignacio Muñoz Araujo","Alberto Antonio Campos Acevedo","Jorge Ignacio Orozco Henríquez","Marcelo Antonio Díaz Ponce","Marianela Del Carmen Henríquez Soto","Andre Ignacio Rojas León","Nelia De Las Mercedes Álvarez García","Gabriel Rodrigo Martínez Flores","Sergio Arnaldo Pradenas Amaza","Jorge Enrique Stuardo Oyarzún","Estrella Belén Stuardo Machacán","Rubén Alexis Ambiado Bañados","Angelyn Mylene Bañados Donoso","Blanca Edelmira Bañados Donoso","Jaime Omar Berríos Villagra","Pía Seytel Berríos Álvarez"];
+var s=document.getElementById("alumno");
+alumnos.forEach(function(a){var o=document.createElement("option");o.value=a;o.textContent=a;s.appendChild(o)});
+var c=document.getElementById("canvas");
+var ctx=c.getContext("2d");
+var d=false;
+function p(e){var r=c.getBoundingClientRect();return{x:(e.touches?e.touches[0].clientX:e.clientX)-r.left,y:(e.touches?e.touches[0].clientY:e.clientY)-r.top}}
+c.addEventListener("mousedown",function(e){d=true;var xy=p(e);ctx.beginPath();ctx.moveTo(xy.x,xy.y)});
+c.addEventListener("mousemove",function(e){if(!d)return;var xy=p(e);ctx.lineTo(xy.x,xy.y);ctx.strokeStyle="#000";ctx.lineWidth=3;ctx.stroke()});
+c.addEventListener("mouseup",function(){d=false});
+c.addEventListener("touchstart",function(e){e.preventDefault();d=true;var xy=p(e);ctx.beginPath();ctx.moveTo(xy.x,xy.y)});
+c.addEventListener("touchmove",function(e){e.preventDefault();if(!d)return;var xy=p(e);ctx.lineTo(xy.x,xy.y);ctx.strokeStyle="#000";ctx.lineWidth=3;ctx.stroke()});
+c.addEventListener("touchend",function(){d=false});
+function limpiar(){ctx.clearRect(0,0,c.width,c.height)}
+function descargar(){var n=s.value||"sin_nombre";var a=document.createElement("a");a.download="Firma_"+n.replace(/ /g,"_")+".png";a.href=c.toDataURL("image/png");a.click()}
+</script>
+</body>
+</html>
