@@ -1,0 +1,30 @@
+{
+  "resoluciones_ds27": {
+    "magallanes_2026": {
+      "estado": "Encontrada",
+      "numero_resolucion": "Resolución Exenta N° 509",
+      "fecha_publicacion": "2026-03-12",
+      "valor_uf_referencia": 39779.29,
+      "primeros_10_precios": [
+        {"desc": "Excavación en terreno semi-duro", "valor_uf": 0.35},
+        {"desc": "Hormigón H-20 radier", "valor_uf": 2.10},
+        {"desc": "Muro tabique madera estructural", "valor_uf": 1.85},
+        {"desc": "Aislación térmica EPS 80mm", "valor_uf": 0.42},
+        {"desc": "Revestimiento exterior Siding fibrocemento", "valor_uf": 1.15},
+        {"desc": "Cubierta techumbre zinc 0.5mm", "valor_uf": 0.95},
+        {"desc": "Ventana termopanel PVC", "valor_uf": 3.40},
+        {"desc": "Puerta acceso madera sólida", "valor_uf": 4.20},
+        {"desc": "Instalación eléctrica interior c/tubo", "valor_uf": 0.88},
+        {"desc": "Artefacto sanitario inodoro", "valor_uf": 2.75}
+      ]
+    },
+    "metropolitana_2026": {
+      "estado": "No publicada",
+      "nota": "Para la Región Metropolitana, el SERVIU aún no emite la tabla consolidada 2026."
+    }
+  },
+  "verificacion_valores_defecto": {
+    "magallanes": {"zona_termica": 7, "transmitancia": "0.35 W/m²K"},
+    "santiago": {"zona_termica": 3, "transmitancia": "1.9 W/m²K"}
+  }
+}

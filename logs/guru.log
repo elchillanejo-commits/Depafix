@@ -1,0 +1,36 @@
+[2026-06-25 19:30:28] === guru.sh iniciado ===
+[2026-06-25 19:31:48] === guru.sh iniciado ===
+[2026-06-25 19:33:14] Levantando servidor Flask
+[2026-06-25 19:33:14] Servidor Flask iniciado — PID 56473
+[2026-06-25 19:33:18] Ejecutando prueba de API
+[2026-06-25 19:33:24] === guru.sh iniciado ===
+[2026-06-25 19:33:32] ERROR: Archivo no encontrado — 
+[2026-06-25 19:33:38] === guru.sh iniciado ===
+[2026-06-25 19:33:39] Abriendo dashboard (timeout 120s)
+[2026-06-25 19:33:45] Inicializando módulos via guru_init_modulos()
+[2026-06-25 19:33:46] Módulos inicializados
+[2026-06-25 19:34:57] Levantando servidor Flask
+[2026-06-25 19:34:57] Servidor Flask iniciado — PID 56555
+[2026-06-25 19:35:43] === guru.sh iniciado ===
+[2026-06-25 19:35:59] Levantando servidor Flask
+[2026-06-25 19:35:59] Servidor Flask iniciado — PID 56604
+[2026-06-25 19:36:45] === guru.sh iniciado ===
+[2026-06-25 19:36:50] Levantando servidor Flask
+[2026-06-25 19:36:50] Servidor Flask iniciado — PID 56635
+[2026-06-25 19:50:09] === guru.sh iniciado ===
+[2026-06-25 19:50:15] Ejecutando prueba de API
+[2026-06-25 19:57:21] === guru.sh iniciado ===
+[2026-06-25 19:57:33] ERROR: Archivo no encontrado — 
+[2026-06-25 19:57:40] === guru.sh iniciado ===
+[2026-06-25 19:57:42] Generando informe de auditoría
+[2026-06-25 19:57:42] Informe de auditoría generado
+[2026-06-25 19:57:48] Abriendo dashboard (timeout 120s)
+[2026-06-25 19:57:51] Inicializando módulos via guru_init_modulos()
+[2026-06-25 19:57:52] Módulos inicializados
+[2026-06-25 19:58:49] ERROR: Archivo no encontrado — 
+[2026-06-25 20:01:14] === guru.sh iniciado ===
+[2026-06-25 20:01:43] Control de calidad: /tmp/test_calidad.csv — región Magallanes
+[2026-06-25 20:01:43] Control de calidad finalizado: /tmp/test_calidad.csv
+[2026-06-25 20:03:11] === guru.sh iniciado ===
+[2026-06-25 20:03:29] Control de calidad: /tmp/test_calidad.csv — región MAG
+[2026-06-25 20:03:29] Control de calidad finalizado: /tmp/test_calidad.csv

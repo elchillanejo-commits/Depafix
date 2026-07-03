@@ -1,0 +1,8 @@
+{
+  "depto": "101",
+  "espacios": [
+    {"nombre": "Living", "m2": 15.5},
+    {"nombre": "Dormitorio 1", "m2": 10.2},
+    {"nombre": "Cocina", "m2": 6.8}
+  ]
+}

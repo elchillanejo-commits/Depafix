@@ -1,0 +1,7 @@
+{
+  "obra_id": "STGO-001",
+  "items_ejecutados": [
+    {"id": "muro_ha", "cantidad": 50},
+    {"id": "pintura_interior", "cantidad": 200}
+  ]
+}

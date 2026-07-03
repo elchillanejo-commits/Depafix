@@ -1,0 +1,10 @@
+--- PRESUPUESTO DEPAFIX ---
+Cliente: Juan Perez
+--------------------------
+Detalle:
+- Pintura living: 30000
+- Sellado grietas: 20000
+--------------------------
+TOTAL: $50000
+--------------------------
+Generado el: 21-06-2026

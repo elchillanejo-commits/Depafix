@@ -1,0 +1,13 @@
+repuestos:
+  - id: "filtro_aceite_001"
+    descripcion: "Filtro de aceite estándar"
+    modelo_compatible: ["Vostro-14-3468", "Vehiculo-Obra-01"]
+    vida_util_km: 10000
+    torque_ajuste: "15 Nm"
+    equivalentes_oem: ["BOSCH-1234", "MANN-5678"]
+  - id: "pastillas_freno_002"
+    descripcion: "Pastillas de freno cerámicas"
+    modelo_compatible: ["Vehiculo-Obra-01"]
+    vida_util_km: 30000
+    torque_ajuste: "85 Nm"
+    equivalentes_oem: ["BREMBO-999", "ATE-888"]

@@ -1,0 +1,5 @@
+obra_id: "STGO-2026-001"
+tolerancia_desviacion: 0.05
+planos_validos: 
+  - "arquitectura_v1.dxf"
+  - "estructural_v2.dxf"

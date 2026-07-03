@@ -1,0 +1,99 @@
+{
+  "codigo_sence": "1238088484",
+  "nombre_curso": "Herramientas De Ms Excel Nivel Básico",
+  "otec_razon_social": "Zengin Limitada",
+  "otec_rut": "76507132-1",
+  "representante": "Ricardo Aurelio Retamal Campos",
+  "fecha_inicio": "2026-06-16",
+  "fecha_termino": "2026-06-20",
+  "ciudad": "Santiago",
+  "horas": 30,
+  "valor_curso": 2268000,
+  "carpeta_curso": "/home/ibar/Documentos/Cursos_SENCE/Excel_Basico_Junio_2026",
+  "alumnos": [
+    {
+      "rut": "12236234-5",
+      "nombre": "Alicia Paulina Soto Marcich"
+    },
+    {
+      "rut": "12095818-6",
+      "nombre": "Marco Esteban Pasache Aliaga"
+    },
+    {
+      "rut": "15939514-6",
+      "nombre": "Francisco Javier Arancibia Álvarez"
+    },
+    {
+      "rut": "13387927-7",
+      "nombre": "Pablo Andrés Rojas Holch"
+    },
+    {
+      "rut": "13607594-2",
+      "nombre": "Valentín Eugenio Solís Epuñán"
+    },
+    {
+      "rut": "13680535-5",
+      "nombre": "Rodrigo Ignacio Muñoz Araujo"
+    },
+    {
+      "rut": "12277027-3",
+      "nombre": "Alberto Antonio Campos Acevedo"
+    },
+    {
+      "rut": "14008185-k",
+      "nombre": "Jorge Ignacio Orozco Henríquez"
+    },
+    {
+      "rut": "12474954-9",
+      "nombre": "Marcelo Antonio Díaz Ponce"
+    },
+    {
+      "rut": "7871722-k",
+      "nombre": "Marianela Del Carmen Henríquez Soto"
+    },
+    {
+      "rut": "21380407-3",
+      "nombre": "Andre Ignacio Rojas León"
+    },
+    {
+      "rut": "8891275-6",
+      "nombre": "Nelia De Las Mercedes Álvarez García"
+    },
+    {
+      "rut": "10285955-3",
+      "nombre": "Gabriel Rodrigo Martínez Flores"
+    },
+    {
+      "rut": "6834835-8",
+      "nombre": "Sergio Arnaldo Pradenas Amaza"
+    },
+    {
+      "rut": "9860989-K",
+      "nombre": "Jorge Enrique Stuardo Oyarzún"
+    },
+    {
+      "rut": "18405755-7",
+      "nombre": "Estrella Belén Stuardo Machacán"
+    },
+    {
+      "rut": "15591290-1",
+      "nombre": "Rubén Alexis Ambiado Bañados"
+    },
+    {
+      "rut": "13380130-8",
+      "nombre": "Angelyn Mylene Bañados Donoso"
+    },
+    {
+      "rut": "9636338-9",
+      "nombre": "Blanca Edelmira Bañados Donoso"
+    },
+    {
+      "rut": "6223619-1",
+      "nombre": "Jaime Omar Berríos Villagra"
+    },
+    {
+      "rut": "15474406-1",
+      "nombre": "Pía Seytel Berríos Álvarez"
+    }
+  ]
+}

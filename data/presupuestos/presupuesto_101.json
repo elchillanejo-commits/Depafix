@@ -1,0 +1,8 @@
+{
+  "cliente": "Juan Perez",
+  "total": 50000,
+  "items": [
+    {"descripcion": "Pintura living", "precio": 30000},
+    {"descripcion": "Sellado grietas", "precio": 20000}
+  ]
+}
