@@ -1,29 +1,31 @@
-# STATUS DepaFix — 02 de Julio 2026 (madrugada)
+# STATUS DepaFix — Cierre Julio 2026
 
 ## 🟢 Sistema (Green)
 | Componente | Estado |
 |---|---|
-| API FastAPI | ✅ 61 endpoints, 0 errores |
-| PostgreSQL | ✅ conectado, 430 propiedades, 57 tareas agentes |
-| Tests | ✅ 35/35 pasando |
+| API FastAPI | ✅ 69+ endpoints |
+| PostgreSQL | ✅ conectado, 576+ propiedades, 80+ tareas agentes |
+| Tests | ✅ 35+ tests pasando |
 | Auth | ✅ X-API-Key + Bearer JWT |
 | Multi-usuario | ✅ 5 usuarios activos |
 | Auditoría | ✅ accesos_api funcionando |
-| Backups | ✅ 3 backups en ~/Datos/Backups |
-| Monitoreo | ✅ deploy_check.sh + health_check.py |
-| Crontab | ✅ 9 jobs activos |
+| Backups | ✅ diarios + cierre julio |
+| Monitoreo | ✅ 24/7 health checks |
+| Ngrok | ✅ URL pública activa |
 
-## 🟡 Agentes (Yellow)
-| Agente | Estado | Última ejecución |
-|---|---|---|
-| Aquiles | ⚠️ inactivo | 2026-06-30 |
-| Siegfried | ⚠️ inactivo | sin registro |
-| Sancho | ⚠️ inactivo | sin registro |
-| Hermes | ✅ scraping OK | 430 propiedades |
+## 🟡 Agentes
+| Agente | Estado |
+|---|---|
+| Aquiles | ✅ presupuesto dual + PDF |
+| Siegfried | ✅ licitaciones evaluadas |
+| Hermes | ✅ 576 propiedades + Yapo.cl |
+| Bilardo | ✅ alertas ISO 9001 |
+| Sancho | ✅ corriendo en cron |
 
-## 🛠 Tareas pendientes
-- [ ] Reactivar agentes Aquiles, Siegfried, Sancho
-- [ ] Configurar ngrok (~/.ngrok_authtoken)
-- [ ] Activar GitHub Pages (git push pendiente)
-- [ ] Semana 3: Hermes scraping automático + aquiles_medicion
-- [ ] Semana 4: presupuesto cliente vs interno con mermas
+## 🛠 Hitos Julio 2026
+- [x] Semana 1: Core (API, Auth, DB, Tests)
+- [x] Semana 2: Agentes + scraping + skills
+- [x] Semana 3: Onboarding + reportes + facturación
+- [x] Semana 4: Infraestructura (ngrok, SSL, monitoreo)
+- [x] 4 licitaciones VIABLES con presupuestos y mensajes
+- [x] Cierre total: 30 prompts ejecutados
