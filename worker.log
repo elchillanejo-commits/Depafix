@@ -1,0 +1,9 @@
+nohup: no se tendrá en cuenta la entrada
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/ibar/Proyectos/DepaFix/core/worker.py", line 4, in <module>
+    from core.db_manager import DatabaseManager
+  File "/home/ibar/Proyectos/DepaFix/core/db_manager.py", line 12, in <module>
+    from sqlalchemy import create_engine, text
+ModuleNotFoundError: No module named 'sqlalchemy'

@@ -1,0 +1,182 @@
+[2026-07-08 20:21:05 -0400] [68010] [INFO] Starting gunicorn 26.0.0
+[2026-07-08 20:21:05 -0400] [68010] [INFO] Listening at: http://0.0.0.0:8000 (68010)
+[2026-07-08 20:21:05 -0400] [68010] [INFO] Using worker: uvicorn.workers.UvicornWorker
+[2026-07-08 20:21:05 -0400] [68026] [INFO] Booting worker with pid: 68026
+[2026-07-08 20:21:05 -0400] [68026] [INFO] Started server process [68026]
+[2026-07-08 20:21:05 -0400] [68026] [INFO] Waiting for application startup.
+[2026-07-08 20:21:05 -0400] [68026] [INFO] Application startup complete.
+[2026-07-08 20:21:05 -0400] [68027] [INFO] Booting worker with pid: 68027
+[2026-07-08 20:21:05 -0400] [68027] [INFO] Started server process [68027]
+[2026-07-08 20:21:05 -0400] [68027] [INFO] Waiting for application startup.
+[2026-07-08 20:21:05 -0400] [68027] [INFO] Application startup complete.
+[2026-07-08 20:21:05 -0400] [68028] [INFO] Booting worker with pid: 68028
+[2026-07-08 20:21:05 -0400] [68029] [INFO] Booting worker with pid: 68029
+[2026-07-08 20:21:05 -0400] [68028] [INFO] Started server process [68028]
+[2026-07-08 20:21:05 -0400] [68028] [INFO] Waiting for application startup.
+[2026-07-08 20:21:05 -0400] [68028] [INFO] Application startup complete.
+[2026-07-08 20:21:05 -0400] [68029] [INFO] Started server process [68029]
+[2026-07-08 20:21:05 -0400] [68029] [INFO] Waiting for application startup.
+[2026-07-08 20:21:05 -0400] [68029] [INFO] Application startup complete.
+[2026-07-08 20:21:05 -0400] [68010] [INFO] Control socket listening at /home/ibar/.gunicorn/gunicorn.ctl
+[2026-07-08 20:33:49 -0400] [72329] [INFO] Starting gunicorn 26.0.0
+[2026-07-08 20:33:49 -0400] [72329] [ERROR] Connection in use: ('0.0.0.0', 8000)
+[2026-07-08 20:33:49 -0400] [72329] [ERROR] connection to ('0.0.0.0', 8000) failed: [Errno 98] Address already in use
+[2026-07-08 20:33:50 -0400] [72329] [ERROR] Connection in use: ('0.0.0.0', 8000)
+[2026-07-08 20:33:50 -0400] [72329] [ERROR] connection to ('0.0.0.0', 8000) failed: [Errno 98] Address already in use
+[2026-07-08 20:33:51 -0400] [72329] [ERROR] Connection in use: ('0.0.0.0', 8000)
+[2026-07-08 20:33:51 -0400] [72329] [ERROR] connection to ('0.0.0.0', 8000) failed: [Errno 98] Address already in use
+[2026-07-08 20:33:52 -0400] [72329] [ERROR] Connection in use: ('0.0.0.0', 8000)
+[2026-07-08 20:33:52 -0400] [72329] [ERROR] connection to ('0.0.0.0', 8000) failed: [Errno 98] Address already in use
+[2026-07-08 20:33:53 -0400] [72329] [ERROR] Connection in use: ('0.0.0.0', 8000)
+[2026-07-08 20:33:53 -0400] [72329] [ERROR] connection to ('0.0.0.0', 8000) failed: [Errno 98] Address already in use
+[2026-07-08 20:33:54 -0400] [72329] [ERROR] Can't connect to ('0.0.0.0', 8000)
+[2026-07-08 20:34:05 -0400] [72411] [INFO] Starting gunicorn 26.0.0
+[2026-07-08 20:34:05 -0400] [72411] [ERROR] Connection in use: ('0.0.0.0', 8000)
+[2026-07-08 20:34:05 -0400] [72411] [ERROR] connection to ('0.0.0.0', 8000) failed: [Errno 98] Address already in use
+[2026-07-08 20:34:06 -0400] [72411] [ERROR] Connection in use: ('0.0.0.0', 8000)
+[2026-07-08 20:34:06 -0400] [72411] [ERROR] connection to ('0.0.0.0', 8000) failed: [Errno 98] Address already in use
+[2026-07-08 20:34:07 -0400] [72411] [ERROR] Connection in use: ('0.0.0.0', 8000)
+[2026-07-08 20:34:07 -0400] [72411] [ERROR] connection to ('0.0.0.0', 8000) failed: [Errno 98] Address already in use
+[2026-07-08 20:34:08 -0400] [72411] [ERROR] Connection in use: ('0.0.0.0', 8000)
+[2026-07-08 20:34:08 -0400] [72411] [ERROR] connection to ('0.0.0.0', 8000) failed: [Errno 98] Address already in use
+[2026-07-08 20:34:09 -0400] [72411] [ERROR] Connection in use: ('0.0.0.0', 8000)
+[2026-07-08 20:34:09 -0400] [72411] [ERROR] connection to ('0.0.0.0', 8000) failed: [Errno 98] Address already in use
+[2026-07-08 20:34:10 -0400] [72411] [ERROR] Can't connect to ('0.0.0.0', 8000)
+[2026-07-08 20:34:21 -0400] [72495] [INFO] Starting gunicorn 26.0.0
+[2026-07-08 20:34:21 -0400] [72495] [ERROR] Connection in use: ('0.0.0.0', 8000)
+[2026-07-08 20:34:21 -0400] [72495] [ERROR] connection to ('0.0.0.0', 8000) failed: [Errno 98] Address already in use
+[2026-07-08 20:34:22 -0400] [72495] [ERROR] Connection in use: ('0.0.0.0', 8000)
+[2026-07-08 20:34:22 -0400] [72495] [ERROR] connection to ('0.0.0.0', 8000) failed: [Errno 98] Address already in use
+[2026-07-08 20:34:23 -0400] [72495] [ERROR] Connection in use: ('0.0.0.0', 8000)
+[2026-07-08 20:34:23 -0400] [72495] [ERROR] connection to ('0.0.0.0', 8000) failed: [Errno 98] Address already in use
+[2026-07-08 20:34:24 -0400] [72495] [ERROR] Connection in use: ('0.0.0.0', 8000)
+[2026-07-08 20:34:24 -0400] [72495] [ERROR] connection to ('0.0.0.0', 8000) failed: [Errno 98] Address already in use
+[2026-07-08 20:34:25 -0400] [72495] [ERROR] Connection in use: ('0.0.0.0', 8000)
+[2026-07-08 20:34:25 -0400] [72495] [ERROR] connection to ('0.0.0.0', 8000) failed: [Errno 98] Address already in use
+[2026-07-08 20:34:26 -0400] [72495] [ERROR] Can't connect to ('0.0.0.0', 8000)
+[2026-07-08 20:34:37 -0400] [72592] [INFO] Starting gunicorn 26.0.0
+[2026-07-08 20:34:37 -0400] [72592] [INFO] Listening at: http://0.0.0.0:8000 (72592)
+[2026-07-08 20:34:37 -0400] [72592] [INFO] Using worker: uvicorn.workers.UvicornWorker
+[2026-07-08 20:34:37 -0400] [72602] [INFO] Booting worker with pid: 72602
+[2026-07-08 20:34:37 -0400] [72602] [INFO] Started server process [72602]
+[2026-07-08 20:34:37 -0400] [72602] [INFO] Waiting for application startup.
+[2026-07-08 20:34:37 -0400] [72602] [INFO] Application startup complete.
+[2026-07-08 20:34:37 -0400] [72603] [INFO] Booting worker with pid: 72603
+[2026-07-08 20:34:37 -0400] [72603] [INFO] Started server process [72603]
+[2026-07-08 20:34:37 -0400] [72603] [INFO] Waiting for application startup.
+[2026-07-08 20:34:37 -0400] [72603] [INFO] Application startup complete.
+[2026-07-08 20:34:37 -0400] [72604] [INFO] Booting worker with pid: 72604
+[2026-07-08 20:34:37 -0400] [72604] [INFO] Started server process [72604]
+[2026-07-08 20:34:37 -0400] [72604] [INFO] Waiting for application startup.
+[2026-07-08 20:34:37 -0400] [72604] [INFO] Application startup complete.
+[2026-07-08 20:34:37 -0400] [72605] [INFO] Booting worker with pid: 72605
+[2026-07-08 20:34:37 -0400] [72605] [INFO] Started server process [72605]
+[2026-07-08 20:34:37 -0400] [72605] [INFO] Waiting for application startup.
+[2026-07-08 20:34:37 -0400] [72605] [INFO] Application startup complete.
+[2026-07-08 20:34:37 -0400] [72592] [INFO] Control socket listening at /home/ibar/.gunicorn/gunicorn.ctl
+[2026-07-08 20:44:00 -0400] [72592] [INFO] Handling signal: term
+[2026-07-08 20:44:00 -0400] [72602] [INFO] Shutting down
+[2026-07-08 20:44:00 -0400] [72604] [INFO] Shutting down
+[2026-07-08 20:44:00 -0400] [72603] [INFO] Shutting down
+[2026-07-08 20:44:00 -0400] [72605] [INFO] Shutting down
+[2026-07-08 20:44:00 -0400] [72602] [INFO] Waiting for application shutdown.
+[2026-07-08 20:44:00 -0400] [72602] [INFO] Application shutdown complete.
+[2026-07-08 20:44:00 -0400] [72602] [INFO] Finished server process [72602]
+[2026-07-08 20:44:00 -0400] [72604] [INFO] Waiting for application shutdown.
+[2026-07-08 20:44:00 -0400] [72603] [INFO] Waiting for application shutdown.
+[2026-07-08 20:44:00 -0400] [72604] [INFO] Application shutdown complete.
+[2026-07-08 20:44:00 -0400] [72604] [INFO] Finished server process [72604]
+[2026-07-08 20:44:00 -0400] [72603] [INFO] Application shutdown complete.
+[2026-07-08 20:44:00 -0400] [72603] [INFO] Finished server process [72603]
+[2026-07-08 20:44:00 -0400] [72605] [INFO] Waiting for application shutdown.
+[2026-07-08 20:44:00 -0400] [72605] [INFO] Application shutdown complete.
+[2026-07-08 20:44:00 -0400] [72605] [INFO] Finished server process [72605]
+[2026-07-08 20:44:00 -0400] [72592] [INFO] Worker (pid:72602) was sent SIGTERM!
+[2026-07-08 20:44:00 -0400] [72592] [INFO] Worker (pid:72603) was sent SIGTERM!
+[2026-07-08 20:44:00 -0400] [72592] [INFO] Worker (pid:72604) was sent SIGTERM!
+[2026-07-08 20:44:00 -0400] [72592] [INFO] Worker (pid:72605) was sent SIGTERM!
+[2026-07-08 20:44:00 -0400] [72592] [INFO] Shutting down: Master
+[2026-07-08 20:44:01 -0400] [75724] [INFO] Starting gunicorn 26.0.0
+[2026-07-08 20:44:01 -0400] [75724] [INFO] Listening at: http://0.0.0.0:8000 (75724)
+[2026-07-08 20:44:01 -0400] [75724] [INFO] Using worker: uvicorn.workers.UvicornWorker
+[2026-07-08 20:44:01 -0400] [75727] [INFO] Booting worker with pid: 75727
+[2026-07-08 20:44:01 -0400] [75727] [INFO] Started server process [75727]
+[2026-07-08 20:44:01 -0400] [75727] [INFO] Waiting for application startup.
+[2026-07-08 20:44:01 -0400] [75727] [INFO] Application startup complete.
+[2026-07-08 20:44:01 -0400] [75728] [INFO] Booting worker with pid: 75728
+[2026-07-08 20:44:01 -0400] [75728] [INFO] Started server process [75728]
+[2026-07-08 20:44:01 -0400] [75728] [INFO] Waiting for application startup.
+[2026-07-08 20:44:01 -0400] [75728] [INFO] Application startup complete.
+[2026-07-08 20:44:01 -0400] [75729] [INFO] Booting worker with pid: 75729
+[2026-07-08 20:44:01 -0400] [75730] [INFO] Booting worker with pid: 75730
+[2026-07-08 20:44:01 -0400] [75724] [INFO] Control socket listening at /home/ibar/.gunicorn/gunicorn.ctl
+[2026-07-08 20:44:01 -0400] [75729] [INFO] Started server process [75729]
+[2026-07-08 20:44:01 -0400] [75729] [INFO] Waiting for application startup.
+[2026-07-08 20:44:01 -0400] [75729] [INFO] Application startup complete.
+[2026-07-08 20:44:01 -0400] [75730] [INFO] Started server process [75730]
+[2026-07-08 20:44:01 -0400] [75730] [INFO] Waiting for application startup.
+[2026-07-08 20:44:01 -0400] [75730] [INFO] Application startup complete.
+[2026-07-08 20:44:49 -0400] [75724] [INFO] Handling signal: term
+[2026-07-08 20:44:49 -0400] [75727] [INFO] Shutting down
+[2026-07-08 20:44:49 -0400] [75729] [INFO] Shutting down
+[2026-07-08 20:44:49 -0400] [75730] [INFO] Shutting down
+[2026-07-08 20:44:49 -0400] [75728] [INFO] Shutting down
+[2026-07-08 20:44:49 -0400] [75727] [INFO] Waiting for application shutdown.
+[2026-07-08 20:44:49 -0400] [75727] [INFO] Application shutdown complete.
+[2026-07-08 20:44:49 -0400] [75727] [INFO] Finished server process [75727]
+[2026-07-08 20:44:49 -0400] [75729] [INFO] Waiting for application shutdown.
+[2026-07-08 20:44:49 -0400] [75729] [INFO] Application shutdown complete.
+[2026-07-08 20:44:49 -0400] [75729] [INFO] Finished server process [75729]
+[2026-07-08 20:44:49 -0400] [75730] [INFO] Waiting for application shutdown.
+[2026-07-08 20:44:49 -0400] [75730] [INFO] Application shutdown complete.
+[2026-07-08 20:44:49 -0400] [75730] [INFO] Finished server process [75730]
+[2026-07-08 20:44:49 -0400] [75728] [INFO] Waiting for application shutdown.
+[2026-07-08 20:44:49 -0400] [75728] [INFO] Application shutdown complete.
+[2026-07-08 20:44:49 -0400] [75728] [INFO] Finished server process [75728]
+[2026-07-08 20:44:49 -0400] [75724] [INFO] Worker (pid:75727) was sent SIGTERM!
+[2026-07-08 20:44:49 -0400] [75724] [INFO] Worker (pid:75728) was sent SIGTERM!
+[2026-07-08 20:44:49 -0400] [75724] [INFO] Worker (pid:75729) was sent SIGTERM!
+[2026-07-08 20:44:49 -0400] [75724] [INFO] Worker (pid:75730) was sent SIGTERM!
+[2026-07-08 20:44:49 -0400] [75724] [INFO] Shutting down: Master
+[2026-07-08 20:44:49 -0400] [76117] [INFO] Starting gunicorn 26.0.0
+[2026-07-08 20:44:49 -0400] [76117] [INFO] Listening at: http://0.0.0.0:8000 (76117)
+[2026-07-08 20:44:49 -0400] [76117] [INFO] Using worker: uvicorn.workers.UvicornWorker
+[2026-07-08 20:44:49 -0400] [76119] [INFO] Booting worker with pid: 76119
+[2026-07-08 20:44:49 -0400] [76119] [INFO] Started server process [76119]
+[2026-07-08 20:44:49 -0400] [76119] [INFO] Waiting for application startup.
+[2026-07-08 20:44:49 -0400] [76119] [INFO] Application startup complete.
+[2026-07-08 20:44:49 -0400] [76120] [INFO] Booting worker with pid: 76120
+[2026-07-08 20:44:50 -0400] [76120] [INFO] Started server process [76120]
+[2026-07-08 20:44:50 -0400] [76120] [INFO] Waiting for application startup.
+[2026-07-08 20:44:50 -0400] [76120] [INFO] Application startup complete.
+[2026-07-08 20:44:50 -0400] [76121] [INFO] Booting worker with pid: 76121
+[2026-07-08 20:44:50 -0400] [76121] [INFO] Started server process [76121]
+[2026-07-08 20:44:50 -0400] [76121] [INFO] Waiting for application startup.
+[2026-07-08 20:44:50 -0400] [76121] [INFO] Application startup complete.
+[2026-07-08 20:44:50 -0400] [76122] [INFO] Booting worker with pid: 76122
+[2026-07-08 20:44:50 -0400] [76122] [INFO] Started server process [76122]
+[2026-07-08 20:44:50 -0400] [76122] [INFO] Waiting for application startup.
+[2026-07-08 20:44:50 -0400] [76122] [INFO] Application startup complete.
+[2026-07-08 20:44:50 -0400] [76117] [INFO] Control socket listening at /home/ibar/.gunicorn/gunicorn.ctl
+[2026-07-08 20:48:00 -0400] [76117] [INFO] Handling signal: term
+[2026-07-08 20:48:00 -0400] [76121] [INFO] Shutting down
+[2026-07-08 20:48:00 -0400] [76119] [INFO] Shutting down
+[2026-07-08 20:48:01 -0400] [76122] [INFO] Shutting down
+[2026-07-08 20:48:01 -0400] [76120] [INFO] Shutting down
+[2026-07-08 20:48:01 -0400] [76121] [INFO] Waiting for application shutdown.
+[2026-07-08 20:48:01 -0400] [76121] [INFO] Application shutdown complete.
+[2026-07-08 20:48:01 -0400] [76121] [INFO] Finished server process [76121]
+[2026-07-08 20:48:01 -0400] [76119] [INFO] Waiting for application shutdown.
+[2026-07-08 20:48:01 -0400] [76119] [INFO] Application shutdown complete.
+[2026-07-08 20:48:01 -0400] [76119] [INFO] Finished server process [76119]
+[2026-07-08 20:48:01 -0400] [76122] [INFO] Waiting for application shutdown.
+[2026-07-08 20:48:01 -0400] [76122] [INFO] Application shutdown complete.
+[2026-07-08 20:48:01 -0400] [76122] [INFO] Finished server process [76122]
+[2026-07-08 20:48:01 -0400] [76120] [INFO] Waiting for application shutdown.
+[2026-07-08 20:48:01 -0400] [76120] [INFO] Application shutdown complete.
+[2026-07-08 20:48:01 -0400] [76120] [INFO] Finished server process [76120]
+[2026-07-08 20:48:01 -0400] [76117] [INFO] Worker (pid:76119) was sent SIGTERM!
+[2026-07-08 20:48:01 -0400] [76117] [INFO] Worker (pid:76121) was sent SIGTERM!
+[2026-07-08 20:48:01 -0400] [76117] [INFO] Worker (pid:76122) was sent SIGTERM!
+[2026-07-08 20:48:01 -0400] [76117] [INFO] Worker (pid:76120) was sent SIGTERM!
+[2026-07-08 20:48:01 -0400] [76117] [INFO] Shutting down: Master

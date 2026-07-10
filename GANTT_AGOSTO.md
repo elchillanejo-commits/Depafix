@@ -1,46 +1,51 @@
-# GANTT DepaFix - Agosto 2026 · Expansión X2
+# GANTT DepaFix - Agosto 2026 · EXPANSIÓN X9
 
 ## 🎯 Objetivo: Duplicar capacidad, ingresos y alcance
 
-## SEMANA 1 (4-8 ago): Estabilización y hardening
-- [ ] Revisar y reparar todos los tests (API + Dashboard + Integración)
-- [ ] Implementar CI/CD con GitHub Actions (test + deploy automático)
-- [ ] Configurar Sentry.io para monitoreo de errores en producción
-- [ ] Optimizar queries lentas (plan de índices, EXPLAIN ANALYZE)
-- [ ] Auditoría de seguridad: rotar API keys, revisar CORS, rate limits
-- [ ] Backup automático a S3/Drive con retención de 30 días
-- [ ] Documentación interna: README.md + runbooks para cada agente
+## SEMANA 1: Estabilización y hardening
+- [x] CI/CD con GitHub Actions (test + deploy automático)
+- [x] Sentry.io para monitoreo de errores
+- [x] Índices avanzados en PostgreSQL
+- [x] Auditoría de seguridad: API keys, CORS, rate limits
+- [x] Backup automático a S3/Drive con retención 30 días
+- [x] Documentación interna: README.md + RUNBOOKS.md
+- [x] Redis caché instalado y configurado
 
-## SEMANA 2 (11-15 ago): Módulo financiero
-- [ ] Contabilidad: libro diario, balance, P&L automático desde caja_negra
-- [ ] Integración SII: facturación electrónica (API facturación.gob.cl)
-- [ ] Panel de control financiero: ingresos, egresos, proyecciones
-- [ ] Alertas de morosidad: avisos automáticos a clientes con deuda > 30 días
-- [ ] Exportación Excel/PDF de reportes financieros
-- [ ] Dashboard de rentabilidad por obra (ingresos - costos reales)
+## SEMANA 2: Módulo financiero
+- [x] Contabilidad: plan de cuentas, libro diario, partida doble
+- [x] Integración SII: DTE 33, facturación electrónica
+- [x] Panel de control financiero: ingresos, egresos, proyecciones
+- [x] Portal de facturación para clientes
+- [x] Conciliación bancaria automática
+- [x] Balance general y estado de resultados
 
-## SEMANA 3 (18-22 ago): Portal clientes + Expansión regiones
-- [ ] Portal clientes: login, ver presupuestos, aceptar/rechazar, historial
-- [ ] Sistema de notificaciones: email + WhatsApp + Telegram para clientes
-- [ ] Firma digital de contratos (API firma.gob.cl o DocuSign)
-- [ ] App móvil PWA: notificaciones push, fotos de avance de obra
-- [ ] Expansión scraping: Valparaíso, Concepción, Viña del Mar
-- [ ] Landing page pública: gestalt.cl con casos de éxito y cotización online
+## SEMANA 3: Portal clientes + Marketplace
+- [x] Portal clientes: login, ver presupuestos, historial
+- [x] Marketplace proveedores (Sodimac, Easy, Construmart)
+- [x] Gamificación: logros, puntos, niveles (Bronce→VIP)
+- [x] Sistema de referidos con códigos de descuento
+- [x] Comunidad: testimonios, galería de obras, calificaciones
+- [x] Cotización express QR + WhatsApp
 
-## SEMANA 4 (25-29 ago): Inteligencia y automatización X2
-- [ ] Aquiles V3: IA con visión artificial para cubicar desde fotos
-- [ ] Siegfried V3: negociador automático que responde objeciones de clientes
-- [ ] Market de proveedores: comparador de precios (Sodimac/Easy/Construmart)
-- [ ] Predicción de demanda: ML para anticipar temporadas altas/bajas
-- [ ] Dashboard predictivo: proyección de ingresos a 3/6/12 meses
-- [ ] Integración con BancoEstado/Transbank para pagos online
-- [ ] Sistema de referidos: clientes recomiendan y ganan descuentos
+## SEMANA 4: Expansión nacional + IA avanzada
+- [x] Scraping 10 regiones chilenas (1,033 propiedades)
+- [x] Aquiles V4: visión artificial para cubicación
+- [x] Siegfried V4: negociador automático con objeciones
+- [x] Predicción de precios con ML (scikit-learn)
+- [x] PWA móvil con notificaciones push
+- [x] Firma electrónica avanzada (FirmaGob.cl)
+- [x] Rutas automáticas para cuadrillas (Google Maps)
+- [x] Pasarela pagos: WebPay + MercadoPago + Khipu
 
-## Métricas objetivo para el 31 de agosto
-- Endpoints: 120+
-- Propiedades scrapeadas: 2000+
-- Presupuestos mensuales: 100+
-- Clientes activos en portal: 20+
-- Ingresos proyectados: +150% vs julio
-- Regiones cubiertas: RM, Valparaíso, Concepción
-
+## MÉTRICAS FINALES (04 Julio 2026)
+- Endpoints: 76+
+- Propiedades: 1,033 en 10 regiones
+- Presupuestos: 459+
+- Tareas agentes: 85+
+- Skills: 13
+- SOPs Gestalt: 19
+- Dashboards HTML: 37+
+- Crons activos: 26+
+- Módulos completos: 15+
+- Facturado: $160,363,170
+- Utilidad estimada: $48,108,951
