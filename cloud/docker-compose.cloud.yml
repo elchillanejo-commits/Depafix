@@ -1,0 +1,124 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: depafix-cloud-postgres
+    environment:
+      POSTGRES_DB: depafix
+      POSTGRES_USER: depafix
+      POSTGRES_PASSWORD: ${PGPASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - cloud
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U depafix"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  aquiles:
+    build: ./aquiles
+    container_name: depafix-aquiles
+    environment:
+      - PGPASSWORD=${PGPASSWORD}
+      - DEPAFIX_API_KEY=${DEPAFIX_API_KEY}
+      - PORT=8000
+    ports:
+      - "8001:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cloud
+    restart: always
+
+  siegfried:
+    build: ./siegfried
+    container_name: depafix-siegfried
+    environment:
+      - PGPASSWORD=${PGPASSWORD}
+      - DEPAFIX_API_KEY=${DEPAFIX_API_KEY}
+      - PORT=8000
+    ports:
+      - "8002:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cloud
+    restart: always
+
+  sancho:
+    build: ./sancho
+    container_name: depafix-sancho
+    environment:
+      - PGPASSWORD=${PGPASSWORD}
+      - DEPAFIX_API_KEY=${DEPAFIX_API_KEY}
+      - PORT=8000
+    ports:
+      - "8003:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cloud
+    restart: always
+
+  hermes:
+    build: ./hermes
+    container_name: depafix-hermes
+    environment:
+      - PGPASSWORD=${PGPASSWORD}
+      - DEPAFIX_API_KEY=${DEPAFIX_API_KEY}
+      - PORT=8000
+    ports:
+      - "8004:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cloud
+    restart: always
+
+  bilardo:
+    build: ./bilardo
+    container_name: depafix-bilardo
+    environment:
+      - PGPASSWORD=${PGPASSWORD}
+      - DEPAFIX_API_KEY=${DEPAFIX_API_KEY}
+      - PORT=8000
+    ports:
+      - "8005:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cloud
+    restart: always
+
+  nginx-cloud:
+    image: nginx:alpine
+    container_name: depafix-cloud-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx-cloud.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - aquiles
+      - siegfried
+      - sancho
+      - hermes
+      - bilardo
+    networks:
+      - cloud
+    restart: always
+
+volumes:
+  pgdata:
+
+networks:
+  cloud:
+    driver: bridge

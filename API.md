@@ -1,32 +1,41 @@
-# DepaFix API
+# DepaFix API v2.0
 Base URL: http://localhost:8000
-Auth: Header X-API-Key o Authorization: Bearer {token}
+Auth: X-API-Key header
+
+## Endpoints públicos
+- GET /health
+- GET /reportes/metrics
+- GET /static/*
 
 ## Autenticación
-POST /auth/login → {email, password} → {api_key, token, rol}
-GET /auth/verify?api_key=XX → {id, email, rol}
+- POST /auth/login
+- POST /auth/register
+- GET /auth/verify
 
 ## Obras
-GET /obras/presupuestos → lista paginada
-GET /obras/resumen → {total, monto_total, promedio}
-GET /obras/por-estado → [{estado, cantidad, total}]
-POST /obras/presupuestos → {cliente, total, descripcion} → {id, cliente, total}
+- GET /obras/presupuestos
+- POST /obras/presupuestos
+- GET /obras/presupuestos/{id}
+- POST /obras/pagar/{id}
+- POST /obras/facturar/{id}
+- GET /obras/balance-general
+- GET /obras/inventario-mermas
 
 ## Agentes
-POST /agentes/tarea/aquiles → {uuid, tarea, prioridad, params, origen}
-POST /agentes/tarea/siegfried → mismo formato
-GET /agentes/memoria → lista de tareas procesadas
+- GET /agentes/memoria
+- GET /agentes/hermes/estado
+- POST /agentes/hermes/ejecutar
+- GET /agentes/propiedades
+- GET /agentes/prediccion/arriendo
+- POST /agentes/portal/login
 
 ## Siegfried
-GET /siegfried/alertas → lista de alertas activas
-GET /siegfried/licitaciones → lista paginada
-GET /siegfried/evaluaciones → evaluaciones LLM
+- GET /siegfried/alertas
+- GET /siegfried/licitaciones
+- GET /siegfried/licitaciones/evaluar
 
 ## Reportes
-GET /reportes/resumen-obras → por estado
-GET /reportes/top-clientes → top 10
-GET /reportes/alertas-criticas → alertas ALTO/CRITICO
-
-## Ejemplos curl
-curl -H "X-API-Key: TU_KEY" http://localhost:8000/obras/presupuestos
-curl -H "Authorization: Bearer TU_TOKEN" http://localhost:8000/obras/presupuestos
+- GET /reportes/dashboard
+- GET /reportes/balance
+- GET /reportes/resumen-obras
+- GET /reportes/top-clientes

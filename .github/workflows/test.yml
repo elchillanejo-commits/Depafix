@@ -1,9 +1,5 @@
 name: DepaFix CI/CD
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -14,25 +10,13 @@ jobs:
           POSTGRES_DB: depafix
           POSTGRES_USER: depafix
           POSTGRES_PASSWORD: sGXizxWs4khbF8ZJeOJ
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
         ports:
           - 5432:5432
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Install dependencies
-        run: |
-          pip install fastapi uvicorn psycopg2-binary pytest httpx sqlalchemy reportlab matplotlib
-      - name: Run tests
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install fastapi uvicorn psycopg2-binary pytest httpx sqlalchemy
+      - run: cd core && python3 -m pytest test_api.py test_dashboard.py -q
         env:
           PGPASSWORD: sGXizxWs4khbF8ZJeOJ
-        run: |
-          cd core
-          python3 -m pytest test_api.py test_dashboard.py -q

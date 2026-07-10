@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>DepaFix — Carta Gantt</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  body{background:#f8fafc;font-family:system-ui}
+  .header{background:#1E3A8A;color:white;padding:1.5rem 2rem;margin-bottom:2rem}
+  .kpi{background:white;border-radius:8px;padding:1.2rem;border:1px solid #e2e8f0;text-align:center}
+  .kpi-val{font-size:2rem;font-weight:700;color:#1E3A8A}
+  .kpi-lbl{font-size:.85rem;color:#64748b}
+  .badge-terminado{background:#15803d;color:white;padding:3px 8px;border-radius:4px;font-size:.75rem}
+  .badge-pendiente{background:#854f0b;color:white;padding:3px 8px;border-radius:4px;font-size:.75rem}
+  .badge-anulado{background:#6b7280;color:white;padding:3px 8px;border-radius:4px;font-size:.75rem}
+  .badge-revision{background:#dc2626;color:white;padding:3px 8px;border-radius:4px;font-size:.75rem}
+  th{background:#1E3A8A;color:white;font-weight:500}
+  .chart-wrap{background:white;border-radius:8px;padding:1.5rem;border:1px solid #e2e8f0;margin-bottom:2rem}
+</style>
+</head>
+<body>
+<div class="header">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div style="font-size:1.8rem;font-weight:700">DEPAFIX</div>
+      <div style="opacity:.8">Carta Gantt de Obras — Dashboard Ejecutivo</div>
+    </div>
+    <div style="opacity:.7;font-size:.9rem">Generado: 2026-07-06 20:20</div>
+  </div>
+</div>
+
+<div class="container-fluid px-4">
+
+<div class="row g-3 mb-4">
+  <div class="col-md-3"><div class="kpi"><div class="kpi-val">20</div><div class="kpi-lbl">Obras con maestro</div></div></div>
+  <div class="col-md-3"><div class="kpi"><div class="kpi-val">$18,607,964</div><div class="kpi-lbl">Monto total CLP</div></div></div>
+  <div class="col-md-3"><div class="kpi"><div class="kpi-val">19</div><div class="kpi-lbl">Terminadas</div></div></div>
+  <div class="col-md-3"><div class="kpi"><div class="kpi-val">0</div><div class="kpi-lbl">Pendientes</div></div></div>
+</div>
+
+<div class="chart-wrap">
+  <h6 class="mb-3" style="color:#1E3A8A;font-weight:600">Monto por Maestro</h6>
+  <div style="height:300px"><canvas id="chartMaestros" aria-label="Monto por maestro" role="img"></canvas></div>
+</div>
+
+<div class="chart-wrap">
+  <h6 class="mb-3" style="color:#1E3A8A;font-weight:600">Listado de Obras</h6>
+  <input class="form-control mb-3" id="buscar" placeholder="Buscar por cliente, maestro o tarea..." style="max-width:400px">
+  <div class="table-responsive">
+  <table class="table table-hover" id="tablaObras">
+    <thead><tr><th>ID</th><th>Cliente</th><th>Maestro</th><th>Tarea</th><th>Fecha</th><th>Total CLP</th><th>m²</th><th>Estado</th></tr></thead>
+    <tbody id="tbody"></tbody>
+    <tfoot><tr><td colspan="5"><strong>TOTAL</strong></td><td id="totalPie"><strong>$18,607,964</strong></td><td></td><td></td></tr></tfoot>
+  </table>
+  </div>
+</div>
+
+</div>
+
+<footer style="background:#1E3A8A;color:white;padding:1rem 2rem;margin-top:2rem;font-size:.85rem;text-align:center">
+  Depafix &nbsp;|&nbsp; +56 9 9979 1350 &nbsp;|&nbsp; depafix@gmail.com &nbsp;|&nbsp; Gestión y Mantención de Departamentos &nbsp;|&nbsp; Santiago, Chile
+</footer>
+
+<script>
+const OBRAS = [{"id": 167, "cliente": null, "tarea": "tabiqueria", "maestro": "María López", "fecha": "2026-12-28", "total": 791495.0, "m2": 97.0, "estado": "terminado"}, {"id": 107, "cliente": null, "tarea": "gasfiteria", "maestro": "Juan Pérez", "fecha": "2026-12-24", "total": 1706095.0, "m2": 49.0, "estado": "terminado"}, {"id": 191, "cliente": null, "tarea": "pintura", "maestro": "María López", "fecha": "2026-12-24", "total": 862336.0, "m2": 26.0, "estado": "terminado"}, {"id": 131, "cliente": null, "tarea": "gasfiteria", "maestro": "María López", "fecha": "2026-12-20", "total": 655828.0, "m2": 50.0, "estado": "terminado"}, {"id": 155, "cliente": null, "tarea": "sellos", "maestro": "Pedro Gómez", "fecha": "2026-12-16", "total": 1290363.0, "m2": 50.0, "estado": "terminado"}, {"id": 179, "cliente": null, "tarea": "sellos", "maestro": "Juan Pérez", "fecha": "2026-12-12", "total": 282768.0, "m2": 62.0, "estado": "terminado"}, {"id": 119, "cliente": null, "tarea": "sellos", "maestro": "Laura Silva", "fecha": "2026-12-08", "total": 140489.0, "m2": 73.0, "estado": "revision"}, {"id": 143, "cliente": null, "tarea": "aseo", "maestro": "Juan Pérez", "fecha": "2026-12-04", "total": 814020.0, "m2": 71.0, "estado": "terminado"}, {"id": 166, "cliente": null, "tarea": "aseo", "maestro": "María López", "fecha": "2026-11-27", "total": 1847947.0, "m2": 22.0, "estado": "terminado"}, {"id": 106, "cliente": null, "tarea": "sellos", "maestro": "Pedro Gómez", "fecha": "2026-11-23", "total": 576965.0, "m2": 54.0, "estado": "terminado"}, {"id": 190, "cliente": null, "tarea": "ceramica", "maestro": "Laura Silva", "fecha": "2026-11-23", "total": 839130.0, "m2": 27.0, "estado": "terminado"}, {"id": 130, "cliente": null, "tarea": "ceramica", "maestro": "Laura Silva", "fecha": "2026-11-19", "total": 516248.0, "m2": 42.0, "estado": "terminado"}, {"id": 154, "cliente": null, "tarea": "electricidad", "maestro": "Laura Silva", "fecha": "2026-11-15", "total": 446528.0, "m2": 95.0, "estado": "terminado"}, {"id": 178, "cliente": null, "tarea": "pintura", "maestro": "María López", "fecha": "2026-11-11", "total": 1409467.0, "m2": 65.0, "estado": "terminado"}, {"id": 118, "cliente": null, "tarea": "aseo", "maestro": "Pedro Gómez", "fecha": "2026-11-07", "total": 2305022.0, "m2": 56.0, "estado": "terminado"}, {"id": 142, "cliente": null, "tarea": "sellos", "maestro": "Juan Pérez", "fecha": "2026-11-03", "total": 1351393.0, "m2": 70.0, "estado": "terminado"}, {"id": 165, "cliente": null, "tarea": "gasfiteria", "maestro": "Laura Silva", "fecha": "2026-10-26", "total": 1385209.0, "m2": 49.0, "estado": "terminado"}, {"id": 105, "cliente": null, "tarea": "tabiqueria", "maestro": "María López", "fecha": "2026-10-22", "total": 703093.0, "m2": 27.0, "estado": "terminado"}, {"id": 189, "cliente": null, "tarea": "electricidad", "maestro": "Pedro Gómez", "fecha": "2026-10-22", "total": 227504.0, "m2": 45.0, "estado": "terminado"}, {"id": 129, "cliente": null, "tarea": "gasfiteria", "maestro": "Pedro Gómez", "fecha": "2026-10-18", "total": 456064.0, "m2": 75.0, "estado": "terminado"}];
+
+// Tabla
+const tbody = document.getElementById('tbody');
+function renderTabla(obras) {
+  tbody.innerHTML = '';
+  let total = 0;
+  obras.forEach(o => {
+    total += o.total || 0;
+    const badge = `<span class="badge-${o.estado}">${o.estado}</span>`;
+    tbody.innerHTML += `<tr>
+      <td>${o.id}</td>
+      <td>${o.cliente||'-'}</td>
+      <td>${o.maestro||'-'}</td>
+      <td>${o.tarea||'-'}</td>
+      <td>${o.fecha||'-'}</td>
+      <td>$${(o.total||0).toLocaleString('es-CL')}</td>
+      <td>${o.m2||'-'}</td>
+      <td>${badge}</td>
+    </tr>`;
+  });
+  document.getElementById('totalPie').innerHTML = `<strong>$${total.toLocaleString('es-CL')}</strong>`;
+}
+renderTabla(OBRAS);
+
+document.getElementById('buscar').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase();
+  renderTabla(OBRAS.filter(o =>
+    (o.cliente||'').toLowerCase().includes(q) ||
+    (o.maestro||'').toLowerCase().includes(q) ||
+    (o.tarea||'').toLowerCase().includes(q)
+  ));
+});
+
+// Chart por maestro
+const maestros = {};
+OBRAS.forEach(o => {
+  if(o.maestro) maestros[o.maestro] = (maestros[o.maestro]||0) + (o.total||0);
+});
+new Chart(document.getElementById('chartMaestros'), {
+  type: 'bar',
+  data: {
+    labels: Object.keys(maestros),
+    datasets: [{
+      label: 'Monto CLP',
+      data: Object.values(maestros),
+      backgroundColor: '#2a78d6',
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {legend: {display: false}},
+    scales: {
+      y: {
+        ticks: {callback: v => '$' + (v/1000000).toFixed(1) + 'M'}
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>
