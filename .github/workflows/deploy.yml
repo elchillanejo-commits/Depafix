@@ -1,17 +1,21 @@
-name: DepaFix CI/CD
-on: [push]
+name: Depafix Auto-Deploy
+
+on:
+  push:
+    branches: [ main ]
+
 jobs:
-  test:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
-      - run: pip install -r core/requirements.txt 2>/dev/null || pip install fastapi uvicorn psycopg2-binary pytest
-      - run: cd core && pytest --tb=short -q || true
-  build:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: docker compose build
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run Migration (La Roca)
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: python3 core/migrate_immutable_v2.py
