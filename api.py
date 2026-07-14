@@ -14,10 +14,12 @@ except ImportError:
     def predict(data): return {"error": "engine no disponible"}
 
 try:
-    from core.db_manager import db
+    from core.db_manager import get_client; db = get_client()
 except ImportError:
     class MockDB:
-        def execute(self, sql, params=None): return None
+        def table(self, name): return self
+        def select(self, *args, **kwargs): return self
+        def execute(self): return type("obj", (object,), {"data": []})()
     db = MockDB()
 
 try:
@@ -61,8 +63,8 @@ async def system_status():
     db_status = {"connected": False, "response_time_ms": None, "record_count": None}
     try:
         start = time.perf_counter()
-        result = db.execute("SELECT COUNT(*) FROM \"presupuestos\"")
-        count = result.scalar() if result else 0
+        result = db.table("presupuestos").select("*").execute()
+        count = len(result.data) if hasattr(result, "data") else 0
         db_status["connected"] = True
         db_status["response_time_ms"] = round((time.perf_counter() - start) * 1000, 2)
         db_status["record_count"] = count
