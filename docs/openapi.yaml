@@ -1,0 +1,22 @@
+openapi: 3.0.0
+info:
+  title: Agente Procurador IA API
+  version: 1.0.0
+paths:
+  /api/clientes:
+    get:
+      summary: Listar clientes de Diego
+      responses:
+        '200':
+          description: Lista de clientes
+  /api/consultar:
+    post:
+      summary: Ejecutar consulta legal (consume tokens)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cliente_id: {type: string}
+                query: {type: string}

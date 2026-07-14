@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+*.db
+*.sqlite
+*.log
+.git/
+.gitignore
+.venv/
+*.bak
+Dockerfile.bak
+requirements.txt.bak
