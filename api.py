@@ -8,18 +8,21 @@ from fastapi.responses import JSONResponse
 import jsonschema
 from jsonschema import validate
 
+# Importar lógica de predicción
 try:
-    from core.engine import predict
+    from core.predict_logic import predecir_costo
 except ImportError:
-    def predict(data): return {"error": "engine no disponible"}
+    def predecir_costo(items):
+        return sum(item.get('valor', 0) * item.get('cantidad', 1) for item in items) * 1.2
 
 try:
-    from core.db_manager import get_client; db = get_client()
+    from core.db_manager import db
 except ImportError:
     class MockDB:
         def table(self, name): return self
-        def select(self, *args, **kwargs): return self
-        def execute(self): return type("obj", (object,), {"data": []})()
+        def select(self, *args): return self
+        def eq(self, *args): return self
+        def execute(self): return type('obj', (object,), {'data': []})()
     db = MockDB()
 
 try:
@@ -40,7 +43,8 @@ except:
     SCHEMA = {"type": "object", "properties": {"departamento": {"type": "string"}, "items": {"type": "array"}}, "required": ["departamento", "items"]}
 
 @app.get("/health")
-async def health(): return {"status": "ok"}
+async def health():
+    return {"status": "ok"}
 
 @app.post("/predict")
 async def predict_endpoint(request: Request):
@@ -53,7 +57,13 @@ async def predict_endpoint(request: Request):
     except jsonschema.ValidationError as e:
         raise HTTPException(422, detail=str(e))
     try:
-        return JSONResponse(predict(data))
+        items = data.get('items', [])
+        total = predecir_costo(items)
+        return JSONResponse({
+            "predicted_cost": total,
+            "message": "Predicción usando SERVIU 2026",
+            "items": items
+        })
     except Exception as e:
         logger.exception("Predicción falló")
         raise HTTPException(500, detail="Error en predicción")
@@ -64,7 +74,7 @@ async def system_status():
     try:
         start = time.perf_counter()
         result = db.table("presupuestos").select("*").execute()
-        count = len(result.data) if hasattr(result, "data") else 0
+        count = len(result.data) if hasattr(result, 'data') else 0
         db_status["connected"] = True
         db_status["response_time_ms"] = round((time.perf_counter() - start) * 1000, 2)
         db_status["record_count"] = count

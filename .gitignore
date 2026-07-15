@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+ENV/
+
+# Secretos / entornos
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+auditor_*.log
+
+# Datos crudos y de trabajo (no se versionan, se regeneran o vienen de scrapers/auditores).
+# NO incluye config/*.json ni frontend/*.json: esos son config de la app, no datos crudos.
+datos/
+data/*.json
+data/*.pkl
+*.pkl
+*.db
+*.sqlite3
+*_pendientes.jsonl
+analisis_local.jsonl
+materiales_adjudicados.json
+prueba.json
+
+# Build artifacts de frontend
+frontend/.next/
+frontend/node_modules/
+frontend/dist/
+
+# Backup
+*.bak
+*.backup
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
