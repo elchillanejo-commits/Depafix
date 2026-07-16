@@ -95,19 +95,26 @@ velas 1H/4H/1D desde un exchange (Binance u otro) y las cargue en
 seguirá devolviendo `ESTADO: ESPERA` en producción — es el comportamiento
 esperado, no un bug.
 
-**Actualización 2026-07-16 — pipeline construido, todavía bloqueado en un
-solo punto:** `data_pipeline.py` se probó con datos reales de Binance
-(trajo velas BTC/USDT 1H reales) y el backoff exponencial se probó con
-rate-limit simulado (2 reintentos, 2s→4s, éxito al 3er intento) — ambos
-funcionan. Lo único que falta es un paso manual: **`velas_cripto` no existe
-todavía en Supabase** (`sql/create_velas_cripto.sql` nunca se ejecutó ahí).
-Correr ese SQL en el SQL Editor de Supabase (owner) es el único paso que
-falta para que el pipeline empiece a guardar datos de verdad. Ese mismo
-comando también sirve para confirmar si la key `anon` puede hacer INSERT —
-ya sabemos que no puede hacer DELETE en `precios_serviu` por RLS, así que
-conviene correr `python3 src/trading/data_pipeline.py --limite 5` apenas
-exista la tabla para confirmar que el guardado también funciona y no queda
-bloqueado en silencio como pasó con el DELETE.
+**Actualización 2026-07-16 — pipeline construido, RLS blindada, dos pasos
+manuales pendientes:** `data_pipeline.py` se probó con datos reales de
+Binance (trajo velas BTC/USDT 1H reales) y el backoff exponencial se probó
+con rate-limit simulado (2 reintentos, 2s→4s, éxito al 3er intento) — ambos
+funcionan. `velas_cripto` no existe todavía en Supabase
+(`sql/create_velas_cripto.sql` nunca se ejecutó ahí). Ese SQL ahora incluye
+`ALTER TABLE velas_cripto ENABLE ROW LEVEL SECURITY` sin ninguna policy para
+`anon` a propósito -- la anon key es pública por diseño (va embebida en
+cualquier cliente) y no debe poder escribir ni leer esta tabla. En vez de
+abrir RLS, `data_pipeline.py` y `TradingLogic` ahora usan
+`DatabaseManager.get_service_client()` (service_role, bypassea RLS).
+
+Pasos manuales pendientes, en orden:
+1. Correr `sql/create_velas_cripto.sql` en el SQL Editor de Supabase (owner).
+2. Agregar `SUPABASE_SERVICE_KEY` a `.env` (Supabase dashboard → Settings →
+   API → service_role). Sin esto, tanto el pipeline como `TradingLogic`
+   fallan explícito en el log (no silencioso) y `TradingLogic` sigue
+   devolviendo `ESPERA`.
+3. Correr `python3 src/trading/data_pipeline.py --limite 5` para confirmar
+   que el INSERT funciona de punta a punta con la service_role key.
 
 ## ⏳ Pendientes (2026-07-16)
 - Correr en Supabase (SQL Editor, con owner) el `DELETE` de arriba para

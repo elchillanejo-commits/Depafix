@@ -7,14 +7,17 @@ devolver ESTADO: ESPERA por falta de datos.
 Usa el endpoint público de mercado (fetch_ohlcv) -- no requiere API key ni
 autenticación, solo datos de velas ya públicos.
 
-REQUISITO PREVIO, fuera del alcance de este script: la tabla velas_cripto
-todavía no existe en Supabase (verificado 2026-07-16, error PGRST205 "Could
-not find the table"). Hay que correr sql/create_velas_cripto.sql en el SQL
-Editor de Supabase (con permisos de owner) antes de que este pipeline pueda
-insertar nada -- la key configurada en .env es 'anon' y no puede hacer DDL.
-Una vez creada la tabla, conviene volver a correr este script con --limite 5
-para confirmar que el INSERT no está bloqueado por RLS (ya vimos que esa
-misma key sí tiene DELETE bloqueado en precios_serviu).
+REQUISITOS PREVIOS, fuera del alcance de este script:
+  1. La tabla velas_cripto todavía no existe en Supabase (verificado
+     2026-07-16, error PGRST205 "Could not find the table"). Correr
+     sql/create_velas_cripto.sql en el SQL Editor de Supabase (permisos de
+     owner) -- la key 'anon' de .env no puede hacer DDL.
+  2. Ese SQL deja RLS activado SIN policy para anon a propósito (la anon key
+     es pública por diseño; no debe poder escribir ni leer esta tabla). Este
+     pipeline escribe con SUPABASE_SERVICE_KEY (service_role, bypassea RLS)
+     -- agregar esa variable a .env con el valor del dashboard de Supabase
+     (Settings > API > service_role) antes de correr esto. Sin ella, falla
+     explícito en el log en vez de chocar en silencio contra RLS.
 
 Uso:
     python3 src/trading/data_pipeline.py [--exchange binance] [--pares BTC/USDT,ETH/USDT] [--limite 500]
@@ -104,9 +107,15 @@ class PipelineVelas:
             logger.error("No se pudo inicializar el exchange '%s': %s", exchange_id, e)
 
         try:
-            self.db = DatabaseManager.get_client()
+            # service_role, no anon: velas_cripto tiene RLS activado sin
+            # policy para anon a propósito (ver sql/create_velas_cripto.sql)
+            # para que la anon key -- pública por diseño -- no pueda escribir
+            # ni borrar. Si SUPABASE_SERVICE_KEY no está configurada, esto
+            # falla fuerte y explícito en vez de degradar en silencio a un
+            # cliente que va a chocar con RLS en cada INSERT.
+            self.db = DatabaseManager.get_service_client()
         except Exception as e:
-            logger.error("No se pudo inicializar el cliente de Supabase: %s", e)
+            logger.error("No se pudo inicializar el cliente de Supabase (service_role): %s", e)
 
     def _guardar_filas(self, filas):
         """Upsert por lotes (idempotente: activo+temporalidad+tiempo es
