@@ -14,7 +14,7 @@ REQUISITOS PREVIOS, fuera del alcance de este script:
      owner) -- la key 'anon' de .env no puede hacer DDL.
   2. Ese SQL deja RLS activado SIN policy para anon a propósito (la anon key
      es pública por diseño; no debe poder escribir ni leer esta tabla). Este
-     pipeline escribe con SUPABASE_SERVICE_KEY (service_role, bypassea RLS)
+     pipeline escribe con SUPABASE_SERVICE_ROLE_KEY (service_role, bypassea RLS)
      -- agregar esa variable a .env con el valor del dashboard de Supabase
      (Settings > API > service_role) antes de correr esto. Sin ella, falla
      explícito en el log en vez de chocar en silencio contra RLS.
@@ -110,7 +110,7 @@ class PipelineVelas:
             # service_role, no anon: velas_cripto tiene RLS activado sin
             # policy para anon a propósito (ver sql/create_velas_cripto.sql)
             # para que la anon key -- pública por diseño -- no pueda escribir
-            # ni borrar. Si SUPABASE_SERVICE_KEY no está configurada, esto
+            # ni borrar. Si SUPABASE_SERVICE_ROLE_KEY no está configurada, esto
             # falla fuerte y explícito en vez de degradar en silencio a un
             # cliente que va a chocar con RLS en cada INSERT.
             self.db = DatabaseManager.get_service_client()
