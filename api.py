@@ -73,7 +73,7 @@ async def system_status():
     db_status = {"connected": False, "response_time_ms": None, "record_count": None}
     try:
         start = time.perf_counter()
-        result = db.table("presupuestos").select("*").execute()
+        result = db.table("precios_serviu").select("*").execute()
         count = len(result.data) if hasattr(result, 'data') else 0
         db_status["connected"] = True
         db_status["response_time_ms"] = round((time.perf_counter() - start) * 1000, 2)
