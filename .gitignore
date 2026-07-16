@@ -4,10 +4,18 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*$py.class
 .Python
 venv/
+.venv/
 env/
 ENV/
+env.bak/
+venv.bak/
+*.egg
+*.egg-info/
+build/
+dist/
 
 # Secretos / entornos
 .env
@@ -17,6 +25,12 @@ ENV/
 # Logs
 *.log
 auditor_*.log
+logs/
+
+# Temporales / editor / OS (además de IDE/OS más abajo)
+*.tmp
+*.swp
+*~
 
 # Datos crudos y de trabajo (no se versionan, se regeneran o vienen de scrapers/auditores).
 # NO incluye config/*.json ni frontend/*.json: esos son config de la app, no datos crudos.
@@ -25,11 +39,27 @@ data/*.json
 data/*.pkl
 *.pkl
 *.db
+*.sqlite
 *.sqlite3
 *_pendientes.jsonl
 analisis_local.jsonl
 materiales_adjudicados.json
 prueba.json
+
+# Archivos basura sueltos en la raíz (artefactos de un redirect roto en una
+# sesión anterior -- no son módulos Python reales, ver commit 7018af2).
+# Confirmado 2026-07-16: ninguno de estos nombres corresponde a un
+# archivo/directorio real trackeado en el repo.
+/socket
+/subprocess
+/sys
+/time
+/logging
+/URL
+/ingesta
+/batch_predict
+/analisis_apu
+/unicodedata
 
 # Build artifacts de frontend
 frontend/.next/
