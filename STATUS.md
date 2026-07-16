@@ -79,7 +79,8 @@ solo con datos SERVIU mientras tanto.
 | Stop Loss técnico basado en estructura | ✅ implementado (nunca un % arbitrario) |
 | Robustez ante fallas de red/Supabase | ✅ cada consulta y cada fórmula en try/except independiente; nunca lanza excepción hacia afuera |
 | Esquema `velas_cripto` (OHLC por activo/temporalidad) | ✅ definido en `sql/create_velas_cripto.sql` |
-| Pipeline de ingesta de velas desde exchange | ❌ no existe — ver nota |
+| Pipeline de ingesta de velas desde exchange | ✅ implementado (`src/trading/data_pipeline.py`, ccxt/Binance) — ver nota |
+| Orquestador (ingesta → evaluación) | ✅ `src/trading/orquestador_cripto.py` + endpoint manual `POST /trading/ejecutar-cripto` en `main.py` |
 
 **Estado operativo real: `ESTADO: ESPERA`.** Toda la lógica de trading está
 implementada y verificada con asserts sobre velas sintéticas (EMA, RSI,
@@ -93,6 +94,20 @@ velas 1H/4H/1D desde un exchange (Binance u otro) y las cargue en
 `velas_cripto`. Hasta que ese pipeline exista, `TradingLogic.evaluar()`
 seguirá devolviendo `ESTADO: ESPERA` en producción — es el comportamiento
 esperado, no un bug.
+
+**Actualización 2026-07-16 — pipeline construido, todavía bloqueado en un
+solo punto:** `data_pipeline.py` se probó con datos reales de Binance
+(trajo velas BTC/USDT 1H reales) y el backoff exponencial se probó con
+rate-limit simulado (2 reintentos, 2s→4s, éxito al 3er intento) — ambos
+funcionan. Lo único que falta es un paso manual: **`velas_cripto` no existe
+todavía en Supabase** (`sql/create_velas_cripto.sql` nunca se ejecutó ahí).
+Correr ese SQL en el SQL Editor de Supabase (owner) es el único paso que
+falta para que el pipeline empiece a guardar datos de verdad. Ese mismo
+comando también sirve para confirmar si la key `anon` puede hacer INSERT —
+ya sabemos que no puede hacer DELETE en `precios_serviu` por RLS, así que
+conviene correr `python3 src/trading/data_pipeline.py --limite 5` apenas
+exista la tabla para confirmar que el guardado también funciona y no queda
+bloqueado en silencio como pasó con el DELETE.
 
 ## ⏳ Pendientes (2026-07-16)
 - Correr en Supabase (SQL Editor, con owner) el `DELETE` de arriba para

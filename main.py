@@ -12,6 +12,22 @@ from core.db_manager import DatabaseManager
 
 app = FastAPI()
 
+
+@app.post("/trading/ejecutar-cripto")
+def ejecutar_pipeline_cripto():
+    """Disparador manual del ciclo ingesta+evaluación de TradingLogic (ver
+    src/trading/orquestador_cripto.py). Es síncrono y puede tardar si el
+    exchange rate-limitea (hay backoff exponencial con reintentos) -- para
+    ejecución recurrente real, usar cron contra el script directamente,
+    igual que el resto de los agentes del proyecto, no este endpoint."""
+    from src.trading.orquestador_cripto import ejecutar_ciclo
+    try:
+        resultados = ejecutar_ciclo()
+        return {"resultados": resultados}
+    except Exception as e:
+        print(f"ERROR CRÍTICO en pipeline cripto: {str(e)}", file=sys.stderr)
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/clientes")
 def listar_clientes():
     try:
