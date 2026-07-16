@@ -8,3 +8,4 @@ python-multipart==0.0.20
 supabase==2.31.0
 httpx==0.28.1
 jsonschema==4.23.0
+ccxt==4.5.65
