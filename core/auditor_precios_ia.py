@@ -64,18 +64,45 @@ class AuditorPrecios:
         except Exception as e:
             logger.error("No se pudo conectar a Supabase: %s", e)
             self.supabase = None
+            self.reglas = []
+
+        self.exclusiones = {}
+        if self.supabase:
+            try:
+                resp = self.supabase.table("reglas_rubros_exclusiones").select("*").execute()
+                for fila in resp.data:
+                    rubro = fila.get("rubro")
+                    palabra = (fila.get("palabra_excluida") or "").lower()
+                    if rubro and palabra:
+                        self.exclusiones.setdefault(rubro, set()).add(palabra)
+                logger.info(
+                    "reglas_rubros_exclusiones cargadas (%d rubro(s) con exclusiones).",
+                    len(self.exclusiones),
+                )
+            except Exception as e:
+                # Tabla nueva/opcional: si falla, se sigue clasificando sin
+                # exclusiones en vez de detener el auditor.
+                logger.warning("No se pudieron cargar exclusiones (se seguirá sin ellas): %s", e)
 
     def _clasificar_rubro(self, item_texto):
         """Devuelve (rubro, regla_id) según la primera regla (ya ordenada por
-        prioridad desc) cuya palabra_clave aparezca en item_texto. None si
-        ninguna regla calza -- el llamador decide marcar ERROR_DATOS."""
+        prioridad desc) cuya palabra_clave aparezca en item_texto Y cuyo rubro
+        no tenga una palabra excluida presente en el mismo texto (ver
+        reglas_rubros_exclusiones -- ej. "construcción de barcos" no debe
+        clasificar como Construcción). Si una regla calza pero está excluida,
+        se sigue probando con las siguientes reglas antes de rendirse."""
         if not item_texto or not self.reglas:
             return None, None
         texto_lower = item_texto.lower()
         for regla in self.reglas:
             palabra = (regla.get("palabra_clave") or "").lower()
-            if palabra and palabra in texto_lower:
-                return regla.get("rubro"), regla.get("id")
+            rubro = regla.get("rubro")
+            if not palabra or palabra not in texto_lower:
+                continue
+            excluidas = self.exclusiones.get(rubro, ())
+            if any(excl in texto_lower for excl in excluidas):
+                continue
+            return rubro, regla.get("id")
         return None, None
 
     def _guardar_fallback(self, row, motivo):
