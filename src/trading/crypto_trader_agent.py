@@ -1,3 +1,4 @@
+import os
 """
 crypto_trader_agent.py -- TradingLogic implementa las fórmulas de confluencia
 del "Manual Maestro: Trading Profesional" (~/docs/Comercio/Trade resumen.pdf).
@@ -31,7 +32,11 @@ import sys
 import traceback
 from pathlib import Path
 
+<<<<<<< Updated upstream
 CORE_PATH = Path("/home/ibar/Proyectos/DepaFix")
+=======
+CORE_PATH = Path(__file__).resolve().parent.parent.parent
+>>>>>>> Stashed changes
 if str(CORE_PATH) not in sys.path:
     sys.path.insert(0, str(CORE_PATH))
 

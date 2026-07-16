@@ -11,8 +11,15 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 
+<<<<<<< Updated upstream
 # Asegurar la ruta del proyecto
 CORE_PATH = Path("/home/ibar/Proyectos/DepaFix")
+=======
+# Asegurar la ruta del proyecto (calculada desde __file__, no importa
+# config.settings.BASE_DIR: ese import solo funciona una vez que este
+# bloque ya puso la raíz del repo en sys.path).
+CORE_PATH = Path(__file__).resolve().parent.parent
+>>>>>>> Stashed changes
 if str(CORE_PATH) not in sys.path:
     sys.path.insert(0, str(CORE_PATH))
 

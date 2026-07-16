@@ -36,8 +36,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 # Mismo patrón que core/auditor_ia.py y core/auditor_precios_ia.py: no se toca
+<<<<<<< Updated upstream
 # sys.path fuera de esto.
 CORE_PATH = Path("/home/ibar/Proyectos/DepaFix")
+=======
+# sys.path fuera de esto. Se calcula desde __file__ (no se importa
+# config.settings.BASE_DIR acá) para evitar el problema del huevo y la
+# gallina: este bloque es justamente lo que hace que "config" sea
+# importable en primer lugar.
+CORE_PATH = Path(__file__).resolve().parent.parent
+>>>>>>> Stashed changes
 if str(CORE_PATH) not in sys.path:
     sys.path.insert(0, str(CORE_PATH))
 
