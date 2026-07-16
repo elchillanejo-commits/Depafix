@@ -196,3 +196,27 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+    def obtener_velas_para_analisis(self, par: str, temporalidad: str, limite: int = 100):
+        """Obtiene velas de Supabase (o desde exchange si no hay)."""
+        try:
+            # Intentar leer desde Supabase
+            from core.db_manager import db
+            result = db.table('velas_cripto').select('*').eq('activo', par).eq('temporalidad', temporalidad).order('tiempo', desc=True).limit(limite).execute()
+            if result.data:
+                return result.data
+        except:
+            pass
+        # Si no hay en BD, descargar directamente
+        return self.obtener_velas(par, temporalidad, limite)
+
+    def obtener_velas_para_analisis(self, par: str, temporalidad: str, limite: int = 100):
+        """Obtiene velas de Supabase (o desde exchange si no hay)."""
+        try:
+            from core.db_manager import db
+            result = db.table('velas_cripto').select('*').eq('activo', par).eq('temporalidad', temporalidad).order('tiempo', desc=True).limit(limite).execute()
+            if result.data:
+                return result.data
+        except:
+            pass
+        return self.obtener_velas(par, temporalidad, limite)
