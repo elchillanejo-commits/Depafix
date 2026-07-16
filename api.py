@@ -108,3 +108,30 @@ async def system_status():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("api:app", host="0.0.0.0", port=8000)
+
+# ===== ENDPOINT PARA EJECUTAR EL ORQUESTADOR CRIPTO =====
+@app.post("/trading/ejecutar-cripto")
+async def ejecutar_cripto(request: Request):
+    """Ejecuta el orquestador de criptomonedas con los parámetros dados."""
+    import subprocess
+    import json
+    try:
+        data = await request.json()
+    except:
+        data = {}
+    exchange = data.get("exchange", "binance")
+    pares = ",".join(data.get("pares", ["BTC/USDT"]))
+    limite = data.get("limite", 20)
+    cmd = [
+        "python3", "src/trading/orquestador_cripto.py",
+        "--exchange", exchange,
+        "--pares", pares,
+        "--limite", str(limite)
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    return {
+        "status": "ok",
+        "stdout": result.stdout,
+        "stderr": result.stderr,
+        "returncode": result.returncode
+    }
