@@ -203,9 +203,14 @@ class TradingLogic:
         self.tolerancia_zona_pct = tolerancia_zona_pct
         self.db = None
         try:
-            self.db = DatabaseManager.get_client()
+            # service_role, no anon: velas_cripto tiene RLS sin policy para
+            # anon a propósito (ver sql/create_velas_cripto.sql), así que ni
+            # siquiera SELECT funciona con la key pública. TradingLogic corre
+            # server-side (cron), no sirve requests de clientes, así que usar
+            # service_role acá no repite el problema de exponer la tabla.
+            self.db = DatabaseManager.get_service_client()
         except Exception as e:
-            logger.error("No se pudo inicializar el cliente de Supabase: %s", e)
+            logger.error("No se pudo inicializar el cliente de Supabase (service_role): %s", e)
 
     # ---------- acceso a datos, robusto a fallas de red ----------
 
