@@ -9,7 +9,7 @@ python3 -m pytest ~/Proyectos/DepaFix/core/test_api.py -q
 cat ~/Proyectos/DepaFix/core/logs/reporte_YYYYMMDD.txt
 
 ## Ver alertas Siegfried
-curl -H X-API-Key:DepaFix2026ApiKey http://localhost:8000/siegfried/alertas
+curl -H X-API-Key:o5CaV1gfXOhL6T9tt69oNZ8Ro6nQPppE http://localhost:8000/siegfried/alertas
 
 ## Inyectar tarea a Aquiles
 echo uuid|TAREA|PRIORIDAD|params|origen >> ~/Proyectos/Agentes/pendientes_aquiles.txt

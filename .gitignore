@@ -83,3 +83,6 @@ backups/
 *.json
 *.jsonl
 .venv/
+
+# Credenciales internas
+CREDENCIALES.md
