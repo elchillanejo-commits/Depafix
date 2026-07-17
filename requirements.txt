@@ -9,5 +9,6 @@ supabase==2.31.0
 httpx==0.28.1
 jsonschema==4.23.0
 ccxt==4.5.65
+numpy==2.5.1
 pandas==3.0.3
 beautifulsoup4==4.15.0
