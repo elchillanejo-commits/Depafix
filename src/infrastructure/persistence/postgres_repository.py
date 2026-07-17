@@ -9,7 +9,7 @@ class PostgresObraRepository(ObraRepositoryPort):
         self.conn = psycopg2.connect(
             host=os.getenv("DB_HOST","localhost"),
             user=os.getenv("DB_USER","depafix"),
-            password=os.getenv("DB_PASS","sGXizxWs4khbF8ZJeOJ"),
+            password=os.getenv("DB_PASS"),  # sin fallback: credencial hardcodeada removida (auditoria 2026-07-16, repo publico)
             dbname=os.getenv("DB_NAME","depafix")
         )
     def guardar(self, obra: Obra):

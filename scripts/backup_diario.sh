@@ -1,5 +1,5 @@
 #!/bin/bash
-export PGPASSWORD=sGXizxWs4khbF8ZJeOJ
+: "${PGPASSWORD:?Falta PGPASSWORD en el entorno (credencial hardcodeada removida, auditoria 2026-07-16 -- repo publico)}"
 BACKUP_DIR=/home/ibar/Proyectos/DepaFix/backups
 mkdir -p $BACKUP_DIR
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)

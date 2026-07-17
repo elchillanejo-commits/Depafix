@@ -2,7 +2,7 @@
 set -e
 VPS="${1:?Falta IP del VPS}"
 echo "=== DEPLOY GESTALT → $VPS $(date '+%Y-%m-%d %H:%M') ==="
-export PGPASSWORD=sGXizxWs4khbF8ZJeOJ
+: "${PGPASSWORD:?Falta PGPASSWORD en el entorno (credencial hardcodeada removida, auditoria 2026-07-16 -- repo publico)}"
 # Backup local
 pg_dump -h localhost -U depafix depafix -Fc > /tmp/depafix_deploy.dump
 # Sincronizar código

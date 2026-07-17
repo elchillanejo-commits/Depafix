@@ -1,0 +1,4 @@
+id,cliente,tarea,maestro,fecha,total,m2,estado,descripcion,incluye_materiales,created_at
+1.0,Cliente Prueba,Revisar fuga,Juan Pérez,2026-07-09T00:00:00,120.0,,completed,Urgente,False,2026-07-10T03:52:36.341148+00:00
+2.0,Cliente Prueba,Revisar fuga,Juan Pérez,2026-07-09T00:00:00,120.0,,completed,Urgente,False,2026-07-10T03:52:47.769667+00:00
+3.0,Cliente Prueba,Revisar fuga,Juan Pérez,2026-07-09T00:00:00,120.0,,completed,Urgente,False,2026-07-10T03:53:41.768086+00:00

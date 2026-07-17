@@ -4,7 +4,7 @@ echo "=== DEPLOY TOTAL DEPAFIX $(date '+%Y-%m-%d %H:%M') ==="
 VPS="${1:-localhost}"
 
 # 1. Backup
-export PGPASSWORD=sGXizxWs4khbF8ZJeOJ
+: "${PGPASSWORD:?Falta PGPASSWORD en el entorno (credencial hardcodeada removida, auditoria 2026-07-16 -- repo publico)}"
 pg_dump -h localhost -U depafix depafix -Fc > /tmp/depafix_total.dump
 echo "[OK] Backup: $(du -sh /tmp/depafix_total.dump | cut -f1)"
 

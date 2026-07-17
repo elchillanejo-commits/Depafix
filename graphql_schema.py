@@ -5,7 +5,8 @@ from strawberry.fastapi import GraphQLRouter
 import psycopg2, os
 
 DB = dict(host=os.getenv("DB_HOST","localhost"), user=os.getenv("DB_USER","depafix"),
-          password=os.getenv("DB_PASS","sGXizxWs4khbF8ZJeOJ"), dbname=os.getenv("DB_NAME","depafix"))
+          password=os.getenv("DB_PASS"), dbname=os.getenv("DB_NAME","depafix"))
+          # DB_PASS sin fallback: credencial hardcodeada removida (auditoria 2026-07-16, repo publico)
 
 @strawberry.type
 class Presupuesto: id: int; descripcion: str; total: float

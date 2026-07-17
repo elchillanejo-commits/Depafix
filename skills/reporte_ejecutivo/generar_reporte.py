@@ -24,7 +24,7 @@ DB_CONFIG = {
     "host": "localhost",
     "dbname": "depafix",
     "user": "depafix",
-    "password": os.getenv("PGPASSWORD", "sGXizxWs4khbF8ZJeOJ")
+    "password": os.getenv("PGPASSWORD")  # sin fallback: credencial hardcodeada removida (auditoria 2026-07-16, repo publico)
 }
 
 def get_conn():

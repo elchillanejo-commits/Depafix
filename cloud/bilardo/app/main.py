@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-\"\"\"
+"""
 Servicio bilardo - DepaFix Cloud Native
-\"\"\"
+"""
 import os
 from fastapi import FastAPI, Request
 import psycopg2
@@ -14,7 +14,7 @@ DB_CONFIG = {
     "port": os.getenv("PGPORT", "5432"),
     "dbname": os.getenv("PGDATABASE", "depafix"),
     "user": os.getenv("PGUSER", "depafix"),
-    "password": os.getenv("PGPASSWORD", "sGXizxWs4khbF8ZJeOJ")
+    "password": os.getenv("PGPASSWORD")  # sin fallback: credencial hardcodeada removida (auditoria 2026-07-16, repo publico)
 }
 
 @app.get("/health")

@@ -3,9 +3,10 @@ import json
 from pathlib import Path
 from datetime import datetime
 
-# Path al proyecto
-root_dir = Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(root_dir))
+# Mismo patrón que src/trading/orquestador_cripto.py y data_pipeline.py.
+CORE_PATH = Path(__file__).resolve().parent.parent.parent
+if str(CORE_PATH) not in sys.path:
+    sys.path.insert(0, str(CORE_PATH))
 
 def registrar_analisis(activo, temporalidad, tipo, entrada, stop, tp, confluencias):
     data = {
@@ -20,7 +21,7 @@ def registrar_analisis(activo, temporalidad, tipo, entrada, stop, tp, confluenci
     }
 
     # Intentar guardar localmente siempre
-    local_log = root_dir / "analisis_local.jsonl"
+    local_log = CORE_PATH / "analisis_local.jsonl"
     with open(local_log, "a") as f:
         f.write(json.dumps(data) + "\n")
     

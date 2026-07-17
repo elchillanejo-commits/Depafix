@@ -24,7 +24,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
-        logging.FileHandler("auditor_ia.log"),
+        logging.FileHandler(CORE_PATH / "auditor_ia.log"),
         logging.StreamHandler()
     ]
 )
@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 CONFIDENCE_THRESHOLD = 0.8
 OPENAI_PLACEHOLDER = True
-FALLBACK_JSONL = "movimientos_pendientes.jsonl"
+FALLBACK_JSONL = str(CORE_PATH / "movimientos_pendientes.jsonl")  # antes relativo al cwd (residual, corregido 2026-07-16)
 
 class AuditorContable:
     def __init__(self, csv_path):

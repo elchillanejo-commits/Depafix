@@ -2,7 +2,7 @@
 FECHA=$(date +%Y%m%d_%H%M)
 DIR="/tmp/depafix_backups"
 mkdir -p $DIR
-export PGPASSWORD="${PGPASSWORD:-sGXizxWs4khbF8ZJeOJ}"
+: "${PGPASSWORD:?Falta PGPASSWORD en el entorno (credencial hardcodeada removida, auditoria 2026-07-16 -- repo publico)}"
 LOG="/home/ibar/Proyectos/DepaFix/core/logs/backup_cloud.log"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Iniciando backup $FECHA" >> "$LOG"
 pg_dump -h localhost -U depafix depafix -Fc > "$DIR/depafix_$FECHA.dump" && \

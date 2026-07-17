@@ -155,6 +155,43 @@ class PipelineVelas:
         logger.info("%s %s: %d velas traídas, %d guardadas.", activo, temporalidad, len(ohlcv), guardadas)
         return guardadas
 
+    def obtener_velas_para_analisis(self, activo: str, temporalidad: str, limite: int = 100):
+        """Lee velas ya guardadas en velas_cripto (con self.db, el mismo
+        cliente service_role que usa el resto de la clase -- no el cliente
+        anon, que este archivo bloquea a propósito vía RLS). Si Supabase
+        falla o todavía no tiene datos para ese par/temporalidad, cae a
+        traerlas directo del exchange (sin guardarlas -- para eso está
+        ejecutar()/_ingestar_una_combinacion). Devuelve siempre una lista
+        (vacía si no hay datos ni exchange disponible), nunca lanza."""
+        if self.db:
+            try:
+                resp = (
+                    self.db.table(TABLA_VELAS)
+                    .select("*")
+                    .eq("activo", activo)
+                    .eq("temporalidad", temporalidad)
+                    .order("tiempo", desc=True)
+                    .limit(limite)
+                    .execute()
+                )
+                if resp.data:
+                    return resp.data
+            except Exception as e:
+                logger.error("Fallo leyendo velas de Supabase para %s %s: %s", activo, temporalidad, e)
+
+        if not self.exchange:
+            return []
+        timeframe_ccxt = TEMPORALIDADES.get(temporalidad)
+        if not timeframe_ccxt:
+            logger.error("Temporalidad desconocida '%s' -- no se puede consultar al exchange.", temporalidad)
+            return []
+        try:
+            ohlcv = _con_reintentos(self.exchange.fetch_ohlcv, activo, timeframe=timeframe_ccxt, limit=limite)
+        except Exception as e:
+            logger.error("Fallo trayendo velas directo del exchange para %s %s: %s", activo, temporalidad, e)
+            return []
+        return _velas_a_filas(ohlcv, activo, temporalidad)
+
     def ejecutar(self):
         """Nunca lanza excepción hacia afuera: cada combinación par/temporalidad
         se procesa en su propio try/except, igual que trade_agent.py con sus
@@ -196,27 +233,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-    def obtener_velas_para_analisis(self, par: str, temporalidad: str, limite: int = 100):
-        """Obtiene velas de Supabase (o desde exchange si no hay)."""
-        try:
-            # Intentar leer desde Supabase
-            from core.db_manager import db
-            result = db.table('velas_cripto').select('*').eq('activo', par).eq('temporalidad', temporalidad).order('tiempo', desc=True).limit(limite).execute()
-            if result.data:
-                return result.data
-        except:
-            pass
-        # Si no hay en BD, descargar directamente
-        return self.obtener_velas(par, temporalidad, limite)
-
-    def obtener_velas_para_analisis(self, par: str, temporalidad: str, limite: int = 100):
-        """Obtiene velas de Supabase (o desde exchange si no hay)."""
-        try:
-            from core.db_manager import db
-            result = db.table('velas_cripto').select('*').eq('activo', par).eq('temporalidad', temporalidad).order('tiempo', desc=True).limit(limite).execute()
-            if result.data:
-                return result.data
-        except:
-            pass
-        return self.obtener_velas(par, temporalidad, limite)
