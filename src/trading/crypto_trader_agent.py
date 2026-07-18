@@ -19,6 +19,9 @@ logger = logging.getLogger(__name__)
 GOLDEN_POCKET = (0.618, 0.786)  # Fibonacci niveles clave
 UMBRAL_SOPORTE = 0.02           # 2% de tolerancia
 VENTANA_SOPORTE = 20            # velas para detectar soportes/resistencias
+UMBRAL_CONFLUENCIA = 4          # factores mínimos (de 6) para disparar COMPRA/VENTA
+PERIODO_EMA = 50
+PERIODO_RSI = 14
 
 # ========== FUNCIONES AUXILIARES ==========
 
@@ -120,17 +123,40 @@ def detectar_order_blocks(velas: List[Dict]) -> List[Dict]:
     return blocks
 
 def calcular_ema(velas: List[Dict], periodo: int = 50) -> float:
-    """Calcula la EMA de cierre."""
+    """Calcula la EMA (media móvil exponencial) de cierre sobre las últimas
+    `periodo` velas, con suavizado estándar alpha = 2/(periodo+1)."""
     if len(velas) < periodo:
         return 0.0
     closes = np.array([v['close'] for v in velas[-periodo:]])
-    return np.mean(closes)  # Media simple como fallback (para no usar pandas)
+    alpha = 2.0 / (periodo + 1)
+    ema = closes[0]
+    for precio in closes[1:]:
+        ema = alpha * precio + (1 - alpha) * ema
+    return float(ema)
+
+def calcular_rsi(velas: List[Dict], periodo: int = 14) -> float:
+    """Calcula el RSI (Relative Strength Index) de cierre sobre las últimas
+    `periodo` velas. Sin suficientes velas devuelve 50.0 (neutral) en vez de
+    lanzar, para no romper la confluencia por falta de historial."""
+    if len(velas) < periodo + 1:
+        return 50.0
+    closes = np.array([v['close'] for v in velas[-(periodo + 1):]])
+    deltas = np.diff(closes)
+    ganancias = np.where(deltas > 0, deltas, 0.0)
+    perdidas = np.where(deltas < 0, -deltas, 0.0)
+    ganancia_media = np.mean(ganancias)
+    perdida_media = np.mean(perdidas)
+    if perdida_media == 0:
+        return 100.0
+    rs = ganancia_media / perdida_media
+    return float(100 - (100 / (1 + rs)))
 
 def generar_senal(velas: List[Dict]) -> Dict[str, Any]:
     """
     Genera señal de trading basada en confluencia de factores:
     - Precio cerca de soporte/resistencia + FVG + Order Block = ALTA PROBABILIDAD
-    - Precio en Golden Pocket + EMA = SEÑAL DE ENTRADA
+    - Precio en Golden Pocket = SEÑAL DE ENTRADA
+    - EMA-50 (tendencia) y RSI-14 (sobrecompra/sobreventa) confirman la dirección
     """
     if len(velas) < 50:
         return {'senal': 'ESPERA', 'motivo': 'Datos insuficientes'}
@@ -160,7 +186,15 @@ def generar_senal(velas: List[Dict]) -> Dict[str, Any]:
     
     # 5. Confluencia
     en_golden_pocket = golden_pocket_low <= precio_actual <= golden_pocket_high
-    
+
+    # 6. Media móvil (tendencia) y RSI (sobrecompra/sobreventa)
+    ema = calcular_ema(velas, periodo=PERIODO_EMA)
+    rsi = calcular_rsi(velas, periodo=PERIODO_RSI)
+    tendencia_alcista = ema > 0 and precio_actual > ema
+    tendencia_bajista = ema > 0 and precio_actual < ema
+    rsi_sobrevendido = rsi < 30
+    rsi_sobrecomprado = rsi > 70
+
     # Señal de compra (alcista)
     compra_score = 0
     if soporte_cerca:
@@ -171,7 +205,11 @@ def generar_senal(velas: List[Dict]) -> Dict[str, Any]:
         compra_score += 1
     if block_cerca and any(b['tipo'] == 'soporte' for b in blocks):
         compra_score += 1
-    
+    if tendencia_alcista:
+        compra_score += 1
+    if rsi_sobrevendido:
+        compra_score += 1
+
     # Señal de venta (bajista)
     venta_score = 0
     if resistencia_cerca:
@@ -182,14 +220,20 @@ def generar_senal(velas: List[Dict]) -> Dict[str, Any]:
         venta_score += 1
     if block_cerca and any(b['tipo'] == 'resistencia' for b in blocks):
         venta_score += 1
-    
-    # Decisión final
-    if compra_score >= 3:
-        return {'senal': 'COMPRA', 'motivo': f'Confluencia alcista ({compra_score}/4)', 'score': compra_score}
-    elif venta_score >= 3:
-        return {'senal': 'VENTA', 'motivo': f'Confluencia bajista ({venta_score}/4)', 'score': venta_score}
+    if tendencia_bajista:
+        venta_score += 1
+    if rsi_sobrecomprado:
+        venta_score += 1
+
+    indicadores = {'ema_50': ema, 'rsi_14': rsi}
+
+    # Decisión final (umbral de confluencia sobre 6 factores posibles)
+    if compra_score >= UMBRAL_CONFLUENCIA:
+        return {'senal': 'COMPRA', 'motivo': f'Confluencia alcista ({compra_score}/6)', 'score': compra_score, **indicadores}
+    elif venta_score >= UMBRAL_CONFLUENCIA:
+        return {'senal': 'VENTA', 'motivo': f'Confluencia bajista ({venta_score}/6)', 'score': venta_score, **indicadores}
     else:
-        return {'senal': 'ESPERA', 'motivo': f'No hay confluencia suficiente (C:{compra_score}/V:{venta_score})', 'score': max(compra_score, venta_score)}
+        return {'senal': 'ESPERA', 'motivo': f'No hay confluencia suficiente (C:{compra_score}/V:{venta_score})', 'score': max(compra_score, venta_score), **indicadores}
 
 # ========== CLASE PRINCIPAL ==========
 

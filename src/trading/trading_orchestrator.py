@@ -11,22 +11,39 @@ estado de mercado que las motivo, y siempre guarda ejecutada=False. Conectar
 esto a ejecucion real de ordenes es un paso separado y deliberado, fuera del
 alcance de este archivo.
 
+Arquitectura de despliegue (Railway): batch, no daemon. --una-vez corre un
+ciclo completo (ingesta + señal + auditoria + reporte de salud) y termina
+-- el "self-healing" y la cadencia periodica quedan a cargo de la
+infraestructura (Cron Schedule del servicio + restartPolicyType=ON_FAILURE),
+no de un loop de Python de larga vida. Un proceso que se reinicia limpio en
+cada corrida no puede acumular fugas de memoria entre corridas; un daemon
+infinito con time.sleep() sí puede. ejecutar_bucle() se mantiene solo para
+uso local/manual (no es lo que corre en produccion, ver Dockerfile.worker).
+
+Salud (Siegfried): cada ciclo (batch o dentro del bucle local) reporta a
+salud_agentes vía core/salud_agentes.py -- 'HEALTHY' con métricas
+(activos_analizados, señales_detectadas, memoria_uso_mb) al terminar, o
+'CRITICAL' con el traceback si el ciclo aborta por una excepción no
+controlada. En modo --una-vez, una excepción termina el proceso con exit
+code != 0 después de reportar CRITICAL, para que Railway reinicie el
+contenedor solo.
+
 Uso:
-    python3 src/trading/trading_orchestrator.py --activos BTC/USDT,ETH/USDT --intervalo 60
-    python3 src/trading/trading_orchestrator.py --una-vez  # un solo ciclo, para cron/testing
+    python3 src/trading/trading_orchestrator.py --una-vez  # modo produccion: un ciclo y sale
+    python3 src/trading/trading_orchestrator.py --activos BTC/USDT,ETH/USDT --intervalo 60  # bucle local
 """
 import argparse
-import functools
 import hashlib
 import json
 import logging
-import random
+import resource
+import signal
 import sys
 import time
 import traceback
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -35,79 +52,19 @@ if str(CORE_PATH) not in sys.path:
     sys.path.insert(0, str(CORE_PATH))
 
 from core.db_manager import DatabaseManager
+from core.resiliencia import red_segura, RedFailSafeError
+from core.salud_agentes import reportar_salud
 from src.trading.data_pipeline import PipelineVelas, PARES_DEFAULT
 from src.trading.crypto_trader_agent import TradingLogic
+from src.trading.report_generator import enviar_alerta, generar_reportes_vencidos
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
 TABLA_OPERACIONES = "operaciones_ejecutadas"
-MAX_LATENCIA_SEG = 0.5
-MAX_REINTENTOS = 5
-BACKOFF_BASE_SEG = 2
+NOMBRE_PROCESO = "trading_orchestrator"
 DRAWDOWN_MAX_PCT = 2.0
 VENTANA_VOLATILIDAD = 20
-
-# Pool aparte para el decorador de latencia maxima: las llamadas de red que
-# envuelve (httpx via supabase-py, ccxt) son sincronicas y no se pueden
-# cancelar de forma preventiva a mitad de un socket. Usar .result(timeout=)
-# deja de esperar y trata el intento como fallido -- que es la semantica
-# util aca ("no bloquees el ciclo mas de 500ms"), aunque el hilo de fondo
-# pueda seguir corriendo hasta que la llamada subyacente resuelva sola.
-_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="trading-net")
-
-
-class RedFailSafeError(RuntimeError):
-    """Senal de desconexion segura: se agotaron los reintentos o se excedio
-    la latencia maxima. El llamador debe tratarlo como "no operar este
-    ciclo", nunca reintentar por su cuenta por fuera del decorador."""
-
-
-def _con_latencia_maxima(func: Callable, segundos: float) -> Callable:
-    @functools.wraps(func)
-    def envoltura(*args, **kwargs):
-        futuro = _executor.submit(func, *args, **kwargs)
-        try:
-            return futuro.result(timeout=segundos)
-        except FutureTimeoutError:
-            raise RedFailSafeError(
-                f"{func.__name__} excedio latencia maxima de {segundos * 1000:.0f}ms"
-            ) from None
-    return envoltura
-
-
-def red_segura(max_reintentos: int = MAX_REINTENTOS, backoff_base: float = BACKOFF_BASE_SEG,
-               latencia_max: float = MAX_LATENCIA_SEG) -> Callable:
-    """Decorador para toda llamada de red (Supabase, exchange): cada intento
-    esta acotado a latencia_max segundos: si lo excede o lanza excepcion,
-    reintenta con backoff exponencial + jitter hasta max_reintentos veces.
-    Agotados los reintentos, levanta RedFailSafeError -- fail-safe explicito
-    en vez de dejar que el error de red se propague crudo o, peor, que el
-    llamador seagote reintentando indefinidamente."""
-    def decorador(func: Callable) -> Callable:
-        func_acotado = _con_latencia_maxima(func, latencia_max)
-
-        @functools.wraps(func)
-        def envoltura(*args, **kwargs):
-            ultimo_error = None
-            for intento in range(max_reintentos):
-                try:
-                    return func_acotado(*args, **kwargs)
-                except Exception as e:
-                    ultimo_error = e
-                    espera = backoff_base * (2 ** intento) + random.uniform(0, 1)
-                    logger.warning(
-                        "%s: fallo de red (intento %d/%d): %s. Reintentando en %.1fs.",
-                        func.__name__, intento + 1, max_reintentos, e, espera,
-                    )
-                    time.sleep(espera)
-            logger.critical(
-                "%s: agotados %d reintentos, desconexion segura (fail-safe).",
-                func.__name__, max_reintentos,
-            )
-            raise RedFailSafeError(f"{func.__name__} agoto reintentos") from ultimo_error
-        return envoltura
-    return decorador
 
 
 class RiskManager:
@@ -195,6 +152,7 @@ class TradingOrchestrator:
         self.pipeline = PipelineVelas(exchange_id=exchange_id, pares=self.pares)
         self.signal_engine = SignalEngine()
         self.risk_manager = RiskManager(capital_inicial=capital_inicial)
+        self._detener = False
         self._db = None
         try:
             # Mismo cliente cacheado (DatabaseManager._service_client) que ya
@@ -273,9 +231,29 @@ class TradingOrchestrator:
             logger.critical("%s: fail-safe de red registrando auditoria: %s. Senal generada pero NO quedo registrada.",
                             activo, e)
 
+        enviar_alerta(
+            f"{activo} -> {senal.get('senal')} a {senal.get('precio_actual')} ({senal.get('motivo')}).",
+            nivel="INFO",
+        )
         return senal
 
+    def _ingestar_velas_frescas(self) -> None:
+        """Refresca velas_cripto desde el exchange antes de analizar. Sin
+        esto, TradingLogic evaluaria sobre datos cada vez mas viejos --
+        procesar_activo() solo LEE velas_cripto, nunca las actualiza (ver
+        PipelineVelas.obtener_velas_para_analisis). PipelineVelas.ejecutar()
+        ya es resiliente por combinacion par/temporalidad (nunca lanza, cada
+        fallo se loguea y sigue con la siguiente); este try/except es
+        defensa adicional para que un error inesperado acá tampoco frene el
+        ciclo -- se analiza igual con las velas que ya haya en Supabase."""
+        try:
+            self.pipeline.ejecutar()
+        except Exception:
+            logger.error("Fallo inesperado ingiriendo velas frescas, se sigue con los datos existentes:\n%s",
+                         traceback.format_exc())
+
     def ejecutar_ciclo(self) -> List[Dict[str, Any]]:
+        self._ingestar_velas_frescas()
         resultados = []
         for activo in self.pares:
             try:
@@ -288,15 +266,77 @@ class TradingOrchestrator:
                 resultados.append(resultado)
         return resultados
 
+    def _uso_memoria_mb(self) -> float:
+        """ru_maxrss es KB en Linux (donde corre el contenedor), no bytes --
+        distinto a macOS. No hay ambigüedad real acá porque Dockerfile.worker
+        siempre corre sobre python:3.12-slim (Linux)."""
+        return round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 1)
+
+    def _ejecutar_ciclo_con_salud(self) -> List[Dict[str, Any]]:
+        """Corre un ciclo completo y reporta el resultado a salud_agentes
+        para que Siegfried sepa el estado sin entrar al servidor. Si el
+        ciclo aborta por una excepción no controlada, reporta 'CRITICAL' con
+        el traceback y vuelve a lanzar -- el llamador decide qué hacer (en
+        modo --una-vez, main() sale con exit code != 0 para que Railway
+        reinicie el contenedor; en el bucle local, ejecutar_bucle() lo
+        atrapa y sigue en la siguiente iteración)."""
+        try:
+            resultados = self.ejecutar_ciclo()
+        except Exception:
+            detalle = traceback.format_exc()
+            logger.critical("Ciclo abortado por excepcion no controlada:\n%s", detalle)
+            reportar_salud(self._db, NOMBRE_PROCESO, "CRITICAL", detalle[-500:])
+            enviar_alerta(f"trading_orchestrator: ciclo abortado por excepcion no controlada:\n{detalle[-500:]}",
+                          nivel="CRITICAL")
+            raise
+
+        señales = sum(1 for r in resultados if r.get("senal") in ("COMPRA", "VENTA"))
+        reportar_salud(
+            self._db, NOMBRE_PROCESO, "HEALTHY",
+            f"{len(resultados)} activo(s) analizado(s), {señales} señal(es) detectada(s).",
+            metricas={
+                "estado": "HEALTHY",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "activos_analizados": len(resultados),
+                "señales_detectadas": señales,
+                "memoria_uso_mb": self._uso_memoria_mb(),
+            },
+        )
+
+        # Reportes periodicos: sin scheduler propio, se generan los que ya
+        # vencieron en cada ciclo (ver docstring de generar_reportes_vencidos
+        # en report_generator.py). Nunca lanza -- un fallo generando
+        # reportes no debe afectar el resultado del ciclo de trading.
+        try:
+            generar_reportes_vencidos(self._db)
+        except Exception:
+            logger.error("Excepcion no controlada generando reportes periodicos:\n%s", traceback.format_exc())
+
+        return resultados
+
+    def _manejar_senal_apagado(self, signum, frame):
+        logger.warning("Senal %s recibida: terminando el ciclo actual y deteniendose (sin matar a mitad de operacion).",
+                       signal.Signals(signum).name)
+        self._detener = True
+
     def ejecutar_bucle(self, intervalo_seg: int = 60) -> None:
+        signal.signal(signal.SIGINT, self._manejar_senal_apagado)
+        signal.signal(signal.SIGTERM, self._manejar_senal_apagado)
         logger.info("TradingOrchestrator iniciado (activos=%s, intervalo=%ds, modo=simulacion).",
                     self.pares, intervalo_seg)
-        while True:
+        while not self._detener:
             try:
-                self.ejecutar_ciclo()
+                self._ejecutar_ciclo_con_salud()
             except Exception:
-                logger.critical("Ciclo abortado por excepcion no controlada:\n%s", traceback.format_exc())
-            time.sleep(intervalo_seg)
+                pass  # ya logueado y reportado a salud_agentes dentro de _ejecutar_ciclo_con_salud
+            # Dormir en pasos de 1s (no time.sleep(intervalo_seg) de una)
+            # para que una senal de apagado se note en <=1s en vez de tener
+            # que esperar hasta 300s a que termine el sleep completo.
+            for _ in range(intervalo_seg):
+                if self._detener:
+                    break
+                time.sleep(1)
+        logger.info("TradingOrchestrator detenido limpiamente.")
 
 
 def main():
@@ -317,7 +357,14 @@ def main():
     )
 
     if args.una_vez:
-        resultados = orquestador.ejecutar_ciclo()
+        try:
+            resultados = orquestador._ejecutar_ciclo_con_salud()
+        except Exception:
+            # Ya quedo logueado y reportado como CRITICAL a salud_agentes en
+            # _ejecutar_ciclo_con_salud. Salir con exit code != 0 es lo que
+            # deja que Railway (restartPolicyType=ON_FAILURE) reinicie el
+            # contenedor solo -- ver docstring del modulo.
+            sys.exit(2)
         logger.info("Ciclo unico finalizado: %d activos procesados.", len(resultados))
         sys.exit(0)
 

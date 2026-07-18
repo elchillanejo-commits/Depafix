@@ -1,0 +1,11 @@
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+# Batch, no daemon: un ciclo (ingesta + señal + auditoria + reporte de
+# salud) y sale. La cadencia (cada cuanto se vuelve a correr) y el
+# self-healing ante crash quedan a cargo de Railway (Cron Schedule +
+# restartPolicyType=ON_FAILURE), no de un loop interno -- ver docstring de
+# trading_orchestrator.py.
+CMD ["python3", "src/trading/trading_orchestrator.py", "--exchange", "kraken", "--activos", "BTC/USDT,SOL/USDT", "--una-vez"]
