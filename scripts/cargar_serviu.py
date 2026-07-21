@@ -5,6 +5,7 @@ Ejecutar después de que Claude genere ~/Proyectos/DepaFix/datos/serviu_2026.jso
 """
 import json, sys
 from pathlib import Path
+sys.path.insert(0, "/home/ibar/Proyectos/02_PROCURADOR")  # reorg 2026-07-19: core/ movido fuera de DepaFix
 from core.db_manager import db
 
 def cargar():

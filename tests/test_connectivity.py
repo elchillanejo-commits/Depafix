@@ -31,6 +31,8 @@ from pathlib import Path
 CORE_PATH = Path(__file__).resolve().parent.parent
 if str(CORE_PATH) not in sys.path:
     sys.path.insert(0, str(CORE_PATH))
+if "/home/ibar/Proyectos/02_PROCURADOR" not in sys.path:  # reorg 2026-07-19: core/ movido fuera de DepaFix
+    sys.path.insert(0, "/home/ibar/Proyectos/02_PROCURADOR")
 
 from config.settings import BASE_DIR
 from core.db_manager import DatabaseManager

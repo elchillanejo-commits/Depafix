@@ -2,7 +2,7 @@
 """
 Sube datos/serviu_2026.json (tabla de precios referenciales SERVIU/MINVU) a
 Supabase, tabla precios_serviu. Requiere que la tabla exista (ver
-sql/create_precios_serviu.sql) y que .env tenga SUPABASE_URL/SUPABASE_KEY.
+01_SERVIU/create_precios_serviu.sql) y que .env tenga SUPABASE_URL/SUPABASE_KEY.
 
 Uso:
     python3 subir_precios_serviu.py [--archivo datos/serviu_2026.json]
@@ -11,8 +11,10 @@ import argparse
 import hashlib
 import json
 import logging
+import sys
 from datetime import datetime, timezone
 
+sys.path.insert(0, "/home/ibar/Proyectos/02_PROCURADOR")  # reorg 2026-07-19: core/ movido fuera de DepaFix
 from core.db_manager import db
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")

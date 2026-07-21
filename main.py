@@ -6,6 +6,11 @@ import sys
 # Cargar variables de entorno
 load_dotenv()
 
+# reorg 2026-07-19: core/ y src/trading/ movidos fuera de DepaFix
+for _p in ("/home/ibar/Proyectos/02_PROCURADOR", "/home/ibar/Proyectos/05_TRADE_CRIPTO"):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
 # Importamos las rutas centralizadas
 from config.settings import DATA_DIR
 from core.db_manager import DatabaseManager
@@ -20,7 +25,7 @@ def ejecutar_pipeline_cripto():
     exchange rate-limitea (hay backoff exponencial con reintentos) -- para
     ejecución recurrente real, usar cron contra el script directamente,
     igual que el resto de los agentes del proyecto, no este endpoint."""
-    from src.trading.orquestador_cripto import ejecutar_ciclo
+    from trading.orquestador_cripto import ejecutar_ciclo
     try:
         resultados = ejecutar_ciclo()
         return {"resultados": resultados}

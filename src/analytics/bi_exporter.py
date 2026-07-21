@@ -30,7 +30,7 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 
-CORE_PATH = Path(__file__).resolve().parent.parent.parent
+CORE_PATH = Path("/home/ibar/Proyectos/02_PROCURADOR")  # reorg 2026-07-19: core/ movido fuera de DepaFix
 if str(CORE_PATH) not in sys.path:
     sys.path.insert(0, str(CORE_PATH))
 

@@ -5,7 +5,9 @@ Migración de datos SQLite → Supabase con claves de idempotencia.
 import sqlite3
 import hashlib
 import logging
+import sys
 from datetime import datetime
+sys.path.insert(0, "/home/ibar/Proyectos/02_PROCURADOR")  # reorg 2026-07-19: core/ movido fuera de DepaFix
 from core.db_manager import DatabaseManager
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
