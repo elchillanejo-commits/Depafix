@@ -121,6 +121,54 @@ def obtener_rubros():
     ]
 
 
+@app.get("/api/trading/operaciones")
+def listar_operaciones_trading(limite: int = 20):
+    """Operaciones recientes registradas por el orquestador de
+    05_TRADE_CRIPTO (ver trading_orchestrator.py::procesar_activo). Esquema
+    real de operaciones_ejecutadas: symbol/price/side/ejecutada/
+    hash_control/created_at -- no activo/senal/precio_entrada, ver el fix
+    de esa tabla en el commit bb59655."""
+    if not SUPABASE_DB_URL:
+        logger.error("SUPABASE_DB_URL no está configurado")
+        return JSONResponse(status_code=500, content={"error": "SUPABASE_DB_URL no está configurado"})
+
+    conn = None
+    try:
+        conn = psycopg2.connect(SUPABASE_DB_URL)
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """
+                select symbol, price, side, ejecutada, hash_control, created_at
+                from operaciones_ejecutadas
+                order by created_at desc
+                limit %(limite)s
+                """,
+                {"limite": limite},
+            )
+            filas = cur.fetchall()
+    except psycopg2.OperationalError:
+        logger.exception("No se pudo conectar a la base de datos")
+        return JSONResponse(status_code=503, content={"error": "No se pudo conectar a la base de datos"})
+    except psycopg2.Error:
+        logger.exception("Error al consultar operaciones_ejecutadas")
+        return JSONResponse(status_code=500, content={"error": "Error al consultar operaciones de trading"})
+    finally:
+        if conn is not None:
+            conn.close()
+
+    return [
+        {
+            "symbol": fila["symbol"],
+            "price": float(fila["price"]) if fila["price"] is not None else None,
+            "side": fila["side"],
+            "ejecutada": fila["ejecutada"],
+            "hash_control": fila["hash_control"],
+            "created_at": fila["created_at"].isoformat() if fila["created_at"] else None,
+        }
+        for fila in filas
+    ]
+
+
 @app.get("/api/decreto49")
 def obtener_decreto49():
     """Artículos del D.S. N°49/2011, reusando decretos/decreto_articulos (sql/create_normativa_ds49.sql)."""
@@ -339,3 +387,127 @@ def consultar(req: ConsultarRequest):
         "consulta": {"id": str(consulta["id"]), "fecha_consulta": consulta["fecha_consulta"].isoformat()},
         "saldo_restante": saldo,
     }
+
+# ============================================
+# ENDPOINTS DE PRESUPUESTOS (HTML + PDF)
+# ============================================
+from fastapi.responses import HTMLResponse, FileResponse
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+import markupsafe
+import os
+import tempfile
+from weasyprint import HTML
+
+# Configurar Jinja2
+template_env = Environment(
+    loader=FileSystemLoader("templates"),
+    autoescape=select_autoescape(["html", "xml"])
+)
+
+# Filtro para formatear números
+def format_number(value):
+    try:
+        return f"{int(value):,}".replace(",", ".")
+    except:
+        return str(value)
+
+template_env.filters["format_number"] = format_number
+
+@app.get("/presupuesto/{presupuesto_id}", response_class=HTMLResponse)
+async def ver_presupuesto(presupuesto_id: int):
+    """
+    Genera la vista HTML de un presupuesto desde la base de datos.
+
+    El esquema real y vivo de `presupuestos` en Supabase (confirmado via
+    PostgREST) es id/cliente(texto)/tarea/maestro/fecha/total/m2/estado/
+    descripcion/incluye_materiales -- no tiene cliente_id (no hay tabla
+    `clientes` relacionada por FK acá) ni existe la tabla
+    `partidas_presupuesto`. Este endpoint arma el detalle a partir de una
+    sola "partida" sintética (tarea/descripcion/total) en vez de leer items
+    de una tabla que no existe.
+    """
+    from core.db_manager import DatabaseManager
+    db = DatabaseManager().get_service_client()
+
+    try:
+        result = db.table("presupuestos").select("*").eq("id", presupuesto_id).execute()
+    except Exception as e:
+        logging.exception("Error consultando presupuesto %s", presupuesto_id)
+        return HTMLResponse(f"<h1>No se pudo consultar el presupuesto</h1><p>{e}</p>", status_code=502)
+
+    if not result.data:
+        return HTMLResponse(
+            f"<h1>Presupuesto no encontrado</h1><p>No existe un presupuesto con id {presupuesto_id}.</p>",
+            status_code=404,
+        )
+
+    data = result.data[0]
+    subtotal = data.get("total") or 0
+    iva = int(subtotal * 0.19)
+    total = subtotal + iva
+
+    template = template_env.get_template("presupuesto.html")
+    html_content = template.render(
+        titulo=f"Presupuesto {data.get('tarea') or ''}".strip() or f"Presupuesto #{presupuesto_id}",
+        subtitulo=data.get("descripcion") or "Pintura · Pisos · Sellados",
+        codigo=f"PR-{presupuesto_id:04d}",
+        cliente={
+            "nombre": data.get("cliente") or "Cliente",
+            "telefono": "",
+            "direccion": "",
+            "comuna": "",
+        },
+        items=[{
+            "descripcion": data.get("tarea") or data.get("descripcion") or "Servicio",
+            "precio": subtotal,
+        }],
+        resumen={
+            "subtotal": subtotal,
+            "iva": iva,
+            "total": total,
+            "nota": "Precios sujetos a variación según condiciones del mercado.",
+        },
+    )
+
+    return HTMLResponse(html_content)
+
+
+@app.get("/presupuestos")
+async def listar_presupuestos():
+    """Lista id/cliente/tarea/estado/total/fecha de todos los presupuestos,
+    para saber qué id probar en /presupuesto/{id}."""
+    from core.db_manager import DatabaseManager
+    db = DatabaseManager().get_service_client()
+
+    try:
+        result = (
+            db.table("presupuestos")
+            .select("id, cliente, tarea, estado, total, fecha")
+            .order("id", desc=True)
+            .execute()
+        )
+    except Exception as e:
+        logging.exception("Error listando presupuestos")
+        return JSONResponse(status_code=502, content={"error": f"No se pudo consultar presupuestos: {e}"})
+
+    return {"presupuestos": result.data}
+
+@app.get("/presupuesto/{presupuesto_id}/pdf")
+async def generar_pdf_presupuesto(presupuesto_id: int):
+    """
+    Genera un PDF del presupuesto.
+    """
+    from fastapi import Request
+    # Reutilizar la lógica de HTML (hacemos una petición interna)
+    import httpx
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f"http://localhost:8000/presupuesto/{presupuesto_id}")
+        html_content = response.text
+
+    # Generar PDF con WeasyPrint
+    pdf_file = HTML(string=html_content).write_pdf()
+    temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    temp_pdf.write(pdf_file)
+    temp_pdf.close()
+
+    return FileResponse(temp_pdf.name, media_type="application/pdf", filename=f"presupuesto_{presupuesto_id}.pdf")
