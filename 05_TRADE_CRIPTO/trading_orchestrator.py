@@ -47,7 +47,7 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-CORE_PATH = Path("/home/ibar/Proyectos/02_PROCURADOR")  # reorg 2026-07-19: core/ movido fuera de DepaFix
+CORE_PATH = Path("/home/ibar/Proyectos/DepaFix/procurador")  # core/ vive en DepaFix/procurador/core (02_PROCURADOR fue renombrado ahi, commit 10462fe)
 TRADE_ROOT = Path("/home/ibar/Proyectos/05_TRADE_CRIPTO")
 for _p in (CORE_PATH, TRADE_ROOT):
     if str(_p) not in sys.path:
@@ -214,14 +214,18 @@ class TradingOrchestrator:
                            activo, senal.get("senal"))
             return senal
 
+        # Esquema real y vivo de operaciones_ejecutadas en Supabase: solo
+        # symbol/price/side/ejecutada/hash_control (confirmado via schema de
+        # PostgREST -- create_operaciones_ejecutadas.sql, que tenia
+        # activo/temporalidad/precio_entrada/precio_salida/cantidad/motivo,
+        # quedo desactualizado). temporalidad y motivo no tienen columna
+        # donde ir hoy -- se pierden en la auditoria hasta que se agregue
+        # una migracion; precio_salida/cantidad nunca se llenaban de todas
+        # formas (siempre None, sin integracion de ordenes reales).
         fila = {
-            "activo": activo,
-            "temporalidad": temporalidad,
-            "senal": senal.get("senal"),
-            "precio_entrada": senal.get("precio_actual"),
-            "precio_salida": None,
-            "cantidad": None,
-            "motivo": senal.get("motivo"),
+            "symbol": activo,
+            "price": senal.get("precio_actual"),
+            "side": senal.get("senal"),
             "hash_control": self._hash_estado_mercado(velas, senal),
             "ejecutada": False,  # simulacion siempre: no hay integracion de ordenes reales en este repo
         }
