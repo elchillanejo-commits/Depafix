@@ -82,7 +82,11 @@ Thumbs.db
 backups/
 *.json
 *.jsonl
+!railway.json
 .venv/
 
 # Credenciales internas
 CREDENCIALES.md
+
+# Afiches generados (Ikki)
+ikki/afiches/

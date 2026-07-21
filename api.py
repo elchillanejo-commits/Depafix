@@ -1,16 +1,22 @@
 import logging
 import os
+import tempfile
 import uuid
 
 import psycopg2
 import psycopg2.extras
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 load_dotenv()
+
+from core.db_manager import DatabaseManager  # noqa: E402 (requiere .env ya cargado)
+from ikki.campana import TIPOS_VALIDOS, crear_campana, subir_afiche
+from ikki.crear_afiche import generar_afiche
 
 logger = logging.getLogger("api")
 
@@ -25,6 +31,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+templates = Jinja2Templates(directory="templates")
+
+
+def format_number(value):
+    try:
+        return f"{int(round(float(value))):,}".replace(",", ".")
+    except (TypeError, ValueError):
+        return value
+
+
+templates.env.filters["format_number"] = format_number
+
 
 class ComprarTokensRequest(BaseModel):
     cliente_id: str
@@ -37,6 +55,20 @@ class ConsultarRequest(BaseModel):
     cliente_id: str
     tipo_consulta: str
     detalle: dict = {}
+
+
+class GenerarAficheRequest(BaseModel):
+    titulo: str
+    subtitulo: str
+    precio: str
+    color_fondo: str | None = None
+
+
+class CampanaRequest(BaseModel):
+    tipo: str
+    titulo: str
+    subtitulo: str | None = None
+    precio: str | None = None
 
 
 @app.get("/api/clientes")
@@ -388,126 +420,201 @@ def consultar(req: ConsultarRequest):
         "saldo_restante": saldo,
     }
 
-# ============================================
-# ENDPOINTS DE PRESUPUESTOS (HTML + PDF)
-# ============================================
-from fastapi.responses import HTMLResponse, FileResponse
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-import markupsafe
-import os
-import tempfile
-from weasyprint import HTML
-
-# Configurar Jinja2
-template_env = Environment(
-    loader=FileSystemLoader("templates"),
-    autoescape=select_autoescape(["html", "xml"])
-)
-
-# Filtro para formatear números
-def format_number(value):
-    try:
-        return f"{int(value):,}".replace(",", ".")
-    except:
-        return str(value)
-
-template_env.filters["format_number"] = format_number
-
-@app.get("/presupuesto/{presupuesto_id}", response_class=HTMLResponse)
-async def ver_presupuesto(presupuesto_id: int):
-    """
-    Genera la vista HTML de un presupuesto desde la base de datos.
-
-    El esquema real y vivo de `presupuestos` en Supabase (confirmado via
-    PostgREST) es id/cliente(texto)/tarea/maestro/fecha/total/m2/estado/
-    descripcion/incluye_materiales -- no tiene cliente_id (no hay tabla
-    `clientes` relacionada por FK acá) ni existe la tabla
-    `partidas_presupuesto`. Este endpoint arma el detalle a partir de una
-    sola "partida" sintética (tarea/descripcion/total) en vez de leer items
-    de una tabla que no existe.
-    """
-    from core.db_manager import DatabaseManager
-    db = DatabaseManager().get_service_client()
-
-    try:
-        result = db.table("presupuestos").select("*").eq("id", presupuesto_id).execute()
-    except Exception as e:
-        logging.exception("Error consultando presupuesto %s", presupuesto_id)
-        return HTMLResponse(f"<h1>No se pudo consultar el presupuesto</h1><p>{e}</p>", status_code=502)
-
-    if not result.data:
-        return HTMLResponse(
-            f"<h1>Presupuesto no encontrado</h1><p>No existe un presupuesto con id {presupuesto_id}.</p>",
-            status_code=404,
+@app.post("/api/generar_afiche")
+def generar_afiche_endpoint(req: GenerarAficheRequest):
+    if not req.titulo.strip() or not req.subtitulo.strip() or not req.precio.strip():
+        return JSONResponse(
+            status_code=400, content={"error": "titulo, subtitulo y precio son requeridos"}
         )
 
-    data = result.data[0]
-    subtotal = data.get("total") or 0
-    iva = int(subtotal * 0.19)
+    try:
+        datos = {"titulo": req.titulo, "subtitulo": req.subtitulo, "precio": req.precio}
+        if req.color_fondo:
+            datos["colores"] = {"fondo": req.color_fondo}
+
+        ruta_local = generar_afiche(datos)
+
+        try:
+            url = subir_afiche(ruta_local)
+            return {"ok": True, "url": url}
+        except Exception:
+            logger.exception("No se pudo subir el afiche a Supabase Storage")
+            return {"ok": True, "ruta_local": ruta_local}
+    except Exception as e:
+        logger.exception("Error generando afiche")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+@app.post("/api/campana/crear")
+def crear_campana_endpoint(req: CampanaRequest):
+    if req.tipo not in TIPOS_VALIDOS:
+        return JSONResponse(
+            status_code=400,
+            content={"error": f"tipo inválido: {req.tipo!r}. Debe ser uno de {sorted(TIPOS_VALIDOS)}"},
+        )
+
+    try:
+        datos = {"titulo": req.titulo, "subtitulo": req.subtitulo, "precio": req.precio}
+        resultado = crear_campana(req.tipo, datos)
+        return {"ok": True, **resultado}
+    except Exception as e:
+        logger.exception("Error creando campaña")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+def _obtener_datos_presupuesto(id: int):
+    """Retorna el contexto de plantilla para un presupuesto, o None si no existe.
+
+    presupuestos convive con dos generaciones de datos (verificado contra
+    Supabase real, no contra los .sql del repo): los ids "clásicos" (1-3, sin
+    partidas_presupuesto, con total/tarea directo en la fila) y los nuevos
+    (con cliente_id + partidas_presupuesto). Si partidas_presupuesto no tiene
+    filas para este id, se arma un item sintético desde total/tarea en vez de
+    mostrar un detalle vacío con total $0 -- eso es lo que pasaba antes de
+    este fallback para los ids clásicos."""
+    client = DatabaseManager().get_service_client()
+
+    presupuesto_res = client.table("presupuestos").select("*").eq("id", id).limit(1).execute()
+    filas = presupuesto_res.data or []
+    if not filas:
+        return None
+    presupuesto = filas[0]
+
+    cliente = {"nombre": presupuesto.get("cliente"), "telefono": None, "direccion": None, "comuna": None}
+    if presupuesto.get("cliente_id"):
+        cliente_res = (
+            client.table("clientes")
+            .select("nombre, telefono, direccion, comuna")
+            .eq("id", presupuesto["cliente_id"])
+            .limit(1)
+            .execute()
+        )
+        if cliente_res.data:
+            cliente = cliente_res.data[0]
+
+    partidas_res = (
+        client.table("partidas_presupuesto")
+        .select("descripcion, cantidad, precio_unitario")
+        .eq("presupuesto_id", id)
+        .order("orden")
+        .execute()
+    )
+    items = [
+        {
+            "descripcion": p["descripcion"],
+            "cantidad": p["cantidad"],
+            "precio_unitario": p["precio_unitario"],
+            "monto": float(p["cantidad"]) * float(p["precio_unitario"]),
+        }
+        for p in (partidas_res.data or [])
+    ]
+
+    if not items and presupuesto.get("total") is not None:
+        total_legacy = float(presupuesto["total"])
+        items = [{
+            "descripcion": presupuesto.get("tarea") or presupuesto.get("descripcion") or "Servicio",
+            "cantidad": 1,
+            "precio_unitario": total_legacy,
+            "monto": total_legacy,
+        }]
+
+    subtotal = sum(item["monto"] for item in items)
+    iva = subtotal * 0.19
     total = subtotal + iva
 
-    template = template_env.get_template("presupuesto.html")
-    html_content = template.render(
-        titulo=f"Presupuesto {data.get('tarea') or ''}".strip() or f"Presupuesto #{presupuesto_id}",
-        subtitulo=data.get("descripcion") or "Pintura · Pisos · Sellados",
-        codigo=f"PR-{presupuesto_id:04d}",
-        cliente={
-            "nombre": data.get("cliente") or "Cliente",
-            "telefono": "",
-            "direccion": "",
-            "comuna": "",
-        },
-        items=[{
-            "descripcion": data.get("tarea") or data.get("descripcion") or "Servicio",
-            "precio": subtotal,
-        }],
-        resumen={
-            "subtotal": subtotal,
-            "iva": iva,
-            "total": total,
-            "nota": "Precios sujetos a variación según condiciones del mercado.",
-        },
-    )
+    return {
+        "titulo": presupuesto.get("nombre") or presupuesto.get("tarea") or f"Presupuesto #{id}",
+        "subtitulo": presupuesto.get("descripcion") or "",
+        "codigo": presupuesto.get("codigo") or str(id),
+        "cliente": cliente,
+        "items": items,
+        "resumen": {"subtotal": subtotal, "iva": iva, "total": total},
+    }
 
-    return HTMLResponse(html_content)
+
+@app.get("/presupuesto/{id}", response_class=HTMLResponse)
+def ver_presupuesto(request: Request, id: int):
+    try:
+        datos = _obtener_datos_presupuesto(id)
+        if datos is None:
+            return HTMLResponse(
+                content="<h1>404 - Presupuesto no encontrado</h1>", status_code=404
+            )
+        return templates.TemplateResponse(request, "presupuesto.html", datos)
+    except Exception as e:
+        logger.exception("Error al obtener presupuesto %s", id)
+        return HTMLResponse(
+            content=f"<h1>Error interno</h1><p>{e}</p>", status_code=500
+        )
+
+
+@app.get("/presupuesto/{id}/pdf")
+def presupuesto_pdf(id: int):
+    try:
+        datos = _obtener_datos_presupuesto(id)
+        if datos is None:
+            return HTMLResponse(
+                content="<h1>404 - Presupuesto no encontrado</h1>", status_code=404
+            )
+
+        html_content = templates.get_template("presupuesto.html").render(**datos)
+
+        try:
+            from weasyprint import HTML
+        except Exception as e:
+            logger.exception("WeasyPrint no está disponible")
+            return JSONResponse(status_code=500, content={"error": f"WeasyPrint no disponible: {e}"})
+
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+                HTML(string=html_content).write_pdf(tmp.name)
+                ruta_pdf = tmp.name
+        except Exception as e:
+            logger.exception("Error generando PDF con WeasyPrint para presupuesto %s", id)
+            return JSONResponse(status_code=500, content={"error": f"Error generando PDF: {e}"})
+
+        return FileResponse(
+            path=ruta_pdf,
+            media_type="application/pdf",
+            filename=f"presupuesto_{id}.pdf",
+        )
+    except Exception as e:
+        logger.exception("Error al generar PDF de presupuesto %s", id)
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 
 @app.get("/presupuestos")
-async def listar_presupuestos():
-    """Lista id/cliente/tarea/estado/total/fecha de todos los presupuestos,
-    para saber qué id probar en /presupuesto/{id}."""
-    from core.db_manager import DatabaseManager
-    db = DatabaseManager().get_service_client()
-
+def listar_presupuestos():
+    """monto_total/nombre solo se llenan para los presupuestos "nuevos"; para
+    los clásicos (1-3) caen a total/tarea -- mismo fallback que
+    _obtener_datos_presupuesto, ver ese docstring."""
     try:
-        result = (
-            db.table("presupuestos")
-            .select("id, cliente, tarea, estado, total, fecha")
+        client = DatabaseManager().get_service_client()
+        presupuestos = (
+            client.table("presupuestos")
+            .select("id, nombre, codigo, monto_total, cliente_id, cliente, tarea, total")
             .order("id", desc=True)
             .execute()
-        )
+        ).data or []
+
+        cliente_ids = list({p["cliente_id"] for p in presupuestos if p.get("cliente_id")})
+        clientes_map = {}
+        if cliente_ids:
+            clientes = (
+                client.table("clientes").select("id, nombre").in_("id", cliente_ids).execute()
+            ).data or []
+            clientes_map = {c["id"]: c["nombre"] for c in clientes}
+
+        return [
+            {
+                "id": p["id"],
+                "nombre": p.get("nombre") or p.get("tarea") or f"Presupuesto #{p['id']}",
+                "codigo": p.get("codigo"),
+                "monto_total": p.get("monto_total") or p.get("total") or 0,
+                "cliente_nombre": clientes_map.get(p.get("cliente_id")) or p.get("cliente"),
+            }
+            for p in presupuestos
+        ]
     except Exception as e:
-        logging.exception("Error listando presupuestos")
-        return JSONResponse(status_code=502, content={"error": f"No se pudo consultar presupuestos: {e}"})
-
-    return {"presupuestos": result.data}
-
-@app.get("/presupuesto/{presupuesto_id}/pdf")
-async def generar_pdf_presupuesto(presupuesto_id: int):
-    """
-    Genera un PDF del presupuesto.
-    """
-    from fastapi import Request
-    # Reutilizar la lógica de HTML (hacemos una petición interna)
-    import httpx
-    async with httpx.AsyncClient() as client:
-        response = await client.get(f"http://localhost:8000/presupuesto/{presupuesto_id}")
-        html_content = response.text
-
-    # Generar PDF con WeasyPrint
-    pdf_file = HTML(string=html_content).write_pdf()
-    temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-    temp_pdf.write(pdf_file)
-    temp_pdf.close()
-
-    return FileResponse(temp_pdf.name, media_type="application/pdf", filename=f"presupuesto_{presupuesto_id}.pdf")
+        logger.exception("Error al listar presupuestos")
+        return JSONResponse(status_code=500, content={"error": str(e)})
