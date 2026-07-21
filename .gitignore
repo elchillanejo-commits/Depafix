@@ -82,6 +82,7 @@ Thumbs.db
 backups/
 *.json
 *.jsonl
+!railway.json
 .venv/
 
 # Credenciales internas
