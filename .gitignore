@@ -86,3 +86,6 @@ backups/
 
 # Credenciales internas
 CREDENCIALES.md
+
+# Afiches generados (Ikki)
+ikki/afiches/

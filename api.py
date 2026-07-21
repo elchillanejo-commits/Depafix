@@ -10,6 +10,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from ikki.campana import TIPOS_VALIDOS, crear_campana, subir_afiche
+from ikki.crear_afiche import generar_afiche
+
 load_dotenv()
 
 logger = logging.getLogger("api")
@@ -37,6 +40,20 @@ class ConsultarRequest(BaseModel):
     cliente_id: str
     tipo_consulta: str
     detalle: dict = {}
+
+
+class GenerarAficheRequest(BaseModel):
+    titulo: str
+    subtitulo: str
+    precio: str
+    color_fondo: str | None = None
+
+
+class CampanaRequest(BaseModel):
+    tipo: str
+    titulo: str
+    subtitulo: str | None = None
+    precio: str | None = None
 
 
 @app.get("/api/clientes")
@@ -339,3 +356,45 @@ def consultar(req: ConsultarRequest):
         "consulta": {"id": str(consulta["id"]), "fecha_consulta": consulta["fecha_consulta"].isoformat()},
         "saldo_restante": saldo,
     }
+
+
+@app.post("/api/generar_afiche")
+def generar_afiche_endpoint(req: GenerarAficheRequest):
+    if not req.titulo.strip() or not req.subtitulo.strip() or not req.precio.strip():
+        return JSONResponse(
+            status_code=400, content={"error": "titulo, subtitulo y precio son requeridos"}
+        )
+
+    try:
+        datos = {"titulo": req.titulo, "subtitulo": req.subtitulo, "precio": req.precio}
+        if req.color_fondo:
+            datos["colores"] = {"fondo": req.color_fondo}
+
+        ruta_local = generar_afiche(datos)
+
+        try:
+            url = subir_afiche(ruta_local)
+            return {"ok": True, "url": url}
+        except Exception:
+            logger.exception("No se pudo subir el afiche a Supabase Storage")
+            return {"ok": True, "ruta_local": ruta_local}
+    except Exception as e:
+        logger.exception("Error generando afiche")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+@app.post("/api/campana/crear")
+def crear_campana_endpoint(req: CampanaRequest):
+    if req.tipo not in TIPOS_VALIDOS:
+        return JSONResponse(
+            status_code=400,
+            content={"error": f"tipo inválido: {req.tipo!r}. Debe ser uno de {sorted(TIPOS_VALIDOS)}"},
+        )
+
+    try:
+        datos = {"titulo": req.titulo, "subtitulo": req.subtitulo, "precio": req.precio}
+        resultado = crear_campana(req.tipo, datos)
+        return {"ok": True, **resultado}
+    except Exception as e:
+        logger.exception("Error creando campaña")
+        return JSONResponse(status_code=500, content={"error": str(e)})
