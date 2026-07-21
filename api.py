@@ -1,5 +1,6 @@
 import logging
 import os
+import tempfile
 import uuid
 
 import psycopg2
@@ -7,7 +8,7 @@ import psycopg2.extras
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
@@ -414,69 +415,108 @@ def crear_campana_endpoint(req: CampanaRequest):
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 
+def _obtener_datos_presupuesto(id: int):
+    """Retorna el contexto de plantilla para un presupuesto, o None si no existe."""
+    client = DatabaseManager().get_service_client()
+
+    presupuesto_res = client.table("presupuestos").select("*").eq("id", id).limit(1).execute()
+    filas = presupuesto_res.data or []
+    if not filas:
+        return None
+    presupuesto = filas[0]
+
+    cliente = {"nombre": presupuesto.get("cliente"), "telefono": None, "direccion": None, "comuna": None}
+    if presupuesto.get("cliente_id"):
+        cliente_res = (
+            client.table("clientes")
+            .select("nombre, telefono, direccion, comuna")
+            .eq("id", presupuesto["cliente_id"])
+            .limit(1)
+            .execute()
+        )
+        if cliente_res.data:
+            cliente = cliente_res.data[0]
+
+    partidas_res = (
+        client.table("partidas_presupuesto")
+        .select("descripcion, cantidad, precio_unitario")
+        .eq("presupuesto_id", id)
+        .order("orden")
+        .execute()
+    )
+    items = [
+        {
+            "descripcion": p["descripcion"],
+            "cantidad": p["cantidad"],
+            "precio_unitario": p["precio_unitario"],
+            "monto": float(p["cantidad"]) * float(p["precio_unitario"]),
+        }
+        for p in (partidas_res.data or [])
+    ]
+
+    subtotal = sum(item["monto"] for item in items)
+    iva = subtotal * 0.19
+    total = subtotal + iva
+
+    return {
+        "titulo": presupuesto.get("nombre") or f"Presupuesto #{id}",
+        "subtitulo": presupuesto.get("descripcion") or "",
+        "codigo": presupuesto.get("codigo") or str(id),
+        "cliente": cliente,
+        "items": items,
+        "resumen": {"subtotal": subtotal, "iva": iva, "total": total},
+    }
+
+
 @app.get("/presupuesto/{id}", response_class=HTMLResponse)
 def ver_presupuesto(request: Request, id: int):
     try:
-        client = DatabaseManager().get_service_client()
-
-        presupuesto_res = client.table("presupuestos").select("*").eq("id", id).limit(1).execute()
-        filas = presupuesto_res.data or []
-        if not filas:
+        datos = _obtener_datos_presupuesto(id)
+        if datos is None:
             return HTMLResponse(
                 content="<h1>404 - Presupuesto no encontrado</h1>", status_code=404
             )
-        presupuesto = filas[0]
-
-        cliente = {"nombre": presupuesto.get("cliente"), "telefono": None, "direccion": None, "comuna": None}
-        if presupuesto.get("cliente_id"):
-            cliente_res = (
-                client.table("clientes")
-                .select("nombre, telefono, direccion, comuna")
-                .eq("id", presupuesto["cliente_id"])
-                .limit(1)
-                .execute()
-            )
-            if cliente_res.data:
-                cliente = cliente_res.data[0]
-
-        partidas_res = (
-            client.table("partidas_presupuesto")
-            .select("descripcion, cantidad, precio_unitario")
-            .eq("presupuesto_id", id)
-            .order("orden")
-            .execute()
-        )
-        items = [
-            {
-                "descripcion": p["descripcion"],
-                "cantidad": p["cantidad"],
-                "precio_unitario": p["precio_unitario"],
-                "monto": float(p["cantidad"]) * float(p["precio_unitario"]),
-            }
-            for p in (partidas_res.data or [])
-        ]
-
-        subtotal = sum(item["monto"] for item in items)
-        iva = subtotal * 0.19
-        total = subtotal + iva
-
-        return templates.TemplateResponse(
-            request,
-            "presupuesto.html",
-            {
-                "titulo": presupuesto.get("nombre") or f"Presupuesto #{id}",
-                "subtitulo": presupuesto.get("descripcion") or "",
-                "codigo": presupuesto.get("codigo") or str(id),
-                "cliente": cliente,
-                "items": items,
-                "resumen": {"subtotal": subtotal, "iva": iva, "total": total},
-            },
-        )
+        return templates.TemplateResponse(request, "presupuesto.html", datos)
     except Exception as e:
         logger.exception("Error al obtener presupuesto %s", id)
         return HTMLResponse(
             content=f"<h1>Error interno</h1><p>{e}</p>", status_code=500
         )
+
+
+@app.get("/presupuesto/{id}/pdf")
+def presupuesto_pdf(id: int):
+    try:
+        datos = _obtener_datos_presupuesto(id)
+        if datos is None:
+            return HTMLResponse(
+                content="<h1>404 - Presupuesto no encontrado</h1>", status_code=404
+            )
+
+        html_content = templates.get_template("presupuesto.html").render(**datos)
+
+        try:
+            from weasyprint import HTML
+        except Exception as e:
+            logger.exception("WeasyPrint no está disponible")
+            return JSONResponse(status_code=500, content={"error": f"WeasyPrint no disponible: {e}"})
+
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+                HTML(string=html_content).write_pdf(tmp.name)
+                ruta_pdf = tmp.name
+        except Exception as e:
+            logger.exception("Error generando PDF con WeasyPrint para presupuesto %s", id)
+            return JSONResponse(status_code=500, content={"error": f"Error generando PDF: {e}"})
+
+        return FileResponse(
+            path=ruta_pdf,
+            media_type="application/pdf",
+            filename=f"presupuesto_{id}.pdf",
+        )
+    except Exception as e:
+        logger.exception("Error al generar PDF de presupuesto %s", id)
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 
 @app.get("/presupuestos")
