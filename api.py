@@ -155,6 +155,54 @@ def obtener_rubros():
     ]
 
 
+@app.get("/api/trading/operaciones")
+def listar_operaciones_trading(limite: int = 20):
+    """Operaciones recientes registradas por el orquestador de
+    05_TRADE_CRIPTO (ver trading_orchestrator.py::procesar_activo). Esquema
+    real de operaciones_ejecutadas: symbol/price/side/ejecutada/
+    hash_control/created_at -- no activo/senal/precio_entrada, ver el fix
+    de esa tabla en el commit bb59655."""
+    if not SUPABASE_DB_URL:
+        logger.error("SUPABASE_DB_URL no está configurado")
+        return JSONResponse(status_code=500, content={"error": "SUPABASE_DB_URL no está configurado"})
+
+    conn = None
+    try:
+        conn = psycopg2.connect(SUPABASE_DB_URL)
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """
+                select symbol, price, side, ejecutada, hash_control, created_at
+                from operaciones_ejecutadas
+                order by created_at desc
+                limit %(limite)s
+                """,
+                {"limite": limite},
+            )
+            filas = cur.fetchall()
+    except psycopg2.OperationalError:
+        logger.exception("No se pudo conectar a la base de datos")
+        return JSONResponse(status_code=503, content={"error": "No se pudo conectar a la base de datos"})
+    except psycopg2.Error:
+        logger.exception("Error al consultar operaciones_ejecutadas")
+        return JSONResponse(status_code=500, content={"error": "Error al consultar operaciones de trading"})
+    finally:
+        if conn is not None:
+            conn.close()
+
+    return [
+        {
+            "symbol": fila["symbol"],
+            "price": float(fila["price"]) if fila["price"] is not None else None,
+            "side": fila["side"],
+            "ejecutada": fila["ejecutada"],
+            "hash_control": fila["hash_control"],
+            "created_at": fila["created_at"].isoformat() if fila["created_at"] else None,
+        }
+        for fila in filas
+    ]
+
+
 @app.get("/api/decreto49")
 def obtener_decreto49():
     """Artículos del D.S. N°49/2011, reusando decretos/decreto_articulos (sql/create_normativa_ds49.sql)."""
@@ -374,7 +422,6 @@ def consultar(req: ConsultarRequest):
         "saldo_restante": saldo,
     }
 
-
 @app.post("/api/generar_afiche")
 def generar_afiche_endpoint(req: GenerarAficheRequest):
     if not req.titulo.strip() or not req.subtitulo.strip() or not req.precio.strip():
@@ -418,7 +465,15 @@ def crear_campana_endpoint(req: CampanaRequest):
 
 
 def _obtener_datos_presupuesto(id: int):
-    """Retorna el contexto de plantilla para un presupuesto, o None si no existe."""
+    """Retorna el contexto de plantilla para un presupuesto, o None si no existe.
+
+    presupuestos convive con dos generaciones de datos (verificado contra
+    Supabase real, no contra los .sql del repo): los ids "clásicos" (1-3, sin
+    partidas_presupuesto, con total/tarea directo en la fila) y los nuevos
+    (con cliente_id + partidas_presupuesto). Si partidas_presupuesto no tiene
+    filas para este id, se arma un item sintético desde total/tarea en vez de
+    mostrar un detalle vacío con total $0 -- eso es lo que pasaba antes de
+    este fallback para los ids clásicos."""
     client = DatabaseManager().get_service_client()
 
     presupuesto_res = client.table("presupuestos").select("*").eq("id", id).limit(1).execute()
@@ -456,12 +511,21 @@ def _obtener_datos_presupuesto(id: int):
         for p in (partidas_res.data or [])
     ]
 
+    if not items and presupuesto.get("total") is not None:
+        total_legacy = float(presupuesto["total"])
+        items = [{
+            "descripcion": presupuesto.get("tarea") or presupuesto.get("descripcion") or "Servicio",
+            "cantidad": 1,
+            "precio_unitario": total_legacy,
+            "monto": total_legacy,
+        }]
+
     subtotal = sum(item["monto"] for item in items)
     iva = subtotal * 0.19
     total = subtotal + iva
 
     return {
-        "titulo": presupuesto.get("nombre") or f"Presupuesto #{id}",
+        "titulo": presupuesto.get("nombre") or presupuesto.get("tarea") or f"Presupuesto #{id}",
         "subtitulo": presupuesto.get("descripcion") or "",
         "codigo": presupuesto.get("codigo") or str(id),
         "cliente": cliente,
@@ -523,11 +587,15 @@ def presupuesto_pdf(id: int):
 
 @app.get("/presupuestos")
 def listar_presupuestos():
+    """monto_total/nombre solo se llenan para los presupuestos "nuevos"; para
+    los clásicos (1-3) caen a total/tarea -- mismo fallback que
+    _obtener_datos_presupuesto, ver ese docstring."""
     try:
         client = DatabaseManager().get_service_client()
         presupuestos = (
             client.table("presupuestos")
-            .select("id, nombre, codigo, monto_total, cliente_id")
+            .select("id, nombre, codigo, monto_total, cliente_id, cliente, tarea, total")
+            .order("id", desc=True)
             .execute()
         ).data or []
 
@@ -542,10 +610,10 @@ def listar_presupuestos():
         return [
             {
                 "id": p["id"],
-                "nombre": p.get("nombre"),
+                "nombre": p.get("nombre") or p.get("tarea") or f"Presupuesto #{p['id']}",
                 "codigo": p.get("codigo"),
-                "monto_total": p.get("monto_total"),
-                "cliente_nombre": clientes_map.get(p.get("cliente_id")),
+                "monto_total": p.get("monto_total") or p.get("total") or 0,
+                "cliente_nombre": clientes_map.get(p.get("cliente_id")) or p.get("cliente"),
             }
             for p in presupuestos
         ]

@@ -3,9 +3,9 @@ import json
 from pathlib import Path
 from datetime import datetime
 
-# Reorg 2026-07-19: core/ vive ahora en ~/Proyectos/02_PROCURADOR (movido fuera de DepaFix).
+# core/ vive en DepaFix/procurador/core (02_PROCURADOR fue renombrado ahi, commit 10462fe).
 REPO_ROOT = Path(__file__).resolve().parent.parent
-CORE_PATH = Path("/home/ibar/Proyectos/02_PROCURADOR")
+CORE_PATH = Path("/home/ibar/Proyectos/DepaFix/procurador")
 if str(CORE_PATH) not in sys.path:
     sys.path.insert(0, str(CORE_PATH))
 

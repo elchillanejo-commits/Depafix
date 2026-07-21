@@ -44,7 +44,7 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 
-CORE_PATH = Path("/home/ibar/Proyectos/02_PROCURADOR")  # reorg 2026-07-19: core/ movido fuera de DepaFix
+CORE_PATH = Path("/home/ibar/Proyectos/DepaFix/procurador")  # core/ vive en DepaFix/procurador/core (02_PROCURADOR fue renombrado ahi, commit 10462fe)
 if str(CORE_PATH) not in sys.path:
     sys.path.insert(0, str(CORE_PATH))
 
@@ -98,8 +98,8 @@ def _fetch_operaciones(cliente, desde: datetime, hasta: datetime) -> List[Dict[s
     resp = (
         cliente.table(TABLA_OPERACIONES)
         .select("*")
-        .gte("timestamp", desde.isoformat())
-        .lt("timestamp", hasta.isoformat())
+        .gte("created_at", desde.isoformat())
+        .lt("created_at", hasta.isoformat())
         .execute()
     )
     return resp.data or []
@@ -110,9 +110,9 @@ def _fetch_salud(cliente, desde: datetime, hasta: datetime) -> List[Dict[str, An
     resp = (
         cliente.table(TABLA_SALUD)
         .select("metricas")
-        .eq("proceso", NOMBRE_PROCESO)
-        .gte("corrido_at", desde.isoformat())
-        .lt("corrido_at", hasta.isoformat())
+        .eq("agente", NOMBRE_PROCESO)
+        .gte("ultimo_ciclo", desde.isoformat())
+        .lt("ultimo_ciclo", hasta.isoformat())
         .execute()
     )
     return resp.data or []
@@ -136,8 +136,11 @@ def generar_resumen(cliente, desde: datetime, hasta: datetime) -> Dict[str, Any]
         logger.warning("No se pudo leer salud_agentes para estimar ESPERA: %s", e)
         filas_salud = []
 
-    compra = [o for o in operaciones if o.get("senal") == "COMPRA"]
-    venta = [o for o in operaciones if o.get("senal") == "VENTA"]
+    # operaciones_ejecutadas vive con symbol/price/side, no
+    # activo/precio_entrada/senal (esquema real via PostgREST, ver
+    # trading_orchestrator.py::procesar_activo).
+    compra = [o for o in operaciones if o.get("side") == "COMPRA"]
+    venta = [o for o in operaciones if o.get("side") == "VENTA"]
 
     total_analizados = sum((f.get("metricas") or {}).get("activos_analizados", 0) for f in filas_salud)
     total_señales_ciclo = sum((f.get("metricas") or {}).get("señales_detectadas", 0) for f in filas_salud)
@@ -145,12 +148,12 @@ def generar_resumen(cliente, desde: datetime, hasta: datetime) -> Dict[str, Any]
 
     señales = [
         {
-            "activo": o.get("activo"),
-            "tipo": o.get("senal"),
-            "precio": o.get("precio_entrada"),
-            "motivo": o.get("motivo"),
+            "activo": o.get("symbol"),
+            "tipo": o.get("side"),
+            "precio": o.get("price"),
+            "motivo": None,  # sin columna en el esquema vivo de operaciones_ejecutadas
             "hash_control": o.get("hash_control"),
-            "timestamp": o.get("timestamp"),
+            "timestamp": o.get("created_at"),
         }
         for o in (compra + venta)
     ]

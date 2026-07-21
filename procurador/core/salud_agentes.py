@@ -11,11 +11,19 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
-from DepaFix.core.resiliencia import red_segura, RedFailSafeError
+from core.resiliencia import red_segura, RedFailSafeError
 
 logger = logging.getLogger(__name__)
 
 TABLA_SALUD = "salud_agentes"
+
+# La tabla vive con un CHECK constraint que solo acepta ('online', 'error')
+# -- confirmado empiricamente contra Supabase, create_salud_agentes.sql (que
+# documenta CHECK IN ('HEALTHY','CRITICAL')) esta desactualizado. El resto
+# del repo (trading_orchestrator.py, etc.) sigue usando HEALTHY/CRITICAL
+# como vocabulario semantico -- se traduce aca, en el unico punto de
+# escritura, en vez de tocar todos los call sites.
+_ESTADO_A_COLUMNA = {"HEALTHY": "online", "CRITICAL": "error"}
 
 
 @red_segura()
@@ -33,11 +41,14 @@ def reportar_salud(cliente, proceso: str, estado: str, detalle: str = "",
     siendo monitoreado. Si el cliente no está disponible o Supabase no
     responde tras los reintentos, se loguea y se sigue."""
     fila = {
-        "proceso": proceso,
-        "estado": estado,
-        "detalle": detalle,
+        # Nombres de columna reales en Supabase (agente/mensaje/ultimo_ciclo,
+        # no proceso/detalle/corrido_at -- ver create_salud_agentes.sql vs
+        # esquema vivo, divergieron en algun momento).
+        "agente": proceso,
+        "estado": _ESTADO_A_COLUMNA.get(estado, estado),
+        "mensaje": detalle,
         "metricas": metricas or {},
-        "corrido_at": datetime.now(timezone.utc).isoformat(),
+        "ultimo_ciclo": datetime.now(timezone.utc).isoformat(),
     }
     if not cliente:
         logger.error("Cliente Supabase (service_role) no disponible: no se pudo reportar salud (%s) de %s.",

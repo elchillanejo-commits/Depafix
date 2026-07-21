@@ -33,7 +33,7 @@ from pathlib import Path
 
 import ccxt
 
-CORE_PATH = Path("/home/ibar/Proyectos/02_PROCURADOR")  # reorg 2026-07-19: core/ movido fuera de DepaFix
+CORE_PATH = Path("/home/ibar/Proyectos/DepaFix/procurador")  # core/ vive en DepaFix/procurador/core (02_PROCURADOR fue renombrado ahi, commit 10462fe)
 if str(CORE_PATH) not in sys.path:
     sys.path.insert(0, str(CORE_PATH))
 
@@ -74,9 +74,12 @@ def _con_reintentos(func, *args, **kwargs):
 
 
 def _velas_a_filas(ohlcv, activo, temporalidad):
-    """Convierte el formato ccxt ([ts_ms, open, high, low, close, volume])
-    al esquema exacto que espera velas_cripto / TradingLogic._obtener_velas:
-    tiempo, open, high, low, close, volume."""
+    """Convierte el formato ccxt ([ts_ms, open, high, low, close, volume]) a
+    la representacion interna que usan TradingLogic/RiskManager en todo el
+    resto del pipeline (activo, temporalidad, tiempo, open, high, low,
+    close, volume). Esto NO es el esquema de la tabla velas_cripto -- ver
+    _fila_a_db()/_fila_desde_db() para esa traduccion, aislada aca a
+    proposito para no tener que tocar TradingLogic/RiskManager."""
     filas = []
     for ts_ms, o, h, l, c, v in ohlcv:
         filas.append({
@@ -90,6 +93,39 @@ def _velas_a_filas(ohlcv, activo, temporalidad):
             "volume": v,
         })
     return filas
+
+
+def _fila_a_db(fila):
+    """Traduce la representacion interna (activo/temporalidad/tiempo/open/
+    high/low/close/volume) al esquema real y vivo de velas_cripto en
+    Supabase (par/intervalo/timestamp/apertura/maximo/minimo/cierre/
+    volumen -- confirmado via el schema de PostgREST, create_velas_cripto.sql
+    quedo desactualizado)."""
+    return {
+        "par": fila["activo"],
+        "intervalo": fila["temporalidad"],
+        "timestamp": fila["tiempo"],
+        "apertura": fila["open"],
+        "maximo": fila["high"],
+        "minimo": fila["low"],
+        "cierre": fila["close"],
+        "volumen": fila["volume"],
+    }
+
+
+def _fila_desde_db(row):
+    """Inverso de _fila_a_db(): de una fila de Supabase de vuelta a la
+    representacion interna que esperan TradingLogic/RiskManager."""
+    return {
+        "activo": row.get("par"),
+        "temporalidad": row.get("intervalo"),
+        "tiempo": row.get("timestamp"),
+        "open": row.get("apertura"),
+        "high": row.get("maximo"),
+        "low": row.get("minimo"),
+        "close": row.get("cierre"),
+        "volume": row.get("volumen"),
+    }
 
 
 class PipelineVelas:
@@ -126,8 +162,9 @@ class PipelineVelas:
         guardadas = 0
         for i in range(0, len(filas), TAMANO_LOTE_INSERT):
             lote = filas[i:i + TAMANO_LOTE_INSERT]
+            lote_db = [_fila_a_db(f) for f in lote]
             try:
-                self.db.table(TABLA_VELAS).upsert(lote, on_conflict="activo,temporalidad,tiempo").execute()
+                self.db.table(TABLA_VELAS).upsert(lote_db, on_conflict="par,intervalo,timestamp").execute()
                 guardadas += len(lote)
             except Exception as e:
                 logger.error(
@@ -168,14 +205,14 @@ class PipelineVelas:
                 resp = (
                     self.db.table(TABLA_VELAS)
                     .select("*")
-                    .eq("activo", activo)
-                    .eq("temporalidad", temporalidad)
-                    .order("tiempo", desc=True)
+                    .eq("par", activo)
+                    .eq("intervalo", temporalidad)
+                    .order("timestamp", desc=True)
                     .limit(limite)
                     .execute()
                 )
                 if resp.data:
-                    return resp.data
+                    return [_fila_desde_db(row) for row in resp.data]
             except Exception as e:
                 logger.error("Fallo leyendo velas de Supabase para %s %s: %s", activo, temporalidad, e)
 
