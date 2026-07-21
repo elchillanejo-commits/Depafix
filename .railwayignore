@@ -1,4 +1,11 @@
 venv/
+venv_aquiles/
+bin/
+lib/
+lib64
+include/
+share/
+pyvenv.cfg
 __pycache__/
 *.pyc
 *.db
