@@ -5,15 +5,17 @@ import uuid
 import psycopg2
 import psycopg2.extras
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
+load_dotenv()
+
+from core.db_manager import DatabaseManager  # noqa: E402 (requiere .env ya cargado)
 from ikki.campana import TIPOS_VALIDOS, crear_campana, subir_afiche
 from ikki.crear_afiche import generar_afiche
-
-load_dotenv()
 
 logger = logging.getLogger("api")
 
@@ -27,6 +29,18 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
+templates = Jinja2Templates(directory="templates")
+
+
+def format_number(value):
+    try:
+        return f"{int(round(float(value))):,}".replace(",", ".")
+    except (TypeError, ValueError):
+        return value
+
+
+templates.env.filters["format_number"] = format_number
 
 
 class ComprarTokensRequest(BaseModel):
@@ -397,4 +411,102 @@ def crear_campana_endpoint(req: CampanaRequest):
         return {"ok": True, **resultado}
     except Exception as e:
         logger.exception("Error creando campaña")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+@app.get("/presupuesto/{id}", response_class=HTMLResponse)
+def ver_presupuesto(request: Request, id: int):
+    try:
+        client = DatabaseManager().get_service_client()
+
+        presupuesto_res = client.table("presupuestos").select("*").eq("id", id).limit(1).execute()
+        filas = presupuesto_res.data or []
+        if not filas:
+            return HTMLResponse(
+                content="<h1>404 - Presupuesto no encontrado</h1>", status_code=404
+            )
+        presupuesto = filas[0]
+
+        cliente = {"nombre": presupuesto.get("cliente"), "telefono": None, "direccion": None, "comuna": None}
+        if presupuesto.get("cliente_id"):
+            cliente_res = (
+                client.table("clientes")
+                .select("nombre, telefono, direccion, comuna")
+                .eq("id", presupuesto["cliente_id"])
+                .limit(1)
+                .execute()
+            )
+            if cliente_res.data:
+                cliente = cliente_res.data[0]
+
+        partidas_res = (
+            client.table("partidas_presupuesto")
+            .select("descripcion, cantidad, precio_unitario")
+            .eq("presupuesto_id", id)
+            .order("orden")
+            .execute()
+        )
+        items = [
+            {
+                "descripcion": p["descripcion"],
+                "cantidad": p["cantidad"],
+                "precio_unitario": p["precio_unitario"],
+                "monto": float(p["cantidad"]) * float(p["precio_unitario"]),
+            }
+            for p in (partidas_res.data or [])
+        ]
+
+        subtotal = sum(item["monto"] for item in items)
+        iva = subtotal * 0.19
+        total = subtotal + iva
+
+        return templates.TemplateResponse(
+            request,
+            "presupuesto.html",
+            {
+                "titulo": presupuesto.get("nombre") or f"Presupuesto #{id}",
+                "subtitulo": presupuesto.get("descripcion") or "",
+                "codigo": presupuesto.get("codigo") or str(id),
+                "cliente": cliente,
+                "items": items,
+                "resumen": {"subtotal": subtotal, "iva": iva, "total": total},
+            },
+        )
+    except Exception as e:
+        logger.exception("Error al obtener presupuesto %s", id)
+        return HTMLResponse(
+            content=f"<h1>Error interno</h1><p>{e}</p>", status_code=500
+        )
+
+
+@app.get("/presupuestos")
+def listar_presupuestos():
+    try:
+        client = DatabaseManager().get_service_client()
+        presupuestos = (
+            client.table("presupuestos")
+            .select("id, nombre, codigo, monto_total, cliente_id")
+            .execute()
+        ).data or []
+
+        cliente_ids = list({p["cliente_id"] for p in presupuestos if p.get("cliente_id")})
+        clientes_map = {}
+        if cliente_ids:
+            clientes = (
+                client.table("clientes").select("id, nombre").in_("id", cliente_ids).execute()
+            ).data or []
+            clientes_map = {c["id"]: c["nombre"] for c in clientes}
+
+        return [
+            {
+                "id": p["id"],
+                "nombre": p.get("nombre"),
+                "codigo": p.get("codigo"),
+                "monto_total": p.get("monto_total"),
+                "cliente_nombre": clientes_map.get(p.get("cliente_id")),
+            }
+            for p in presupuestos
+        ]
+    except Exception as e:
+        logger.exception("Error al listar presupuestos")
         return JSONResponse(status_code=500, content={"error": str(e)})

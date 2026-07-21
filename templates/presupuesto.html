@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presupuesto {{ codigo }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #eef2f7; display: flex; justify-content: center; padding: 40px; }
+        .presupuesto { max-width: 880px; width: 100%; background: white; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #0b2a44, #1a4b75); padding: 28px 35px; display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 6px solid #f39c12; }
+        .header h1 { font-size: 26px; color: white; }
+        .header h1 small { font-size: 14px; font-weight: 400; color: #f1c40f; display: block; }
+        .header .codigo { background: #f39c12; color: #0b2a44; font-weight: 800; padding: 10px 24px; border-radius: 40px; }
+        .cuerpo { padding: 30px 35px; }
+        .seccion { margin-bottom: 28px; }
+        .seccion-titulo { font-weight: 700; font-size: 15px; color: white; background: linear-gradient(to right, #1a4b75, #2a6a9e); padding: 6px 18px; border-radius: 30px 8px 8px 30px; display: inline-block; margin-bottom: 15px; }
+        .fila-dato { display: flex; padding: 5px 0; border-bottom: 1px dashed #dce3f0; }
+        .fila-dato .label { width: 130px; font-weight: 600; color: #1a3b5d; }
+        .fila-dato .valor { flex: 1; color: #0b1f33; }
+        table.tabla-cuenta { width: 100%; border-collapse: collapse; font-size: 15px; border-radius: 10px; overflow: hidden; }
+        .tabla-cuenta thead { background: #0b2a44; color: white; }
+        .tabla-cuenta th { padding: 12px 18px; text-align: left; font-weight: 600; text-transform: uppercase; font-size: 12px; }
+        .tabla-cuenta th:last-child, .tabla-cuenta td:last-child { text-align: right; }
+        .tabla-cuenta td { padding: 10px 18px; border-bottom: 1px solid #e6ecf5; }
+        .resumen { margin-top: 18px; width: 100%; max-width: 320px; margin-left: auto; }
+        .resumen-fila { display: flex; justify-content: space-between; padding: 6px 0; font-size: 15px; }
+        .resumen-fila.total { border-top: 3px double #f39c12; margin-top: 6px; padding-top: 12px; font-size: 20px; font-weight: 800; color: #0b2a44; }
+        .footer { text-align: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #6b8a9e; }
+    </style>
+</head>
+<body>
+<div class="presupuesto">
+    <div class="header">
+        <div><h1>DEPAFIX <small>Pintura · Pisos · Terminaciones</small></h1></div>
+        <div class="codigo">{{ codigo }}</div>
+    </div>
+    <div class="cuerpo">
+        <h2 style="margin-bottom:4px;">{{ titulo }}</h2>
+        {% if subtitulo %}<p style="color:#6b8a9e; margin-bottom:20px;">{{ subtitulo }}</p>{% endif %}
+
+        <div class="seccion">
+            <div class="seccion-titulo">Cliente</div>
+            <div class="fila-dato"><span class="label">Nombre:</span><span class="valor">{{ cliente.nombre or "No especificado" }}</span></div>
+            <div class="fila-dato"><span class="label">Teléfono:</span><span class="valor">{{ cliente.telefono or "-" }}</span></div>
+            <div class="fila-dato"><span class="label">Dirección:</span><span class="valor">{{ cliente.direccion or "-" }}</span></div>
+            <div class="fila-dato"><span class="label">Comuna:</span><span class="valor">{{ cliente.comuna or "-" }}</span></div>
+        </div>
+
+        <div class="seccion">
+            <div class="seccion-titulo">Detalle</div>
+            <table class="tabla-cuenta">
+                <thead>
+                    <tr><th>Descripción</th><th>Cantidad</th><th>Precio unitario</th><th>Monto</th></tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>{{ item.descripcion }}</td>
+                        <td>{{ item.cantidad }}</td>
+                        <td>${{ item.precio_unitario | format_number }}</td>
+                        <td>${{ item.monto | format_number }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" style="text-align:center; color:#6b8a9e;">Sin ítems registrados</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="resumen">
+                <div class="resumen-fila"><span>Subtotal</span><span>${{ resumen.subtotal | format_number }}</span></div>
+                <div class="resumen-fila"><span>IVA (19%)</span><span>${{ resumen.iva | format_number }}</span></div>
+                <div class="resumen-fila total"><span>Total</span><span>${{ resumen.total | format_number }}</span></div>
+            </div>
+        </div>
+
+        <div class="footer">DepaFix &middot; Presupuesto generado automáticamente</div>
+    </div>
+</div>
+</body>
+</html>
