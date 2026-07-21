@@ -1,6 +1,8 @@
 import logging
 import os
+import re
 import tempfile
+import unicodedata
 import uuid
 
 import psycopg2
@@ -549,4 +551,158 @@ def listar_presupuestos():
         ]
     except Exception as e:
         logger.exception("Error al listar presupuestos")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+class BudgetGenerateRequest(BaseModel):
+    descripcion: str
+    cliente_id: str | None = None
+
+
+def _normalizar_texto(texto: str) -> set[str]:
+    """Tokeniza y normaliza texto para matching contra items_catalogo (sin LLM)."""
+    n = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode("ascii").lower()
+    n = re.sub(r"[^a-z0-9 ]", " ", n)
+    tokens = set()
+    for palabra in n.split():
+        if palabra.endswith("es") and len(palabra) > 4:
+            palabra = palabra[:-2]
+        elif palabra.endswith("s") and len(palabra) > 3:
+            palabra = palabra[:-1]
+        tokens.add(palabra)
+    return tokens
+
+
+def _mejor_match_catalogo(nombre_item: str, catalogo: list[dict]):
+    """Matching determinista por solapamiento de palabras (sin LLM disponible).
+
+    Compara también contra `sinonimos` de cada ítem, para cubrir frases que no
+    comparten raíz con el nombre canónico (ej. "luces cocina" -> "Aplicaciones
+    de luz para cocina").
+    """
+    tokens_item = _normalizar_texto(nombre_item)
+    mejor, mejor_score = None, 0.0
+    for it in catalogo:
+        variantes = [it["nombre"], *(it.get("sinonimos") or [])]
+        for variante in variantes:
+            tokens_cat = _normalizar_texto(variante)
+            if not tokens_item or not tokens_cat:
+                continue
+            interseccion = tokens_item & tokens_cat
+            if not interseccion:
+                continue
+            score = len(interseccion) / min(len(tokens_item), len(tokens_cat))
+            if score > mejor_score:
+                mejor, mejor_score = it, score
+    return mejor if mejor_score >= 0.5 else None
+
+
+@app.post("/budget/generate")
+def budget_generate(req: BudgetGenerateRequest):
+    """
+    Genera un presupuesto a partir de una descripción en lenguaje natural, ej:
+    "Vista Colón depto 710: 9 plafones, 3 luces cocina, 3 soportes TV"
+
+    NOTA: no hay ANTHROPIC_API_KEY / OPENAI_API_KEY configurada en este entorno,
+    por lo que el parseo se hace con un matcher determinista (solapamiento de
+    palabras) contra items_catalogo en vez de un LLM real. Frases muy distintas
+    a los nombres del catálogo (sinónimos, singular/plural irregular) pueden no
+    matchear -- se listan en "items_sin_precio" para pedir aclaración.
+    """
+    try:
+        client = DatabaseManager().get_service_client()
+
+        texto = req.descripcion.strip()
+        if ":" in texto:
+            titulo_hint, resto = texto.split(":", 1)
+            titulo_hint = titulo_hint.strip()
+        else:
+            titulo_hint, resto = None, texto
+
+        fragmentos = [f.strip() for f in re.split(r"[,;]", resto) if f.strip()]
+        if not fragmentos:
+            return JSONResponse(status_code=400, content={"error": "descripcion vacía o sin ítems reconocibles"})
+
+        catalogo = (
+            client.table("items_catalogo")
+            .select("nombre, precio_interno, precio_cliente, sinonimos")
+            .execute()
+            .data
+            or []
+        )
+
+        items_resueltos, items_sin_precio = [], []
+        for frag in fragmentos:
+            m = re.match(r"^(\d+)\s+(.+)$", frag)
+            cantidad, nombre_item = (int(m.group(1)), m.group(2).strip()) if m else (1, frag)
+
+            match = _mejor_match_catalogo(nombre_item, catalogo)
+            if match:
+                precio = match.get("precio_cliente") or match.get("precio_interno") or 0
+                items_resueltos.append(
+                    {"descripcion": match["nombre"], "cantidad": cantidad, "precio_unitario": float(precio)}
+                )
+            else:
+                items_sin_precio.append(nombre_item)
+
+        if items_sin_precio:
+            return JSONResponse(
+                status_code=422,
+                content={
+                    "error": "No se encontró precio en items_catalogo para algunos ítems; se requiere aclaración",
+                    "items_sin_precio": items_sin_precio,
+                    "items_resueltos": items_resueltos,
+                },
+            )
+
+        subtotal = sum(i["cantidad"] * i["precio_unitario"] for i in items_resueltos)
+
+        codigo = f"BG-{uuid.uuid4().hex[:8].upper()}"
+        creado = (
+            client.table("presupuestos")
+            .insert(
+                {
+                    "codigo": codigo,
+                    "nombre": titulo_hint or "Presupuesto generado",
+                    "descripcion": req.descripcion,
+                    "cliente_id": req.cliente_id,
+                    "monto_total": subtotal,
+                    "estado": "generado",
+                }
+            )
+            .execute()
+        )
+        presupuesto_id = creado.data[0]["id"]
+
+        for orden, item in enumerate(items_resueltos):
+            client.table("partidas_presupuesto").insert(
+                {
+                    "presupuesto_id": presupuesto_id,
+                    "descripcion": item["descripcion"],
+                    "cantidad": item["cantidad"],
+                    "precio_unitario": item["precio_unitario"],
+                    "orden": orden,
+                }
+            ).execute()
+
+        return {
+            "ok": True,
+            "id": presupuesto_id,
+            "codigo": codigo,
+            "subtotal": subtotal,
+            "url": f"/presupuesto/{presupuesto_id}",
+        }
+    except Exception as e:
+        logger.exception("Error en /budget/generate")
+        try:
+            DatabaseManager().get_service_client().table("error_logs").insert(
+                {
+                    "modulo": "api",
+                    "funcion": "budget_generate",
+                    "mensaje": str(e),
+                    "metadata": {"descripcion": req.descripcion},
+                }
+            ).execute()
+        except Exception:
+            pass
         return JSONResponse(status_code=500, content={"error": str(e)})
