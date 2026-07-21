@@ -1,137 +1,341 @@
-#!/usr/bin/env python3
-import os, sys, json, time, logging
-from datetime import datetime
-from pathlib import Path
-from fastapi import FastAPI, HTTPException, Request
+import logging
+import os
+import uuid
+
+import psycopg2
+import psycopg2.extras
+from dotenv import load_dotenv
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import jsonschema
-from jsonschema import validate
+from pydantic import BaseModel
 
-# Importar lógica de predicción
-try:
-    from DepaFix.core.predict_logic import predecir_costo
-except ImportError:
-    def predecir_costo(items):
-        return sum(item.get('valor', 0) * item.get('cantidad', 1) for item in items) * 1.2
+load_dotenv()
 
-try:
-    from DepaFix.core.db_manager import db
-except ImportError:
-    class MockDB:
-        def table(self, name): return self
-        def select(self, *args): return self
-        def eq(self, *args): return self
-        def execute(self): return type('obj', (object,), {'data': []})()
-    db = MockDB()
+logger = logging.getLogger("api")
 
-try:
-    import DepaFix.core.circuit_state as circuit_state
-    circuit_state.reset_all()
-    print("✅ Circuit State inicializado")
-except ImportError:
-    pass
+SUPABASE_DB_URL = os.environ.get("SUPABASE_DB_URL")
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("depafix-api")
-app = FastAPI(title="DepaFix API")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app = FastAPI(title="Agente Procurador IA - API")
 
-try:
-    with open("schema.json") as f: SCHEMA = json.load(f)
-except:
-    SCHEMA = {"type": "object", "properties": {"departamento": {"type": "string"}, "items": {"type": "array"}}, "required": ["departamento", "items"]}
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
 
-@app.get("/health")
-async def health():
-    return {"status": "ok"}
 
-@app.post("/predict")
-async def predict_endpoint(request: Request):
+class ComprarTokensRequest(BaseModel):
+    cliente_id: str
+    cantidad: int
+    monto: float | None = None
+    metodo_pago: str = "mock"
+
+
+class ConsultarRequest(BaseModel):
+    cliente_id: str
+    tipo_consulta: str
+    detalle: dict = {}
+
+
+@app.get("/api/clientes")
+def listar_clientes():
+    if not SUPABASE_DB_URL:
+        logger.error("SUPABASE_DB_URL no está configurado")
+        return JSONResponse(status_code=500, content={"error": "SUPABASE_DB_URL no está configurado"})
+
+    conn = None
     try:
-        data = await request.json()
-    except:
-        raise HTTPException(400, "Invalid JSON")
-    try:
-        validate(instance=data, schema=SCHEMA)
-    except jsonschema.ValidationError as e:
-        raise HTTPException(422, detail=str(e))
-    try:
-        items = data.get('items', [])
-        total = predecir_costo(items)
-        return JSONResponse({
-            "predicted_cost": total,
-            "message": "Predicción usando SERVIU 2026",
-            "items": items
-        })
-    except Exception as e:
-        logger.exception("Predicción falló")
-        raise HTTPException(500, detail="Error en predicción")
+        conn = psycopg2.connect(SUPABASE_DB_URL)
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """
+                select id, nombre, rut, estado, fecha_creacion
+                from clientes
+                order by fecha_creacion desc
+                """
+            )
+            filas = cur.fetchall()
+    except psycopg2.OperationalError:
+        logger.exception("No se pudo conectar a la base de datos")
+        return JSONResponse(status_code=503, content={"error": "No se pudo conectar a la base de datos"})
+    except psycopg2.Error:
+        logger.exception("Error al consultar clientes")
+        return JSONResponse(status_code=500, content={"error": "Error al consultar clientes"})
+    finally:
+        if conn is not None:
+            conn.close()
 
-@app.get("/status")
-async def system_status():
-    db_status = {"connected": False, "response_time_ms": None, "record_count": None}
-    try:
-        start = time.perf_counter()
-        result = db.table("precios_serviu").select("*").execute()
-        count = len(result.data) if hasattr(result, 'data') else 0
-        db_status["connected"] = True
-        db_status["response_time_ms"] = round((time.perf_counter() - start) * 1000, 2)
-        db_status["record_count"] = count
-    except Exception as e:
-        db_status["error"] = str(e)
+    return [
+        {
+            "id": str(fila["id"]),
+            "nombre": fila["nombre"],
+            "rut": fila["rut"],
+            "estado": fila["estado"],
+            "fecha_creacion": fila["fecha_creacion"].isoformat() if fila["fecha_creacion"] else None,
+        }
+        for fila in filas
+    ]
 
-    ml_status = {"exists": False}
-    model_path = Path(__file__).resolve().parent / "models" / "depafix_model_v1.pkl"
-    if model_path.exists():
-        ml_status["exists"] = True
-        ml_status["last_modified"] = datetime.fromtimestamp(os.path.getmtime(model_path)).isoformat()
-        import re
-        match = re.search(r"v(\d+)", model_path.name)
-        ml_status["version"] = f"v{match.group(1)}" if match else "unknown"
 
+@app.get("/api/rubros")
+def obtener_rubros():
+    if not SUPABASE_DB_URL:
+        logger.error("SUPABASE_DB_URL no está configurado")
+        return JSONResponse(status_code=500, content={"error": "SUPABASE_DB_URL no está configurado"})
+
+    conn = None
     try:
-        import DepaFix.core.circuit_state as circuit_state
-        cb_state = circuit_state.get_circuit_state()
-        failures = circuit_state.get_failures()
-    except ImportError:
-        cb_state = "unknown"
-        failures = {}
+        conn = psycopg2.connect(SUPABASE_DB_URL)
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """
+                select
+                    coalesce(rubro, 'Otros') as rubro,
+                    count(*) as cantidad_materiales,
+                    sum(cantidad * precio_unitario) as costo_total
+                from line_items
+                group by coalesce(rubro, 'Otros')
+                order by costo_total desc
+                """
+            )
+            filas = cur.fetchall()
+    except psycopg2.OperationalError:
+        logger.exception("No se pudo conectar a la base de datos")
+        return JSONResponse(status_code=503, content={"error": "No se pudo conectar a la base de datos"})
+    except psycopg2.Error:
+        logger.exception("Error al consultar rubros")
+        return JSONResponse(status_code=500, content={"error": "Error al consultar rubros"})
+    finally:
+        if conn is not None:
+            conn.close()
+
+    return [
+        {
+            "rubro": fila["rubro"],
+            "cantidad_materiales": fila["cantidad_materiales"],
+            "costo_total": float(fila["costo_total"]),
+        }
+        for fila in filas
+    ]
+
+
+@app.get("/api/decreto49")
+def obtener_decreto49():
+    """Artículos del D.S. N°49/2011, reusando decretos/decreto_articulos (sql/create_normativa_ds49.sql)."""
+    if not SUPABASE_DB_URL:
+        logger.error("SUPABASE_DB_URL no está configurado")
+        return JSONResponse(status_code=500, content={"error": "SUPABASE_DB_URL no está configurado"})
+
+    conn = None
+    try:
+        conn = psycopg2.connect(SUPABASE_DB_URL)
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """
+                select d.numero as decreto_numero, d.titulo as decreto_titulo,
+                       a.numero as articulo, a.contenido
+                from decreto_articulos a
+                join decretos d on d.id = a.decreto_id
+                order by d.numero, a.numero
+                """
+            )
+            filas = cur.fetchall()
+    except psycopg2.OperationalError:
+        logger.exception("No se pudo conectar a la base de datos")
+        return JSONResponse(status_code=503, content={"error": "No se pudo conectar a la base de datos"})
+    except psycopg2.Error:
+        logger.exception("Error al consultar decreto49")
+        return JSONResponse(status_code=500, content={"error": "Error al consultar decreto49"})
+    finally:
+        if conn is not None:
+            conn.close()
+
+    return [
+        {
+            "decreto": fila["decreto_numero"],
+            "decreto_titulo": fila["decreto_titulo"],
+            "articulo": fila["articulo"],
+            "contenido": fila["contenido"],
+        }
+        for fila in filas
+    ]
+
+
+def _saldo_cliente(cur, cliente_id: str) -> int:
+    cur.execute(
+        """
+        select coalesce(sum(consultas_restantes), 0) as saldo
+        from tokens
+        where usuario_id = %(cliente_id)s
+          and (fecha_expiracion is null or fecha_expiracion > now())
+        """,
+        {"cliente_id": cliente_id},
+    )
+    return cur.fetchone()["saldo"]
+
+
+@app.get("/api/tokens/saldo")
+def obtener_saldo(cliente_id: str):
+    if not SUPABASE_DB_URL:
+        logger.error("SUPABASE_DB_URL no está configurado")
+        return JSONResponse(status_code=500, content={"error": "SUPABASE_DB_URL no está configurado"})
+
+    conn = None
+    try:
+        conn = psycopg2.connect(SUPABASE_DB_URL)
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            saldo = _saldo_cliente(cur, cliente_id)
+    except psycopg2.OperationalError:
+        logger.exception("No se pudo conectar a la base de datos")
+        return JSONResponse(status_code=503, content={"error": "No se pudo conectar a la base de datos"})
+    except psycopg2.Error:
+        logger.exception("Error al consultar saldo")
+        return JSONResponse(status_code=500, content={"error": "Error al consultar saldo"})
+    finally:
+        if conn is not None:
+            conn.close()
+
+    return {"cliente_id": cliente_id, "tokens": saldo}
+
+
+@app.post("/api/comprar_tokens")
+def comprar_tokens(req: ComprarTokensRequest):
+    if req.cantidad <= 0:
+        return JSONResponse(status_code=400, content={"error": "cantidad debe ser mayor a 0"})
+
+    if not SUPABASE_DB_URL:
+        logger.error("SUPABASE_DB_URL no está configurado")
+        return JSONResponse(status_code=500, content={"error": "SUPABASE_DB_URL no está configurado"})
+
+    conn = None
+    try:
+        conn = psycopg2.connect(SUPABASE_DB_URL)
+        with conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                codigo_token = f"TKN-{uuid.uuid4().hex[:12]}"
+                cur.execute(
+                    """
+                    insert into tokens (usuario_id, codigo_token, consultas_restantes, fecha_compra)
+                    values (%(cliente_id)s, %(codigo_token)s, %(cantidad)s, now())
+                    returning id, codigo_token, consultas_restantes, fecha_compra
+                    """,
+                    {
+                        "cliente_id": req.cliente_id,
+                        "codigo_token": codigo_token,
+                        "cantidad": req.cantidad,
+                    },
+                )
+                token = cur.fetchone()
+
+                cur.execute(
+                    """
+                    insert into compras (cliente_id, token_id, cantidad, monto, metodo_pago)
+                    values (%(cliente_id)s, %(token_id)s, %(cantidad)s, %(monto)s, %(metodo_pago)s)
+                    returning id, fecha_compra
+                    """,
+                    {
+                        "cliente_id": req.cliente_id,
+                        "token_id": token["id"],
+                        "cantidad": req.cantidad,
+                        "monto": req.monto,
+                        "metodo_pago": req.metodo_pago,
+                    },
+                )
+                compra = cur.fetchone()
+                saldo = _saldo_cliente(cur, req.cliente_id)
+    except psycopg2.errors.ForeignKeyViolation:
+        logger.exception("cliente_id inexistente al comprar tokens")
+        return JSONResponse(status_code=404, content={"error": "cliente_id no existe"})
+    except psycopg2.OperationalError:
+        logger.exception("No se pudo conectar a la base de datos")
+        return JSONResponse(status_code=503, content={"error": "No se pudo conectar a la base de datos"})
+    except psycopg2.Error:
+        logger.exception("Error al registrar compra de tokens")
+        return JSONResponse(status_code=500, content={"error": "Error al registrar compra de tokens"})
+    finally:
+        if conn is not None:
+            conn.close()
 
     return {
-        "database": db_status,
-        "ml_model": ml_status,
-        "circuit_breaker": {"state": cb_state, "failures": failures},
-        "timestamp": datetime.now().isoformat()
+        "ok": True,
+        "token": {
+            "id": str(token["id"]),
+            "codigo_token": token["codigo_token"],
+            "consultas_restantes": token["consultas_restantes"],
+        },
+        "compra": {"id": str(compra["id"]), "fecha_compra": compra["fecha_compra"].isoformat()},
+        "saldo_actual": saldo,
     }
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("api:app", host="0.0.0.0", port=8000)
 
-# ===== ENDPOINT PARA EJECUTAR EL ORQUESTADOR CRIPTO =====
-@app.post("/trading/ejecutar-cripto")
-async def ejecutar_cripto(request: Request):
-    """Ejecuta el orquestador de criptomonedas con los parámetros dados."""
-    import subprocess
-    import json
+@app.post("/api/consultar")
+def consultar(req: ConsultarRequest):
+    if not SUPABASE_DB_URL:
+        logger.error("SUPABASE_DB_URL no está configurado")
+        return JSONResponse(status_code=500, content={"error": "SUPABASE_DB_URL no está configurado"})
+
+    conn = None
     try:
-        data = await request.json()
-    except:
-        data = {}
-    exchange = data.get("exchange", "binance")
-    pares = ",".join(data.get("pares", ["BTC/USDT"]))
-    limite = data.get("limite", 20)
-    cmd = [
-        "python3", "src/trading/orquestador_cripto.py",
-        "--exchange", exchange,
-        "--pares", pares,
-        "--limite", str(limite)
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True)
+        conn = psycopg2.connect(SUPABASE_DB_URL)
+        with conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute("select 1 from clientes where id = %(cliente_id)s", {"cliente_id": req.cliente_id})
+                if cur.fetchone() is None:
+                    return JSONResponse(status_code=404, content={"error": "cliente_id no existe"})
+
+                cur.execute(
+                    """
+                    select id
+                    from tokens
+                    where usuario_id = %(cliente_id)s
+                      and consultas_restantes > 0
+                      and (fecha_expiracion is null or fecha_expiracion > now())
+                    order by fecha_compra asc nulls last
+                    limit 1
+                    for update
+                    """,
+                    {"cliente_id": req.cliente_id},
+                )
+                token = cur.fetchone()
+                if token is None:
+                    return JSONResponse(status_code=402, content={"error": "tokens insuficientes"})
+
+                cur.execute(
+                    "update tokens set consultas_restantes = consultas_restantes - 1 where id = %(id)s",
+                    {"id": token["id"]},
+                )
+
+                cur.execute(
+                    """
+                    insert into consultas (cliente_id, tipo_consulta, detalle, token_usado)
+                    values (%(cliente_id)s, %(tipo_consulta)s, %(detalle)s, 1)
+                    returning id, fecha_consulta
+                    """,
+                    {
+                        "cliente_id": req.cliente_id,
+                        "tipo_consulta": req.tipo_consulta,
+                        "detalle": psycopg2.extras.Json(req.detalle),
+                    },
+                )
+                consulta = cur.fetchone()
+                saldo = _saldo_cliente(cur, req.cliente_id)
+    except psycopg2.errors.ForeignKeyViolation:
+        logger.exception("cliente_id inexistente al consultar")
+        return JSONResponse(status_code=404, content={"error": "cliente_id no existe"})
+    except psycopg2.OperationalError:
+        logger.exception("No se pudo conectar a la base de datos")
+        return JSONResponse(status_code=503, content={"error": "No se pudo conectar a la base de datos"})
+    except psycopg2.Error:
+        logger.exception("Error al registrar consulta")
+        return JSONResponse(status_code=500, content={"error": "Error al registrar consulta"})
+    finally:
+        if conn is not None:
+            conn.close()
+
     return {
-        "status": "ok",
-        "stdout": result.stdout,
-        "stderr": result.stderr,
-        "returncode": result.returncode
+        "ok": True,
+        "consulta": {"id": str(consulta["id"]), "fecha_consulta": consulta["fecha_consulta"].isoformat()},
+        "saldo_restante": saldo,
     }
