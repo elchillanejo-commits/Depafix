@@ -13,7 +13,7 @@ for _p in ("/home/ibar/Proyectos/02_PROCURADOR", "/home/ibar/Proyectos/05_TRADE_
 
 # Importamos las rutas centralizadas
 from config.settings import DATA_DIR
-from core.db_manager import DatabaseManager
+from DepaFix.core.db_manager import DatabaseManager
 
 app = FastAPI()
 

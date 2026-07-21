@@ -76,9 +76,9 @@ CORE_PATH = Path(__file__).resolve().parent.parent
 if str(CORE_PATH) not in sys.path:
     sys.path.insert(0, str(CORE_PATH))
 
-from core.db_manager import DatabaseManager
-from core.predict_logic import _valor_en_clp  # misma conversión UF->CLP que usa /predict
-from core.resiliencia import red_segura, RedFailSafeError
+from DepaFix.core.db_manager import DatabaseManager
+from DepaFix.core.predict_logic import _valor_en_clp  # misma conversión UF->CLP que usa /predict
+from DepaFix.core.resiliencia import red_segura, RedFailSafeError
 
 logging.basicConfig(
     level=logging.INFO,

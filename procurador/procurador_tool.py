@@ -33,8 +33,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from core.db_manager import DatabaseManager
-from core.resiliencia import red_segura, RedFailSafeError
+from DepaFix.core.db_manager import DatabaseManager
+from DepaFix.core.resiliencia import red_segura, RedFailSafeError
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)

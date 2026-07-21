@@ -29,7 +29,7 @@ CORE_PATH = Path(__file__).resolve().parent.parent
 if str(CORE_PATH) not in sys.path:
     sys.path.insert(0, str(CORE_PATH))
 
-from core.db_manager import DatabaseManager
+from DepaFix.core.db_manager import DatabaseManager
 
 logging.basicConfig(
     level=logging.INFO,

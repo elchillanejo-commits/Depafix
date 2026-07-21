@@ -1,0 +1,1 @@
+CREATE OR REPLACE VIEW active_compliance_tasks AS SELECT id, rol, etapa_procesal, riesgo_detectado, created_at, dictamen FROM compliance_logs WHERE (dictamen = 'Negociar' OR dictamen IS NULL) AND created_at > (NOW() - INTERVAL '30 days'); COMMENT ON VIEW active_compliance_tasks IS 'Casos pendientes últimos 30 días';

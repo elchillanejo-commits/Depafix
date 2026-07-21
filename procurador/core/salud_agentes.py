@@ -11,7 +11,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
-from core.resiliencia import red_segura, RedFailSafeError
+from DepaFix.core.resiliencia import red_segura, RedFailSafeError
 
 logger = logging.getLogger(__name__)
 

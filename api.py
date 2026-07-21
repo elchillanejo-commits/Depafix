@@ -10,13 +10,13 @@ from jsonschema import validate
 
 # Importar lógica de predicción
 try:
-    from core.predict_logic import predecir_costo
+    from DepaFix.core.predict_logic import predecir_costo
 except ImportError:
     def predecir_costo(items):
         return sum(item.get('valor', 0) * item.get('cantidad', 1) for item in items) * 1.2
 
 try:
-    from core.db_manager import db
+    from DepaFix.core.db_manager import db
 except ImportError:
     class MockDB:
         def table(self, name): return self
@@ -26,7 +26,7 @@ except ImportError:
     db = MockDB()
 
 try:
-    import core.circuit_state as circuit_state
+    import DepaFix.core.circuit_state as circuit_state
     circuit_state.reset_all()
     print("✅ Circuit State inicializado")
 except ImportError:
@@ -91,7 +91,7 @@ async def system_status():
         ml_status["version"] = f"v{match.group(1)}" if match else "unknown"
 
     try:
-        import core.circuit_state as circuit_state
+        import DepaFix.core.circuit_state as circuit_state
         cb_state = circuit_state.get_circuit_state()
         failures = circuit_state.get_failures()
     except ImportError:

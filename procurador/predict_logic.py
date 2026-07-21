@@ -1,4 +1,4 @@
-from core.db_manager import db
+from DepaFix.core.db_manager import db
 import unicodedata
 import logging
 
