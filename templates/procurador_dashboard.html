@@ -4,8 +4,13 @@
 <body>
     <h1>🛡️ Procurador Virtual</h1>
     <div>
+        <h2>Cliente</h2>
+        <input id="clienteId" size="40" placeholder="cliente_id (uuid)">
+    </div>
+    <div>
         <h2>Saldo de Tokens</h2>
         <p id="saldo">Cargando...</p>
+        <button onclick="cargarSaldo()">Actualizar saldo</button>
         <button onclick="comprarTokens()">Comprar 10 tokens</button>
     </div>
     <div>
@@ -15,22 +20,30 @@
         <pre id="respuesta"></pre>
     </div>
     <script>
+        function clienteId() {
+            return document.getElementById('clienteId').value.trim();
+        }
         async function cargarSaldo() {
-            const res = await fetch('/api/tokens/saldo?usuario_id=1');
+            const id = clienteId();
+            if (!id) { document.getElementById('saldo').textContent = '(ingresa cliente_id)'; return; }
+            const res = await fetch('/api/tokens/saldo?cliente_id=' + encodeURIComponent(id));
             const data = await res.json();
-            document.getElementById('saldo').textContent = data.saldo || 0;
+            document.getElementById('saldo').textContent = data.tokens ?? data.error ?? 0;
         }
         async function comprarTokens() {
-            await fetch('/api/tokens/comprar', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({usuario_id: 1, cantidad: 10})});
+            const id = clienteId();
+            if (!id) { alert('Ingresa cliente_id'); return; }
+            await fetch('/api/comprar_tokens', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({cliente_id: id, cantidad: 10})});
             cargarSaldo();
         }
         async function consultar() {
             const consulta = document.getElementById('consulta').value;
-            const res = await fetch('/api/procurador/consultar', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({consulta, usuario_id: 1})});
+            const id = clienteId();
+            const body = id ? {consulta, cliente_id: id} : {consulta};
+            const res = await fetch('/api/procurador/consultar', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
             const data = await res.json();
-            document.getElementById('respuesta').textContent = data.respuesta || data.error || 'Sin respuesta';
+            document.getElementById('respuesta').textContent = JSON.stringify(data, null, 2);
         }
-        cargarSaldo();
     </script>
 </body>
 </html>

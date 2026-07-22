@@ -1,3 +1,4 @@
+import difflib
 import logging
 import os
 import re
@@ -57,6 +58,86 @@ class ConsultarRequest(BaseModel):
     cliente_id: str
     tipo_consulta: str
     detalle: dict = {}
+
+
+class ProcuradorConsultaRequest(BaseModel):
+    consulta: str
+    cliente_id: str | None = None
+
+
+# --- Matcher de sinónimos legales -----------------------------------------
+# Diccionario por categoría + fallback difuso (difflib) para typos o variantes
+# no listadas explícitamente.
+SINONIMOS_LEGALES = {
+    "prescripcion": [
+        "prescripcion", "prescribio", "prescribe", "prescrita", "prescrito",
+        "caducidad", "caduco", "caduca", "caducado",
+        "extincion", "extincion de la accion", "extinguio", "extinguida",
+        "accion prescrita", "plazo vencido", "plazo extinguido",
+    ],
+    "nulidad": [
+        "nulidad", "nulo", "nula", "invalidez", "invalido", "invalida",
+        "vicio del consentimiento",
+    ],
+    "cobranza_indebida": [
+        "cobranza indebida", "cobro indebido", "acoso de cobranza",
+        "hostigamiento", "cobranza extrajudicial abusiva",
+    ],
+}
+
+_MENSAJES_CATEGORIA = {
+    "prescripcion": (
+        "La consulta se relaciona con prescripción/caducidad/extinción de la acción. "
+        "Revisa la fecha de exigibilidad de la deuda y el plazo aplicable "
+        "(regla general Código Civil: 5 años acciones ordinarias, 3 años ejecutivas)."
+    ),
+    "nulidad": (
+        "La consulta se relaciona con nulidad de un acto o contrato. "
+        "Revisa si hay vicio del consentimiento o incumplimiento de solemnidades."
+    ),
+    "cobranza_indebida": (
+        "La consulta se relaciona con cobranza indebida o acoso de cobranza. "
+        "Revisa la normativa sobre cobranza extrajudicial (Ley 20.575)."
+    ),
+}
+
+
+def _normalizar_texto(texto: str) -> str:
+    texto = texto.lower().strip()
+    texto = unicodedata.normalize("NFKD", texto)
+    return "".join(c for c in texto if not unicodedata.combining(c))
+
+
+_SINONIMOS_NORM = {
+    categoria: [_normalizar_texto(kw) for kw in keywords]
+    for categoria, keywords in SINONIMOS_LEGALES.items()
+}
+_KEYWORDS_A_CATEGORIA = {
+    kw: categoria for categoria, keywords in _SINONIMOS_NORM.items() for kw in keywords
+}
+
+
+def clasificar_consulta(texto: str) -> str | None:
+    """Clasifica una consulta libre en una categoría legal.
+
+    1) Búsqueda directa por sinónimo (substring) en el diccionario.
+    2) Fallback difuso con difflib para typos o variantes no listadas.
+    """
+    normalizado = _normalizar_texto(texto)
+
+    for categoria, keywords in _SINONIMOS_NORM.items():
+        if any(kw in normalizado for kw in keywords):
+            return categoria
+
+    todas_las_keywords = list(_KEYWORDS_A_CATEGORIA.keys())
+    for palabra in normalizado.split():
+        if len(palabra) < 4:
+            continue
+        cercanas = difflib.get_close_matches(palabra, todas_las_keywords, n=1, cutoff=0.8)
+        if cercanas:
+            return _KEYWORDS_A_CATEGORIA[cercanas[0]]
+
+    return None
 
 
 class GenerarAficheRequest(BaseModel):
@@ -421,6 +502,112 @@ def consultar(req: ConsultarRequest):
         "consulta": {"id": str(consulta["id"]), "fecha_consulta": consulta["fecha_consulta"].isoformat()},
         "saldo_restante": saldo,
     }
+
+@app.post("/api/procurador/consultar")
+def procurador_consultar(req: ProcuradorConsultaRequest):
+    categoria = clasificar_consulta(req.consulta)
+
+    if categoria is None:
+        resultado = {
+            "categoria": "no_reconocida",
+            "mensaje": (
+                "No se reconoció el tema de la consulta. Intenta reformular usando "
+                "términos como 'prescripción', 'nulidad' o 'cobranza indebida'."
+            ),
+        }
+    else:
+        resultado = {"categoria": categoria, "mensaje": _MENSAJES_CATEGORIA[categoria]}
+
+    if not SUPABASE_DB_URL:
+        logger.error("SUPABASE_DB_URL no está configurado")
+        return JSONResponse(status_code=500, content={"error": "SUPABASE_DB_URL no está configurado"})
+
+    conn = None
+    try:
+        conn = psycopg2.connect(SUPABASE_DB_URL)
+        with conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                if categoria is not None:
+                    cur.execute(
+                        """
+                        select rol, etapa_procesal, riesgo_detectado, dictamen, created_at
+                        from compliance_logs
+                        where riesgo_detectado ilike %(patron)s
+                        order by created_at desc
+                        limit 5
+                        """,
+                        {"patron": f"%{categoria}%"},
+                    )
+                    resultado["antecedentes"] = [
+                        {**fila, "created_at": fila["created_at"].isoformat() if fila["created_at"] else None}
+                        for fila in cur.fetchall()
+                    ]
+                else:
+                    resultado["antecedentes"] = []
+
+                if req.cliente_id:
+                    cur.execute("select 1 from clientes where id = %(cliente_id)s", {"cliente_id": req.cliente_id})
+                    if cur.fetchone() is None:
+                        return JSONResponse(status_code=404, content={"error": "cliente_id no existe"})
+
+                    cur.execute(
+                        """
+                        select id
+                        from tokens
+                        where usuario_id = %(cliente_id)s
+                          and consultas_restantes > 0
+                          and (fecha_expiracion is null or fecha_expiracion > now())
+                        order by fecha_compra asc nulls last
+                        limit 1
+                        for update
+                        """,
+                        {"cliente_id": req.cliente_id},
+                    )
+                    token = cur.fetchone()
+                    if token is None:
+                        return JSONResponse(status_code=402, content={"error": "tokens insuficientes"})
+
+                    cur.execute(
+                        "update tokens set consultas_restantes = consultas_restantes - 1 where id = %(id)s",
+                        {"id": token["id"]},
+                    )
+
+                    cur.execute(
+                        """
+                        insert into consultas (cliente_id, tipo_consulta, detalle, token_usado)
+                        values (%(cliente_id)s, %(tipo_consulta)s, %(detalle)s, 1)
+                        returning fecha_consulta
+                        """,
+                        {
+                            "cliente_id": req.cliente_id,
+                            "tipo_consulta": categoria or "no_reconocida",
+                            "detalle": psycopg2.extras.Json({"consulta": req.consulta}),
+                        },
+                    )
+                    consulta = cur.fetchone()
+                    resultado["saldo_restante"] = _saldo_cliente(cur, req.cliente_id)
+                    resultado["fecha_consulta"] = consulta["fecha_consulta"].isoformat()
+    except psycopg2.errors.ForeignKeyViolation:
+        logger.exception("cliente_id inexistente al consultar procurador")
+        return JSONResponse(status_code=404, content={"error": "cliente_id no existe"})
+    except psycopg2.OperationalError:
+        logger.exception("No se pudo conectar a la base de datos")
+        return JSONResponse(status_code=503, content={"error": "No se pudo conectar a la base de datos"})
+    except psycopg2.Error:
+        logger.exception("Error al procesar consulta del procurador")
+        return JSONResponse(status_code=500, content={"error": "Error al procesar consulta del procurador"})
+    finally:
+        if conn is not None:
+            conn.close()
+
+    resultado["ok"] = True
+    return resultado
+
+
+@app.get("/procurador/dashboard", response_class=HTMLResponse)
+def procurador_dashboard(request: Request):
+    return templates.TemplateResponse(request, "procurador_dashboard.html", {})
+
 
 @app.post("/api/generar_afiche")
 def generar_afiche_endpoint(req: GenerarAficheRequest):
