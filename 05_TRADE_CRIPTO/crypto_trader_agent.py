@@ -10,11 +10,18 @@ crypto_trader_agent.py - Agente de trading con análisis profesional:
 """
 
 import sys
+from pathlib import Path
 import numpy as np
 import logging
 from typing import List, Dict, Any, Tuple
 
-_CORE_PATH = "/home/ibar/Proyectos/02_PROCURADOR"  # reorg 2026-07-19: core/ movido fuera de DepaFix
+# "/home/ibar/Proyectos/02_PROCURADOR" (el path viejo de aca) no existe desde
+# que ese directorio se renombro a DepaFix/procurador (commit 10462fe) -- en
+# la practica nunca hizo falta porque trading_orchestrator.py, el unico
+# entry point real, ya deja el core/ correcto en sys.path antes de importar
+# este modulo. Se corrige igual para no dejar una ruta muerta si este modulo
+# se llega a usar standalone.
+_CORE_PATH = str(Path(__file__).resolve().parent.parent / "procurador")
 if _CORE_PATH not in sys.path:
     sys.path.insert(0, _CORE_PATH)
 

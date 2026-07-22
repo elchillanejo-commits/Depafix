@@ -29,8 +29,8 @@ code != 0 después de reportar CRITICAL, para que Railway reinicie el
 contenedor solo.
 
 Uso:
-    python3 src/trading/trading_orchestrator.py --una-vez  # modo produccion: un ciclo y sale
-    python3 src/trading/trading_orchestrator.py --activos BTC/USDT,ETH/USDT --intervalo 60  # bucle local
+    python3 05_TRADE_CRIPTO/trading_orchestrator.py --una-vez  # modo produccion: un ciclo y sale
+    python3 05_TRADE_CRIPTO/trading_orchestrator.py --activos BTC/USDT,ETH/USDT --intervalo 60  # bucle local
 """
 import argparse
 import hashlib
@@ -47,8 +47,14 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-CORE_PATH = Path("/home/ibar/Proyectos/DepaFix/procurador")  # core/ vive en DepaFix/procurador/core (02_PROCURADOR fue renombrado ahi, commit 10462fe)
-TRADE_ROOT = Path("/home/ibar/Proyectos/05_TRADE_CRIPTO")
+# Rutas relativas a este archivo (no absolutas al home del dev): tienen que
+# resolver igual en local (~/Proyectos/DepaFix/05_TRADE_CRIPTO/) y dentro del
+# contenedor de Railway (/app/05_TRADE_CRIPTO/, ver Dockerfile.worker), donde
+# /home/ibar no existe. core/ vive en DepaFix/procurador/core (02_PROCURADOR
+# fue renombrado ahi, commit 10462fe); TRADE_ROOT es este mismo directorio.
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+CORE_PATH = _REPO_ROOT / "procurador"
+TRADE_ROOT = Path(__file__).resolve().parent
 for _p in (CORE_PATH, TRADE_ROOT):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))

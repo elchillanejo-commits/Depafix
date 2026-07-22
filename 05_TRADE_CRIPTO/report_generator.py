@@ -44,7 +44,11 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 
-CORE_PATH = Path("/home/ibar/Proyectos/DepaFix/procurador")  # core/ vive en DepaFix/procurador/core (02_PROCURADOR fue renombrado ahi, commit 10462fe)
+# Relativa a este archivo, no al home del dev -- tiene que resolver igual en
+# local y dentro del contenedor de Railway (ver mismo fix en
+# trading_orchestrator.py). core/ vive en DepaFix/procurador/core
+# (02_PROCURADOR fue renombrado ahi, commit 10462fe).
+CORE_PATH = Path(__file__).resolve().parent.parent / "procurador"
 if str(CORE_PATH) not in sys.path:
     sys.path.insert(0, str(CORE_PATH))
 

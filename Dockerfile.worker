@@ -8,4 +8,4 @@ COPY . .
 # self-healing ante crash quedan a cargo de Railway (Cron Schedule +
 # restartPolicyType=ON_FAILURE), no de un loop interno -- ver docstring de
 # trading_orchestrator.py.
-CMD ["python3", "src/trading/trading_orchestrator.py", "--exchange", "kraken", "--activos", "BTC/USDT,SOL/USDT", "--una-vez"]
+CMD ["python3", "05_TRADE_CRIPTO/trading_orchestrator.py", "--exchange", "kraken", "--activos", "BTC/USDT,SOL/USDT", "--una-vez"]
