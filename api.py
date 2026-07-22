@@ -102,14 +102,14 @@ _MENSAJES_CATEGORIA = {
 }
 
 
-def _normalizar_texto(texto: str) -> str:
+def _normalizar_texto_legal(texto: str) -> str:
     texto = texto.lower().strip()
     texto = unicodedata.normalize("NFKD", texto)
     return "".join(c for c in texto if not unicodedata.combining(c))
 
 
 _SINONIMOS_NORM = {
-    categoria: [_normalizar_texto(kw) for kw in keywords]
+    categoria: [_normalizar_texto_legal(kw) for kw in keywords]
     for categoria, keywords in SINONIMOS_LEGALES.items()
 }
 _KEYWORDS_A_CATEGORIA = {
@@ -123,7 +123,7 @@ def clasificar_consulta(texto: str) -> str | None:
     1) Búsqueda directa por sinónimo (substring) en el diccionario.
     2) Fallback difuso con difflib para typos o variantes no listadas.
     """
-    normalizado = _normalizar_texto(texto)
+    normalizado = _normalizar_texto_legal(texto)
 
     for categoria, keywords in _SINONIMOS_NORM.items():
         if any(kw in normalizado for kw in keywords):
