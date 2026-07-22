@@ -532,7 +532,7 @@ def procurador_consultar(req: ProcuradorConsultaRequest):
                         """
                         select rol, etapa_procesal, riesgo_detectado, dictamen, created_at
                         from compliance_logs
-                        where riesgo_detectado ilike %(patron)s
+                        where unaccent(riesgo_detectado) ilike %(patron)s
                         order by created_at desc
                         limit 5
                         """,
