@@ -659,7 +659,8 @@ def _mejor_match_catalogo(nombre_item: str, catalogo: list[dict]):
             interseccion = tokens_item & tokens_cat
             if not interseccion:
                 continue
-            score = len(interseccion) / min(len(tokens_item), len(tokens_cat))
+            union = tokens_item | tokens_cat
+            score = len(interseccion) / len(union)
             if score > mejor_score:
                 mejor, mejor_score = it, score
     return mejor if mejor_score >= 0.5 else None
