@@ -23,6 +23,11 @@ CREATE TABLE IF NOT EXISTS velas_cripto (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_velas_unique ON velas_cripto(par, intervalo, "timestamp");
 ALTER TABLE velas_cripto ENABLE ROW LEVEL SECURITY;
+-- Cierra el acceso de 'anon' (antes sql/create_bi_readonly.sql). Sin
+-- policy para anon a propósito: con RLS activado y cero policies,
+-- PostgREST deniega todo acceso a ese rol. data_pipeline.py escribe
+-- con SUPABASE_SERVICE_ROLE_KEY (bypassea RLS).
+REVOKE ALL ON public.velas_cripto FROM anon;
 DROP POLICY IF EXISTS "bi_readonly_access_velas" ON velas_cripto;
 CREATE POLICY "bi_readonly_access_velas" ON velas_cripto FOR SELECT TO bi_readonly USING (true);
 

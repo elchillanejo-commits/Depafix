@@ -15,6 +15,23 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- ------------------------------------------------------------
+-- Rol de solo lectura para Power BI (compartido con 02_PROCURADOR
+-- y 03_TRADE_CRIPTO, que también referencian "TO bi_readonly" en
+-- sus policies). Se crea acá porque este es el primer master de la
+-- cadena de despliegue. Ver sql/create_bi_readonly.sql (origen,
+-- ahora incorporado aquí) para el razonamiento de seguridad.
+-- ------------------------------------------------------------
+DO $do$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'bi_readonly') THEN
+        CREATE ROLE bi_readonly LOGIN PASSWORD 'CAMBIAR_ESTA_PASSWORD_ANTES_DE_USAR';
+    END IF;
+END
+$do$;
+GRANT CONNECT ON DATABASE postgres TO bi_readonly;
+GRANT USAGE ON SCHEMA public TO bi_readonly;
+
+-- ------------------------------------------------------------
 -- Ledger genérico de registros inmutables (usado por line_items
 -- y por audit_chain para el hash-chain de integridad)
 -- ------------------------------------------------------------
@@ -130,6 +147,62 @@ CREATE TABLE IF NOT EXISTS precios_serviu (
 CREATE INDEX IF NOT EXISTS idx_precios_serviu_item ON precios_serviu(item);
 ALTER TABLE precios_serviu ENABLE ROW LEVEL SECURITY;
 
+-- Clasificación de rubro y trazabilidad de calidad de dato (antes
+-- sql/migrate_precios_serviu_rubro.sql). precios_serviu nunca tuvo
+-- columna `rubro` en producción; se agrega acá junto con el resto
+-- del esquema para que un despliegue nuevo la tenga desde el día 1.
+ALTER TABLE precios_serviu
+    ADD COLUMN IF NOT EXISTS rubro TEXT,
+    ADD COLUMN IF NOT EXISTS estado_dato TEXT NOT NULL DEFAULT 'OK';
+CREATE INDEX IF NOT EXISTS idx_precios_serviu_rubro ON precios_serviu(rubro);
+CREATE INDEX IF NOT EXISTS idx_precios_serviu_estado_dato ON precios_serviu(estado_dato);
+COMMENT ON COLUMN precios_serviu.rubro IS 'Categoría de gasto (Construcción, Electricidad, ...). NULL hasta que auditor_precios_ia.py la clasifique.';
+COMMENT ON COLUMN precios_serviu.estado_dato IS 'OK | ERROR_DATOS. ERROR_DATOS = el auditor no pudo clasificar rubro y/o falta valor_unitario; requiere revisión manual.';
+
+-- NOTA: sql/create_view_analisis_desviacion.sql (fuente de la vista más
+-- abajo) referenciaba una columna `moneda` que nunca existió en ningún
+-- .sql previo del repo ni en producción -- tampoco la agrega
+-- migrate_precios_serviu_rubro.sql. Se agrega acá tal cual la usaba la
+-- vista original (CASE WHEN moneda = 'UF' ...), sin inventar una fuente
+-- de verdad distinta para esa lógica; hay que confirmar con quien migra
+-- los datos de Mercado Público/SERVIU cómo se va a poblar.
+ALTER TABLE precios_serviu ADD COLUMN IF NOT EXISTS moneda TEXT;
+
+-- Cierre de acceso de 'anon' + policy exclusiva para bi_readonly
+-- (antes sql/create_bi_readonly.sql). En vivo, precios_serviu tenía
+-- RLS activado pero sin policy alguna -- bi_readonly no podía leerla
+-- todavía; esto lo deja funcional.
+GRANT SELECT ON public.precios_serviu TO bi_readonly;
+REVOKE ALL ON public.precios_serviu FROM anon;
+DROP POLICY IF EXISTS "bi_readonly_select" ON precios_serviu;
+CREATE POLICY "bi_readonly_select" ON precios_serviu FOR SELECT TO bi_readonly USING (true);
+
+-- Auditoría de anomalías de precio detectadas por core/trade_agent.py
+-- (antes sql/create_alertas_precio_serviu.sql). Mismo patrón que
+-- operaciones_ejecutadas: hash_control = SHA-256 del item + estadísticas
+-- del rubro que motivaron la alerta.
+CREATE TABLE IF NOT EXISTS alertas_precio_serviu (
+    id                  SERIAL PRIMARY KEY,
+    item_id             INTEGER,
+    item                TEXT,
+    rubro               TEXT NOT NULL,
+    valor_clp           NUMERIC NOT NULL,
+    promedio_rubro_clp  NUMERIC NOT NULL,
+    desviacion_pct      NUMERIC NOT NULL,
+    z_score             NUMERIC,
+    tipo                TEXT NOT NULL,
+    severidad           TEXT NOT NULL,
+    n_muestras_rubro    INTEGER NOT NULL,
+    desde_cache         BOOLEAN DEFAULT false,
+    hash_control        TEXT NOT NULL,
+    detectado_at        TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_alertas_precio_serviu_lookup ON alertas_precio_serviu(rubro, detectado_at DESC);
+COMMENT ON TABLE alertas_precio_serviu IS 'Auditoria de anomalias de precio detectadas por core/trade_agent.py. hash_control = SHA-256 del item + estadisticas del rubro que motivaron la alerta. desde_cache=true indica que la corrida uso el snapshot local porque Supabase no respondio.';
+-- RLS activado sin policy para anon a propósito: trade_agent.py escribe
+-- con SUPABASE_SERVICE_ROLE_KEY (bypassea RLS).
+ALTER TABLE alertas_precio_serviu ENABLE ROW LEVEL SECURITY;
+
 CREATE TABLE IF NOT EXISTS reglas_rubros (
     id            SERIAL PRIMARY KEY,
     palabra_clave text NOT NULL,
@@ -140,6 +213,30 @@ CREATE TABLE IF NOT EXISTS reglas_rubros (
 );
 CREATE INDEX IF NOT EXISTS idx_reglas_rubros_prioridad ON reglas_rubros(prioridad DESC);
 
+-- Seed inicial (antes en sql/migrate_precios_serviu_rubro.sql), tomado
+-- 1:1 del dict RUBROS vigente en Aquiles/scrapers/multi_dia.py.
+INSERT INTO reglas_rubros (palabra_clave, rubro, prioridad) VALUES
+    ('construcción', 'Construcción', 10),
+    ('construccion', 'Construcción', 10),
+    ('electricidad', 'Electricidad', 10),
+    ('eléctric', 'Electricidad', 10),
+    ('electric', 'Electricidad', 9),
+    ('fontanería', 'Fontanería', 10),
+    ('fontaneria', 'Fontanería', 10),
+    ('gasfitería', 'Fontanería', 9),
+    ('gasfiteria', 'Fontanería', 9),
+    ('gráfica', 'Gráfica', 10),
+    ('grafica', 'Gráfica', 10),
+    ('publicidad', 'Gráfica', 8),
+    ('impresión', 'Gráfica', 8),
+    ('impresion', 'Gráfica', 8),
+    ('capacitación', 'Capacitación', 10),
+    ('capacitacion', 'Capacitación', 10),
+    ('formación', 'Capacitación', 8),
+    ('formacion', 'Capacitación', 8),
+    ('entrenamiento', 'Capacitación', 7)
+ON CONFLICT DO NOTHING;
+
 CREATE TABLE IF NOT EXISTS reglas_rubros_exclusiones (
     id               SERIAL PRIMARY KEY,
     rubro            text NOT NULL,
@@ -147,6 +244,50 @@ CREATE TABLE IF NOT EXISTS reglas_rubros_exclusiones (
     created_at       timestamptz DEFAULT now(),
     UNIQUE (rubro, palabra_excluida)
 );
+COMMENT ON TABLE reglas_rubros_exclusiones IS 'Palabras que invalidan un match de reglas_rubros para ese rubro (evita falsos positivos como "construcción de barcos" -> Construcción). Consumida por core/auditor_precios_ia.py.';
+
+-- Seed inicial (antes en sql/create_reglas_rubros_exclusiones.sql).
+INSERT INTO reglas_rubros_exclusiones (rubro, palabra_excluida) VALUES
+    ('Construcción', 'barco'),
+    ('Construcción', 'bote'),
+    ('Construcción', 'naval'),
+    ('Construcción', 'pesca'),
+    ('Construcción', 'pesquero'),
+    ('Construcción', 'marítimo'),
+    ('Construcción', 'maritimo'),
+    ('Construcción', 'embarcación'),
+    ('Construcción', 'embarcacion'),
+    ('Construcción', 'buque')
+ON CONFLICT DO NOTHING;
+
+-- Promedio/desviación estándar de precio (en CLP) por rubro crítico,
+-- para que trade_agent.py haga una sola consulta liviana en vez de
+-- calcular estadísticas del lado de Python (antes
+-- sql/create_view_analisis_desviacion.sql). Solo filas estado_dato='OK'
+-- y rubros presentes en reglas_rubros. Conversión UF->CLP inline: los
+-- registros fuente=SERVIU están en UF, los de MERCADO_PUBLICO en CLP.
+CREATE OR REPLACE VIEW v_analisis_desviacion AS
+SELECT
+    rubro,
+    COUNT(*)                                               AS n_muestras,
+    ROUND(AVG(valor_clp)::numeric, 2)                      AS promedio_clp,
+    ROUND(COALESCE(STDDEV_SAMP(valor_clp), 0)::numeric, 2) AS stddev_clp,
+    ROUND(MIN(valor_clp)::numeric, 2)                      AS min_clp,
+    ROUND(MAX(valor_clp)::numeric, 2)                      AS max_clp,
+    MAX(created_at)                                        AS ultima_actualizacion
+FROM (
+    SELECT
+        rubro,
+        created_at,
+        CASE WHEN moneda = 'UF' THEN valor_unitario * 38377.09 ELSE valor_unitario END AS valor_clp
+    FROM precios_serviu
+    WHERE estado_dato = 'OK'
+      AND rubro IS NOT NULL
+      AND valor_unitario IS NOT NULL
+      AND rubro IN (SELECT DISTINCT rubro FROM reglas_rubros)
+) sub
+GROUP BY rubro;
+COMMENT ON VIEW v_analisis_desviacion IS 'Promedio/stddev de precio en CLP por rubro crítico (rubros definidos en reglas_rubros), solo filas estado_dato=OK. Consumida por core/trade_agent.py.';
 
 CREATE TABLE IF NOT EXISTS reglas_contables (
     id                       bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -213,6 +354,14 @@ DROP POLICY IF EXISTS "Permitir_Update_Total" ON presupuestos;
 CREATE POLICY "Permitir_Update_Total" ON presupuestos FOR UPDATE USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "bi_readonly_access" ON presupuestos;
 CREATE POLICY "bi_readonly_access" ON presupuestos FOR SELECT TO bi_readonly USING (true);
+GRANT SELECT ON public.presupuestos TO bi_readonly;
+-- NOTA (antes sql/create_bi_readonly.sql): el REVOKE de acá pretendía
+-- cerrarle el acceso a 'anon', pero la policy "Permitir_Lectura_Total"
+-- de más abajo usa USING(true) sin TO, o sea aplica a PUBLIC (incluido
+-- anon) -- ese REVOKE no la neutraliza. Queda igual que en el archivo
+-- original; no se resuelve la contradicción acá porque implica decidir
+-- si presupuestos debe seguir siendo público o no.
+REVOKE ALL ON public.presupuestos FROM anon;
 
 CREATE TABLE IF NOT EXISTS partidas_presupuesto (
     id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -133,3 +133,12 @@ CREATE INDEX IF NOT EXISTS idx_error_logs_created ON error_logs(created_at);
 ALTER TABLE error_logs ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "bi_readonly_error_logs" ON error_logs;
 CREATE POLICY "bi_readonly_error_logs" ON error_logs FOR SELECT TO bi_readonly USING (true);
+
+-- Casos de compliance pendientes de los últimos 30 días (antes
+-- sql/04_VISTAS_GESTION.sql).
+CREATE OR REPLACE VIEW active_compliance_tasks AS
+SELECT id, rol, etapa_procesal, riesgo_detectado, created_at, dictamen
+FROM compliance_logs
+WHERE (dictamen = 'Negociar' OR dictamen IS NULL)
+  AND created_at > (NOW() - INTERVAL '30 days');
+COMMENT ON VIEW active_compliance_tasks IS 'Casos pendientes últimos 30 días';
