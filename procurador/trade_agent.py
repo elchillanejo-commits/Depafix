@@ -95,6 +95,10 @@ REPORTE_DEFAULT = str(CORE_PATH / "reporte_trading.jsonl")
 TABLA_ALERTAS = "alertas_precio_serviu"
 TABLA_SALUD = "salud_agentes"
 NOMBRE_PROCESO = "trade_agent"
+# HEALTHY/CRITICAL es el vocabulario semántico que usa este archivo; la
+# columna real "estado" en Supabase solo acepta ('online', 'error') -- ver
+# el mismo mapeo en procurador/core/salud_agentes.py.
+_ESTADO_A_COLUMNA = {"HEALTHY": "online", "CRITICAL": "error"}
 UMBRAL_DEFAULT = 0.20
 MIN_MUESTRA_DEFAULT = 3
 # Última línea de defensa si reglas_rubros también es inalcanzable: los 5
@@ -318,11 +322,14 @@ class SupabaseClientManager:
         Reportar salud nunca debe hacer caer al proceso que está siendo
         monitoreado: cualquier falla acá se loguea, nunca se propaga."""
         fila = {
-            "proceso": NOMBRE_PROCESO,
-            "estado": estado,
-            "detalle": detalle,
+            # Nombres de columna reales en Supabase (agente/mensaje/
+            # ultimo_ciclo, no proceso/detalle/corrido_at -- ver
+            # procurador/core/salud_agentes.py, mismo fix).
+            "agente": NOMBRE_PROCESO,
+            "estado": _ESTADO_A_COLUMNA.get(estado, estado),
+            "mensaje": detalle,
             "metricas": metricas or {},
-            "corrido_at": datetime.now(timezone.utc).isoformat(),
+            "ultimo_ciclo": datetime.now(timezone.utc).isoformat(),
         }
         if not self.escritura:
             logger.error("Cliente Supabase (service_role) no disponible: no se pudo reportar salud (%s) a %s.",

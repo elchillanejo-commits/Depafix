@@ -72,9 +72,26 @@ VENTANAS_REPORTE_HORAS = {
     "mensual": 24 * 30,
 }
 
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+def _valor_configurado(valor: Optional[str]) -> Optional[str]:
+    """None si `valor` no está seteado o es un placeholder sin reemplazar
+    (tipo "<tu_token>") en vez de una credencial real -- evita que
+    enviar_alerta() intente pegarle a la API de Telegram con un token que
+    nunca va a funcionar y llene los logs de 404 en cada ciclo."""
+    if not valor or (valor.startswith("<") and valor.endswith(">")):
+        return None
+    return valor
+
+
+TELEGRAM_BOT_TOKEN = _valor_configurado(os.getenv("TELEGRAM_BOT_TOKEN"))
+TELEGRAM_CHAT_ID = _valor_configurado(os.getenv("TELEGRAM_CHAT_ID"))
 TELEGRAM_TIMEOUT_SEG = 5.0
+
+if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+    logger.warning(
+        "TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID no configurados (ausentes o con "
+        "placeholder sin reemplazar) -- las alertas solo quedan en el log, no "
+        "se intenta enviar a Telegram."
+    )
 
 
 def enviar_alerta(mensaje: str, nivel: str = "INFO") -> None:

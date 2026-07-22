@@ -38,5 +38,10 @@ class DatabaseManager:
         """Retorna cliente con anon key (respeta RLS)."""
         return self.get_client(use_service_role=False)
 
-# Singleton
+# Singleton. Alias 'db' porque varios módulos del repo (core/predict_logic.py,
+# subir_precios_serviu.py, scripts/cargar_serviu.py, 05_TRADE_CRIPTO/
+# monitor_sol.py) importan 'from core.db_manager import db' -- sin este alias
+# esos imports fallan con ImportError (mismo patrón que procurador/core/
+# db_manager.py, que ya lo tiene).
 db_manager = DatabaseManager()
+db = db_manager

@@ -17,12 +17,13 @@ logger = logging.getLogger(__name__)
 
 TABLA_SALUD = "salud_agentes"
 
-# La tabla vive con un CHECK constraint que solo acepta ('online', 'error')
-# -- confirmado empiricamente contra Supabase, create_salud_agentes.sql (que
-# documenta CHECK IN ('HEALTHY','CRITICAL')) esta desactualizado. El resto
-# del repo (trading_orchestrator.py, etc.) sigue usando HEALTHY/CRITICAL
-# como vocabulario semantico -- se traduce aca, en el unico punto de
-# escritura, en vez de tocar todos los call sites.
+# La tabla vive con un CHECK constraint que acepta
+# ('online','offline','error','warning') -- confirmado contra
+# information_schema.columns y pg_constraint en vivo, 2026-07-21 (ver
+# sql/create_salud_agentes.sql, ya actualizado). Este código solo escribe
+# 'online'/'error' porque el resto del repo (trading_orchestrator.py, etc.)
+# sigue usando HEALTHY/CRITICAL como vocabulario semantico -- se traduce
+# aca, en el unico punto de escritura, en vez de tocar todos los call sites.
 _ESTADO_A_COLUMNA = {"HEALTHY": "online", "CRITICAL": "error"}
 
 
