@@ -66,6 +66,14 @@ ETAPA_PATTERNS = [
 # etapa detectada por posicion, no solo por aparecer al final del texto.
 ETAPA_FIRME_PATTERN = re.compile(r'firme\s+y\s+ejecutoriada', re.IGNORECASE)
 
+# Encabezado del sistema de tramitacion del Poder Judicial ("Etapa: X
+# Estado Procesal: Y"): cuando esta presente es la fuente de verdad de
+# la etapa actual, mas confiable que el heuristico de ultima mencion
+# -- ese heuristico se confunde con alegatos que discuten una etapa
+# (p.ej. "requiere periodo de prueba amplio") sin que el caso este
+# realmente en esa etapa.
+ETAPA_HEADER_PATTERN = re.compile(r'Etapa:\s*([^\n]+?)\s+Estado\s+Procesal:', re.IGNORECASE)
+
 # Patron estructurado: en los expedientes del Poder Judicial chileno la
 # tabla de litigantes usa filas "<CODIGO>. <RUT> <NATURAL|JURIDICA> <nombre>"
 # donde DTE./DDO. son las partes y AB.DTE/AP.DTE/AB.DDO/AP.DDO son sus
@@ -73,12 +81,18 @@ ETAPA_FIRME_PATTERN = re.compile(r'firme\s+y\s+ejecutoriada', re.IGNORECASE)
 # nombre del apoderado en vez de la parte). El \b antes de DTE\./DDO\.
 # mas el hecho de que "AB.DTE"/"AP.DTE" no contienen el punto pegado a
 # "DTE" evita que el patron de la parte matchee esas filas de abogados.
+# Ademas de las filas de tabla y "Tabla de contenidos", una fila DTE./DDO.
+# aislada (fuera de la tabla completa de Litigantes) puede aparecer en un
+# bloque resumen al inicio del documento, pegada directamente al bloque de
+# metadata del expediente (ROL/Caratulado) sin otra fila DTE./DDO. cerca --
+# sin cortar ahi tambien, la captura se comia esa metadata completa hasta
+# la proxima fila real, muy mas adelante en el documento.
 LITIGANTE_DTE_TABLA_PATTERN = re.compile(
-    r'\bDTE\.\s*[\dKk\-]+\s*(?:NATURAL|JURIDICA)\s+(.+?)(?=\n(?:AB\.|AP\.|DTE\.|DDO\.)|\nTabla|\Z)',
+    r'\bDTE\.\s*[\dKk\-]+\s*(?:NATURAL|JURIDICA)\s+(.+?)(?=\n(?:AB\.|AP\.|DTE\.|DDO\.)|\nTabla|\nROL\s*:|\nCaratulado\s*:|\Z)',
     re.IGNORECASE | re.DOTALL,
 )
 LITIGANTE_DDO_TABLA_PATTERN = re.compile(
-    r'\bDDO\.\s*[\dKk\-]+\s*(?:NATURAL|JURIDICA)\s+(.+?)(?=\n(?:AB\.|AP\.|DTE\.|DDO\.)|\nTabla|\Z)',
+    r'\bDDO\.\s*[\dKk\-]+\s*(?:NATURAL|JURIDICA)\s+(.+?)(?=\n(?:AB\.|AP\.|DTE\.|DDO\.)|\nTabla|\nROL\s*:|\nCaratulado\s*:|\Z)',
     re.IGNORECASE | re.DOTALL,
 )
 # Fallback en prosa -- para documentos que no traen la tabla estructurada
@@ -215,12 +229,17 @@ class ProcuradorParser:
         """Devuelve la etapa procesal ACTUAL: "Sentencia firme" si el
         documento contiene "firme y ejecutoriada" (estado terminal, tiene
         prioridad semantica sobre cualquier otra cosa detectada); si no,
-        la ultima etapa mencionada en el texto (no la primera -- un
-        expediente narra su historia completa en orden, y la mencion mas
-        tardia es la que refleja el estado real hoy). "Desconocida" si no
-        se encuentra ninguna etapa."""
+        el campo "Etapa: X" del encabezado de tramitacion del Poder
+        Judicial si esta presente (fuente de verdad); si no, la ultima
+        etapa mencionada en el texto (no la primera -- un expediente
+        narra su historia completa en orden, y la mencion mas tardia es
+        la que refleja el estado real hoy). "Desconocida" si no se
+        encuentra ninguna etapa."""
         if ETAPA_FIRME_PATTERN.search(self.text):
             return "Sentencia firme"
+        m = ETAPA_HEADER_PATTERN.search(self.text)
+        if m:
+            return self._limpiar(m.group(1))
         ultima_etapa, ultima_pos = None, -1
         for etapa, pat in ETAPA_PATTERNS:
             for m in pat.finditer(self.text):
