@@ -86,10 +86,25 @@ LITIGANTE_DDO_TABLA_PATTERN = re.compile(
 # de metadata de representacion ("FOLIO DESIGNACIÓN", "TIPO DE PODER") que
 # es lo que hacia que el regex original se comiera texto ajeno al nombre.
 LITIGANTES_DEM_PATTERN = re.compile(
-    r'(?:demandante|actor|recurrente|querellante)\s*:\s*(.{1,200}?)(?=\s*(?:demandado|recurrido|querellado)\s*:|\s*FOLIO\s+DESIGNACIÓN|\s*TIPO\s+DE\s+PODER|\n\n|$)',
+    r'(?:demandante|actor|recurrente|querellante)\s*:\s*(.{1,200}?)'
+    r'(?=\s*(?:demandado|recurrido|querellado)\s*:'
+    r'|\s*FOLIO\s+DESIGNACIÓN'
+    r'|\s*TIPO\s+DE\s+PODER'
+    # En prosa simple (una parte por linea) "Ante"/"ROL" en la linea
+    # siguiente marcan el salto al tribunal, no siguen siendo el nombre --
+    # sin este corte, si "demandado:" ya aparecio ANTES que "demandante:"
+    # en el texto (orden invertido, valido en algunos escritos), no queda
+    # ningun limite antes del fin del documento y se traga todo lo que sigue.
+    r'|\n\s*(?:ante\b|rol\b)'
+    r'|\n\n|\Z)',
     re.IGNORECASE | re.DOTALL,
 )
-LITIGANTES_DDO_PATTERN = re.compile(r'(?:demandado|recurrido|querellado)\s*:\s*(.+?)(?:\.|$)', re.IGNORECASE)
+# Sin DOTALL: "." no cruza saltos de linea, asi que el lookahead puede
+# pedir "\n" como limite ademas de "." o fin de string -- la version
+# anterior exigia consumir un "." o llegar al fin absoluto del string,
+# y fallaba en silencio (sin match, sin campo "demandado") cuando el
+# valor terminaba en salto de linea sin punto final.
+LITIGANTES_DDO_PATTERN = re.compile(r'(?:demandado|recurrido|querellado)\s*:\s*(.+?)(?=\.|\n|$)', re.IGNORECASE)
 
 # Fechas -- se extraen TODAS las que aparecen en el documento (no la
 # primera que matchea "proximo plazo:", que casi nunca aparece asi
