@@ -37,6 +37,7 @@ logs/
 datos/
 data/*.json
 data/*.pkl
+data/expedientes/
 *.pkl
 *.db
 *.sqlite

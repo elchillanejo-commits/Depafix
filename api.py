@@ -5,11 +5,12 @@ import re
 import tempfile
 import unicodedata
 import uuid
+from pathlib import Path
 
 import psycopg2
 import psycopg2.extras
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
@@ -20,10 +21,13 @@ load_dotenv()
 from core.db_manager import DatabaseManager  # noqa: E402 (requiere .env ya cargado)
 from ikki.campana import TIPOS_VALIDOS, crear_campana, subir_afiche
 from ikki.crear_afiche import generar_afiche
+from procurador.procurador_tool import save_parsed_to_compliance  # noqa: E402
 
 logger = logging.getLogger("api")
 
 SUPABASE_DB_URL = os.environ.get("SUPABASE_DB_URL")
+EXPEDIENTES_DIR = Path(__file__).resolve().parent / "data" / "expedientes"
+EXPEDIENTE_MAX_BYTES = 20 * 1024 * 1024  # 20 MB -- expedientes judiciales reales no superan esto
 
 app = FastAPI(title="Agente Procurador IA - API")
 
@@ -602,6 +606,41 @@ def procurador_consultar(req: ProcuradorConsultaRequest):
 
     resultado["ok"] = True
     return resultado
+
+
+@app.post("/api/procurador/subir_pdf")
+async def procurador_subir_pdf(pdf: UploadFile = File(...)):
+    if not pdf.filename or not pdf.filename.lower().endswith(".pdf"):
+        return JSONResponse(status_code=400, content={"error": "El archivo debe ser un PDF (.pdf)"})
+
+    contenido = await pdf.read()
+    if not contenido:
+        return JSONResponse(status_code=400, content={"error": "El archivo está vacío"})
+    if len(contenido) > EXPEDIENTE_MAX_BYTES:
+        return JSONResponse(
+            status_code=413,
+            content={"error": f"El archivo supera el tamaño máximo permitido ({EXPEDIENTE_MAX_BYTES // (1024*1024)} MB)"},
+        )
+
+    EXPEDIENTES_DIR.mkdir(parents=True, exist_ok=True)
+    # Nombre generado (no el original del cliente) para no depender de
+    # texto arbitrario del uploader al construir la ruta en disco.
+    ruta_destino = EXPEDIENTES_DIR / f"{uuid.uuid4().hex}.pdf"
+    ruta_destino.write_bytes(contenido)
+
+    try:
+        row_id = save_parsed_to_compliance(str(ruta_destino))
+    except Exception as e:
+        logger.exception("Error inesperado procesando PDF subido (%s)", pdf.filename)
+        return JSONResponse(status_code=500, content={"error": f"Error al procesar el PDF: {e}"})
+
+    if row_id is None:
+        return JSONResponse(
+            status_code=422,
+            content={"error": "No se pudo identificar el ROL del expediente o falló el guardado; ver error_logs"},
+        )
+
+    return {"ok": True, "compliance_log_id": row_id, "archivo_guardado": str(ruta_destino.relative_to(EXPEDIENTES_DIR.parent.parent))}
 
 
 @app.get("/procurador/dashboard", response_class=HTMLResponse)
