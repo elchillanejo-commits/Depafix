@@ -359,7 +359,14 @@ def analyze_legal_risk(parsed_data, raw_text, rules_path=LEGAL_RULES_PATH):
 # --------------------------------------------------------------------------- #
 # Persistencia Supabase -- schema real, service_role, reintentos
 # --------------------------------------------------------------------------- #
-@red_segura()
+# latencia_max mas alta que el default de red_segura() (500ms): un INSERT
+# no es idempotente a nivel de fila (no hay constraint unico sobre
+# metadata->>idempotency_key), y ese timeout no cancela la llamada
+# subyacente -- si el POST original solo iba lento y no habia fallado de
+# verdad, un reintento sobre el mismo insert crea una fila duplicada. Se
+# confirmo en produccion: el insert de C-3208-2026 tardo ~550ms y el
+# reintento genero una segunda fila para el mismo ROL.
+@red_segura(latencia_max=5.0)
 def _insert_compliance_log(sp, payload):
     return sp.table("compliance_logs").insert(payload).execute()
 
