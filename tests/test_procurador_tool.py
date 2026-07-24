@@ -9,7 +9,7 @@ regex justo para poder testear asi).
 import sys
 from pathlib import Path
 
-CORE_PATH = Path("/home/ibar/Proyectos/02_PROCURADOR")  # reorg 2026-07-19: core/ movido fuera de DepaFix
+CORE_PATH = Path("/home/ibar/Proyectos/DepaFix")  # consolidado 2026-07-24: 02_PROCURADOR archivado, todo en DepaFix
 if str(CORE_PATH) not in sys.path:
     sys.path.insert(0, str(CORE_PATH))
 

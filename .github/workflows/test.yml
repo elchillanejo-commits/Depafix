@@ -1,0 +1,24 @@
+name: DepaFix CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: depafix
+          POSTGRES_USER: depafix
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install -r requirements.txt
+      - run: python3 -m pytest test_db.py tests/test_integrity.py -q
+        env:
+          PGPASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}

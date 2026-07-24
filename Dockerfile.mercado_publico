@@ -1,0 +1,10 @@
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+# Batch, no daemon: un ciclo (recorre --dias día(s) x rubros, guarda en
+# precios_serviu/line_items, reporta a salud_agentes) y sale. La cadencia
+# la maneja Railway Cron Schedule + restartPolicyType=ON_FAILURE, no un
+# loop interno -- mismo patrón que Dockerfile.worker/trading_orchestrator.py.
+CMD ["python3", "04_MERCADO_PUBLICO/scraper/run_scraper.py", "--dias", "1", "--limite", "15"]
