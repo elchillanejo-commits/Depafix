@@ -38,6 +38,7 @@ datos/
 data/*.json
 data/*.pkl
 data/expedientes/
+procurador/docs_02/
 *.pkl
 *.db
 *.sqlite

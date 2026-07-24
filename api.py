@@ -26,7 +26,7 @@ from procurador.procurador_tool import save_parsed_to_compliance  # noqa: E402
 logger = logging.getLogger("api")
 
 SUPABASE_DB_URL = os.environ.get("SUPABASE_DB_URL")
-EXPEDIENTES_DIR = Path(__file__).resolve().parent / "data" / "expedientes"
+EXPEDIENTES_DIR = Path(__file__).resolve().parent / "procurador" / "docs_02"
 EXPEDIENTE_MAX_BYTES = 20 * 1024 * 1024  # 20 MB -- expedientes judiciales reales no superan esto
 
 app = FastAPI(title="Agente Procurador IA - API")
@@ -640,7 +640,20 @@ async def procurador_subir_pdf(pdf: UploadFile = File(...)):
             content={"error": "No se pudo identificar el ROL del expediente o falló el guardado; ver error_logs"},
         )
 
-    return {"ok": True, "compliance_log_id": row_id, "archivo_guardado": str(ruta_destino.relative_to(EXPEDIENTES_DIR.parent.parent))}
+    # save_parsed_to_compliance ya decidio -- via idempotency_key -- si esto
+    # es una fila nueva o una ya existente; se relee la fila para devolver
+    # el resultado real del parser (rol/etapa/riesgo/dictamen) en vez de
+    # solo el id, sin duplicar la logica de parseo aca.
+    fila = DatabaseManager().get_service_client().table("compliance_logs") \
+        .select("id,rol,etapa_procesal,riesgo_detectado,dictamen,metadata") \
+        .eq("id", row_id).execute()
+
+    return {
+        "ok": True,
+        "compliance_log_id": row_id,
+        "archivo_guardado": str(ruta_destino.relative_to(EXPEDIENTES_DIR.parent.parent)),
+        "resultado_parser": fila.data[0] if fila.data else None,
+    }
 
 
 @app.get("/procurador/dashboard", response_class=HTMLResponse)
