@@ -85,6 +85,7 @@ backups/
 *.json
 *.jsonl
 !railway.json
+!config/*.json
 .venv/
 
 # Credenciales internas
