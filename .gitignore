@@ -38,6 +38,7 @@ datos/
 data/*.json
 data/*.pkl
 data/expedientes/
+procurador/docs_02/
 *.pkl
 *.db
 *.sqlite
@@ -84,6 +85,7 @@ backups/
 *.json
 *.jsonl
 !railway.json
+!config/*.json
 .venv/
 
 # Credenciales internas

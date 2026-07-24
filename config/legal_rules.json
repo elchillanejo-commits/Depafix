@@ -1,0 +1,104 @@
+{
+  "_meta": {
+    "descripcion": "BORRADOR inicial de reglas de riesgo legal para procurador_tool.py. No validado por un abogado -- revisar severidades, keywords y salvaguardas antes de usarlo para generar dictamenes reales.",
+    "limitacion_conocida": "ProcuradorParser (procurador_tool.py) solo extrae campos judiciales (rol, tribunal, etapa_procesal, litigantes, proximo_plazo). No existe todavia extraccion dedicada de campos contractuales (monto_contrato, plazo_entrega, garantias) -- por eso la mayoria de las reglas de construccion/contratos abajo buscan sobre 'raw_text' con keyword_presente/regex_match en vez de un campo estructurado propio.",
+    "version": "0.1-borrador"
+  },
+  "severidad_peso": {
+    "bajo": 1,
+    "medio": 2,
+    "alto": 3,
+    "abusiva": 5
+  },
+  "reglas": [
+    {
+      "id": "tribunal_no_identificado",
+      "campo": "tribunal",
+      "tipo": "campo_requerido",
+      "severidad": "bajo",
+      "mensaje": "No se pudo identificar el tribunal o instancia en el documento -- verificar manualmente."
+    },
+    {
+      "id": "plazo_no_identificado",
+      "campo": "proximo_plazo",
+      "tipo": "campo_requerido",
+      "severidad": "medio",
+      "mensaje": "No se detecto un proximo plazo procesal ni fecha de entrega explicita -- requiere revision manual del documento."
+    },
+    {
+      "id": "riesgo_prescripcion",
+      "campo": "raw_text",
+      "tipo": "keyword_presente",
+      "valor": ["prescripción", "prescrito", "plazo prescriptivo vencido"],
+      "severidad": "alto",
+      "mensaje": "Posible prescripción de la acción o derecho -- revisar plazos con prioridad."
+    },
+    {
+      "id": "embargo_o_ejecucion",
+      "campo": "raw_text",
+      "tipo": "keyword_presente",
+      "valor": ["mandamiento de pago", "embargo", "remate"],
+      "severidad": "alto",
+      "mensaje": "Se detectan indicios de etapa de ejecución/embargo -- atención prioritaria."
+    },
+    {
+      "id": "boleta_garantia_mencionada",
+      "campo": "raw_text",
+      "tipo": "keyword_presente",
+      "valor": ["boleta de garantía", "boleta bancaria de garantía", "garantía de fiel cumplimiento"],
+      "severidad": "bajo",
+      "mensaje": "Se menciona boleta de garantía -- confirmar vigencia, monto y beneficiario exigido."
+    },
+    {
+      "id": "multa_atraso_detectada",
+      "campo": "raw_text",
+      "tipo": "regex_match",
+      "valor": "multa.{0,40}(por cada d[ií]a|diari[ao]).{0,40}(\\d{1,2}\\s?%|\\d+\\s*UF)",
+      "severidad": "medio",
+      "mensaje": "Cláusula de multa por atraso detectada -- verificar que el porcentaje/monto no sea desproporcionado respecto al valor del contrato."
+    },
+    {
+      "id": "subcontratacion_no_autorizada",
+      "campo": "raw_text",
+      "tipo": "regex_match",
+      "valor": "subcontratar\\w*\\s+sin\\s+(autorización|consentimiento)",
+      "severidad": "medio",
+      "mensaje": "Referencia a subcontratación sin autorización -- riesgo de incumplimiento contractual."
+    },
+    {
+      "id": "monto_elevado_detectado",
+      "campo": "raw_text",
+      "tipo": "regex_match",
+      "valor": "\\$\\s?[\\d\\.]{9,}",
+      "severidad": "medio",
+      "mensaje": "Se detecta un monto de 9+ dígitos en el documento -- confirmar la cifra exacta y su respaldo."
+    },
+    {
+      "id": "clausula_renuncia_derechos",
+      "campo": "raw_text",
+      "tipo": "clausula_abusiva",
+      "valor": ["renuncia a cualquier acción", "renuncia expresa a impugnar", "renuncia irrevocable de derechos"],
+      "severidad": "abusiva",
+      "mensaje": "Cláusula de renuncia de derechos detectada -- riesgo de abuso contractual.",
+      "salvaguarda": "Evaluar nulidad parcial de la cláusula de renuncia por vulnerar derechos irrenunciables (Art. 12 Código Civil chileno)."
+    },
+    {
+      "id": "clausula_exoneracion_responsabilidad",
+      "campo": "raw_text",
+      "tipo": "clausula_abusiva",
+      "valor": ["exime de toda responsabilidad", "sin responsabilidad alguna del mandante", "libera de responsabilidad total"],
+      "severidad": "abusiva",
+      "mensaje": "Cláusula de exoneración total de responsabilidad -- riesgo de abuso.",
+      "salvaguarda": "Cláusulas de exoneración total pueden ser nulas si hay dolo o culpa grave (Arts. 1547 y 1558 Código Civil chileno)."
+    },
+    {
+      "id": "clausula_arbitraje_unilateral",
+      "campo": "raw_text",
+      "tipo": "clausula_abusiva",
+      "valor": ["árbitro designado exclusivamente por", "arbitraje forzoso a elección unilateral"],
+      "severidad": "abusiva",
+      "mensaje": "Cláusula de arbitraje con designación unilateral del árbitro -- riesgo de abuso.",
+      "salvaguarda": "La designación unilateral del árbitro puede viciar el consentimiento -- evaluar impugnación de la cláusula compromisoria."
+    }
+  ]
+}
