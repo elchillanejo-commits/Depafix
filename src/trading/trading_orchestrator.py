@@ -77,7 +77,7 @@ def ejecutar_ciclo(exchange, activos, limite, modo):
             
             # 2. Analizar
             trader = TradingLogic()
-            senal = trader.analizar(velas, activo)
+            senal = trader.analizar(velas)
             logger.info(f"📊 {activo} -> {senal['senal']} | {senal['motivo']}")
             
             # 3. Registrar si es COMPRA o VENTA

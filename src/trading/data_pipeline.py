@@ -176,6 +176,36 @@ class PipelineVelas:
         )
         return total_guardadas
 
+    def obtener_velas(self, activo, temporalidad, limite=100):
+        """Velas para análisis: primero Supabase, si no alcanza, directo del exchange."""
+        if self.db:
+            try:
+                result = (
+                    self.db.table(TABLA_VELAS)
+                    .select("*")
+                    .eq("activo", activo)
+                    .eq("temporalidad", temporalidad)
+                    .order("tiempo", desc=True)
+                    .limit(limite)
+                    .execute()
+                )
+                if result.data and len(result.data) >= limite:
+                    return list(reversed(result.data))
+            except Exception as e:
+                logger.warning("No se pudo leer velas desde Supabase (%s %s): %s", activo, temporalidad, e)
+
+        if not self.exchange:
+            return []
+        timeframe_ccxt = TEMPORALIDADES.get(temporalidad, temporalidad)
+        try:
+            ohlcv = _con_reintentos(self.exchange.fetch_ohlcv, activo, timeframe=timeframe_ccxt, limit=limite)
+        except Exception as e:
+            logger.error("Fallo trayendo velas para análisis %s %s: %s", activo, temporalidad, e)
+            return []
+        filas = _velas_a_filas(ohlcv, activo, temporalidad)
+        self._guardar_filas(filas)
+        return filas
+
 
 def main():
     parser = argparse.ArgumentParser(description="Ingesta de velas OHLC hacia velas_cripto")
@@ -196,27 +226,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-    def obtener_velas_para_analisis(self, par: str, temporalidad: str, limite: int = 100):
-        """Obtiene velas de Supabase (o desde exchange si no hay)."""
-        try:
-            # Intentar leer desde Supabase
-            from core.db_manager import db
-            result = db.table('velas_cripto').select('*').eq('activo', par).eq('temporalidad', temporalidad).order('tiempo', desc=True).limit(limite).execute()
-            if result.data:
-                return result.data
-        except:
-            pass
-        # Si no hay en BD, descargar directamente
-        return self.obtener_velas(par, temporalidad, limite)
-
-    def obtener_velas_para_analisis(self, par: str, temporalidad: str, limite: int = 100):
-        """Obtiene velas de Supabase (o desde exchange si no hay)."""
-        try:
-            from core.db_manager import db
-            result = db.table('velas_cripto').select('*').eq('activo', par).eq('temporalidad', temporalidad).order('tiempo', desc=True).limit(limite).execute()
-            if result.data:
-                return result.data
-        except:
-            pass
-        return self.obtener_velas(par, temporalidad, limite)
