@@ -63,7 +63,7 @@ def ejecutar_ciclo(exchange, activos, limite, modo):
     """Ejecuta un ciclo de trading: descarga → análisis → registro"""
     logger.info(f"🔄 Ciclo iniciado: {exchange} | {activos}")
     
-    pipeline = PipelineVelas(exchange_id=args.exchange)
+    pipeline = PipelineVelas(exchange_id=exchange)
     resultados = []
     
     for activo in activos.split(','):
