@@ -153,7 +153,7 @@ class PipelineVelas:
             # ni borrar. Si SUPABASE_SERVICE_ROLE_KEY no está configurada, esto
             # falla fuerte y explícito en vez de degradar en silencio a un
             # cliente que va a chocar con RLS en cada INSERT.
-            self.db = DatabaseManager.get_service_client()
+            self.db = DatabaseManager().get_service_client()
         except Exception as e:
             logger.error("No se pudo inicializar el cliente de Supabase (service_role): %s", e)
 

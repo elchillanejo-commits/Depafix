@@ -167,7 +167,7 @@ class TradingOrchestrator:
             # Mismo cliente cacheado (DatabaseManager._service_client) que ya
             # usa PipelineVelas -- no abre una conexion nueva, get_service_client()
             # devuelve la instancia existente si ya fue creada.
-            self._db = DatabaseManager.get_service_client()
+            self._db = DatabaseManager().get_service_client()
         except Exception as e:
             logger.error("No se pudo inicializar Supabase (service_role) para auditoria: %s", e)
 
