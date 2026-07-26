@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-trading_orchestrator.py - Orquestador de trading 24/7 para Binance/Kraken
-Siegfried Trading Agent
+trading_orchestrator.py - Orquestador de trading 24/7 con órdenes reales
 """
-
 import os
 import sys
 import time
@@ -12,15 +10,16 @@ import logging
 import argparse
 from datetime import datetime
 from pathlib import Path
+from decimal import Decimal
 import traceback
 
-# Agregar raíz del proyecto al path
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-from core.db_manager import db
+from core.db_manager import DatabaseManager
 from src.trading.crypto_trader_agent import TradingLogic
 from src.trading.data_pipeline import PipelineVelas
+import ccxt
 
 logging.basicConfig(
     level=logging.INFO,
@@ -28,6 +27,10 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 logger = logging.getLogger(__name__)
+
+# ========== CONFIGURACIÓN ==========
+TRADE_AMOUNT_USDT = Decimal("10.50")
+MIN_ORDER_USDT = Decimal("10.0")
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Trading Orchestrator')
@@ -39,92 +42,168 @@ def parse_args():
     parser.add_argument('--limite', type=int, default=100, help='Velas a descargar por ciclo')
     return parser.parse_args()
 
-def registrar_senal(activo, senal, precio, motivo, puntuacion, modo):
+def get_exchange(exchange_id):
+    """Cliente autenticado del exchange -- solo se llama en modo real."""
+    if exchange_id == 'binance':
+        exchange = ccxt.binance({
+            'apiKey': os.getenv('BINANCE_API_KEY'),
+            'secret': os.getenv('BINANCE_SECRET_KEY'),
+            'enableRateLimit': True,
+            'options': {'defaultType': 'spot'}
+        })
+    elif exchange_id == 'kraken':
+        exchange = ccxt.kraken({
+            'apiKey': os.getenv('KRAKEN_API_KEY'),
+            'secret': os.getenv('KRAKEN_SECRET_KEY'),
+            'enableRateLimit': True
+        })
+    else:
+        raise ValueError(f"Exchange no soportado: {exchange_id}")
+    return exchange
+
+def execute_order(exchange, symbol, side, quantity, price):
+    """Ejecuta una orden de mercado real. side: 'buy' o 'sell'."""
+    try:
+        quantity = float(exchange.amount_to_precision(symbol, quantity))
+        notional = quantity * price
+
+        if notional < float(MIN_ORDER_USDT):
+            logger.warning(f"Monto muy pequeño: {quantity} {symbol} (${notional:.2f} < ${MIN_ORDER_USDT})")
+            return None
+
+        logger.info(f"💰 Ejecutando orden {side} {quantity} {symbol} a ${price:.2f}")
+        order = exchange.create_market_order(symbol, side, quantity)
+        logger.info(f"✅ Orden ejecutada: {order}")
+        return order
+    except ccxt.InsufficientFunds as e:
+        logger.error(f"❌ Saldo insuficiente para {side} {symbol}: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"❌ Error ejecutando orden: {e}")
+        return None
+
+def registrar_senal(activo, senal, precio, motivo, puntuacion, modo, cantidad=None, ejecutada=False, orden_id=None):
     """Guarda la señal en operaciones_ejecutadas"""
     try:
         data = {
             'activo': activo,
             'temporalidad': '1H',
             'senal': senal,
-            'precio_entrada': precio,
+            'precio_entrada': float(precio),
+            'precio_salida': None,
+            'cantidad': float(cantidad) if cantidad else None,
             'motivo': motivo,
             'puntuacion_confluencia': puntuacion,
-            'ejecutada': False,
-            'timestamp': datetime.now().isoformat()
+            'ejecutada': ejecutada,
+            'orden_id': orden_id,
+            'timestamp': datetime.utcnow().isoformat()
         }
-        result = db.table('operaciones_ejecutadas').insert(data).execute()
-        logger.info(f"📝 Señal registrada: {activo} | {senal} | ${precio} | {motivo}")
+        db_client = DatabaseManager.get_service_client()
+        result = db_client.table('operaciones_ejecutadas').insert(data).execute()
+        logger.info(f"📝 Señal registrada: {activo} | {senal} | ${precio:.2f} | {motivo}")
         return result
     except Exception as e:
         logger.error(f"❌ Error registrando señal: {e}")
         return None
 
-def ejecutar_ciclo(exchange, activos, limite, modo):
-    """Ejecuta un ciclo de trading: descarga → análisis → registro"""
-    logger.info(f"🔄 Ciclo iniciado: {exchange} | {activos}")
-    
-    pipeline = PipelineVelas(exchange_id=exchange)
-    resultados = []
-    
-    for activo in activos.split(','):
-        activo = activo.strip()
+def ejecutar_ciclo(exchange, exchange_id, activos, limite, modo):
+    """Ejecuta un ciclo de trading"""
+    logger.info(f"🔄 Ciclo iniciado: {exchange_id} | {','.join(activos)}")
+
+    pipeline = PipelineVelas(exchange_id)
+
+    for activo in activos:
         try:
-            # 1. Descargar velas
             velas = pipeline.obtener_velas(activo, '1H', limite)
             if not velas:
-                logger.warning(f"⚠️ No se obtuvieron velas para {activo}")
+                logger.warning(f"No hay datos para {activo}")
                 continue
-            
-            # 2. Analizar
-            trader = TradingLogic()
-            senal = trader.analizar(velas)
-            logger.info(f"📊 {activo} -> {senal['senal']} | {senal['motivo']}")
-            
-            # 3. Registrar si es COMPRA o VENTA
-            if senal['senal'] in ('COMPRA', 'VENTA'):
-                registrar_senal(
-                    activo=activo,
-                    senal=senal['senal'],
-                    precio=senal.get('precio_actual', velas[-1]['close']),
-                    motivo=senal.get('motivo', ''),
-                    puntuacion=senal.get('score', 0),
-                    modo=modo
-                )
-            
-            resultados.append(senal)
-            
+
+            trading_logic = TradingLogic()
+            resultado = trading_logic.analizar(velas)
+
+            senal = resultado['senal']
+            motivo = resultado.get('motivo', '')
+            puntuacion = resultado.get('score', 0)
+            precio_actual = resultado.get('precio_actual', velas[-1]['close'])
+
+            logger.info(f"📊 {activo} -> {senal} | {motivo} | ${precio_actual:.2f}")
+
+            cantidad = None
+            ejecutada = False
+            orden_id = None
+
+            if modo == 'real' and senal in ('COMPRA', 'VENTA'):
+                balance = exchange.fetch_balance()
+
+                if senal == 'COMPRA':
+                    usdt_free = balance.get('USDT', {}).get('free', 0) or 0
+                    if usdt_free < float(TRADE_AMOUNT_USDT):
+                        logger.warning(f"Saldo insuficiente: {usdt_free:.2f} USDT < {TRADE_AMOUNT_USDT}")
+                    else:
+                        quantity = float(TRADE_AMOUNT_USDT) / precio_actual
+                        order = execute_order(exchange, activo, 'buy', quantity, precio_actual)
+                        if order:
+                            ejecutada = True
+                            cantidad = order.get('filled') or quantity
+                            orden_id = order.get('id')
+
+                elif senal == 'VENTA':
+                    base = activo.split('/')[0]
+                    balance_free = balance.get(base, {}).get('free', 0) or 0
+                    if balance_free <= 0:
+                        logger.warning(f"No hay {base} para vender")
+                    else:
+                        order = execute_order(exchange, activo, 'sell', balance_free, precio_actual)
+                        if order:
+                            ejecutada = True
+                            cantidad = order.get('filled') or balance_free
+                            orden_id = order.get('id')
+
+            registrar_senal(
+                activo=activo,
+                senal=senal,
+                precio=precio_actual,
+                motivo=motivo,
+                puntuacion=puntuacion,
+                modo=modo,
+                cantidad=cantidad,
+                ejecutada=ejecutada,
+                orden_id=orden_id
+            )
+
         except Exception as e:
             logger.error(f"❌ Error procesando {activo}: {e}")
             traceback.print_exc()
-    
-    return resultados
+
+    logger.info("✅ Ciclo completado")
 
 def main():
     args = parse_args()
+    
     logger.info(f"🧠 Siegfried Trading Agent iniciado")
     logger.info(f"   Exchange: {args.exchange}")
     logger.info(f"   Activos: {args.activos}")
     logger.info(f"   Modo: {args.modo}")
     logger.info(f"   Intervalo: {args.intervalo}s")
     
+    activos = [a.strip() for a in args.activos.split(',')]
+
+    exchange = get_exchange(args.exchange) if args.modo == 'real' else None
+
     while True:
         try:
-            ejecutar_ciclo(args.exchange, args.activos, args.limite, args.modo)
-            
+            ejecutar_ciclo(exchange, args.exchange, activos, args.limite, args.modo)
             if args.una_vez:
-                logger.info("✅ Ciclo único completado. Saliendo.")
                 break
-            
-            logger.info(f"⏳ Esperando {args.intervalo}s para próximo ciclo...")
             time.sleep(args.intervalo)
-            
         except KeyboardInterrupt:
-            logger.info("🛑 Interrupción recibida. Saliendo...")
+            logger.info("👋 Interrupción recibida. Saliendo...")
             break
         except Exception as e:
             logger.error(f"❌ Error en ciclo principal: {e}")
             traceback.print_exc()
-            time.sleep(10)
+            time.sleep(args.intervalo)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
