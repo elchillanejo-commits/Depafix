@@ -5,6 +5,8 @@ TradingLogic (src/trading/crypto_trader_agent.py) necesita para dejar de
 devolver ESTADO: ESPERA por falta de datos.
 
 Usa el endpoint público de mercado (fetch_ohlcv) -- no requiere API key ni
+# Parche para get_service_client
+import core.db_manager_patch
 autenticación, solo datos de velas ya públicos.
 
 REQUISITOS PREVIOS, fuera del alcance de este script:
@@ -32,15 +34,33 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import ccxt
+from dotenv import load_dotenv
+from supabase import create_client
 
 CORE_PATH = Path(__file__).resolve().parent.parent.parent
 if str(CORE_PATH) not in sys.path:
     sys.path.insert(0, str(CORE_PATH))
 
-from core.db_manager import DatabaseManager
+load_dotenv(CORE_PATH / ".env")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
+
+
+def _crear_cliente_service_role():
+    """Cliente Supabase con service_role, autocontenido en este módulo (no
+    depende de core/db_manager.py, cuya API está en flujo en otra sesión
+    concurrente). Bypassea RLS por diseño de Supabase -- necesario porque
+    velas_cripto tiene RLS activado sin policy para anon a propósito."""
+    import os
+    url = os.getenv("SUPABASE_URL")
+    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_SERVICE_KEY")
+    if not url or not key:
+        raise RuntimeError(
+            "Faltan SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en .env -- "
+            "la anon key no puede escribir en velas_cripto (RLS sin policy)."
+        )
+    return create_client(url, key)
 
 TABLA_VELAS = "velas_cripto"
 PARES_DEFAULT = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT"]
@@ -73,23 +93,41 @@ def _con_reintentos(func, *args, **kwargs):
     raise ultimo_error
 
 
-def _velas_a_filas(ohlcv, activo, temporalidad):
+def _velas_a_filas(ohlcv, par, temporalidad):
     """Convierte el formato ccxt ([ts_ms, open, high, low, close, volume])
-    al esquema exacto que espera velas_cripto / TradingLogic._obtener_velas:
-    tiempo, open, high, low, close, volume."""
+    al esquema REAL de la tabla velas_cripto en Supabase (columnas en
+    español: par/apertura/maximo/minimo/cierre/volumen -- verificado por
+    consulta directa a information_schema el 2026-07-25; el esquema en
+    sql/create_velas_cripto.sql con nombres en inglés está desactualizado
+    y no refleja la tabla real). TradingLogic sigue usando claves en inglés
+    internamente -- la traducción se hace solo en el límite con la DB, ver
+    _fila_a_vela."""
     filas = []
     for ts_ms, o, h, l, c, v in ohlcv:
         filas.append({
-            "activo": activo,
+            "par": par,
             "temporalidad": temporalidad,
             "tiempo": datetime.fromtimestamp(ts_ms / 1000, tz=timezone.utc).isoformat(),
-            "open": o,
-            "high": h,
-            "low": l,
-            "close": c,
-            "volume": v,
+            "apertura": o,
+            "maximo": h,
+            "minimo": l,
+            "cierre": c,
+            "volumen": v,
         })
     return filas
+
+
+def _fila_a_vela(fila):
+    """Traduce una fila de velas_cripto (columnas en español) al formato
+    interno en inglés que espera TradingLogic (src/trading/crypto_trader_agent.py)."""
+    return {
+        "tiempo": fila["tiempo"],
+        "open": fila["apertura"],
+        "high": fila["maximo"],
+        "low": fila["minimo"],
+        "close": fila["cierre"],
+        "volume": fila.get("volumen"),
+    }
 
 
 class PipelineVelas:
@@ -113,12 +151,12 @@ class PipelineVelas:
             # ni borrar. Si SUPABASE_SERVICE_ROLE_KEY no está configurada, esto
             # falla fuerte y explícito en vez de degradar en silencio a un
             # cliente que va a chocar con RLS en cada INSERT.
-            self.db = DatabaseManager.get_service_client()
+            self.db = _crear_cliente_service_role()
         except Exception as e:
             logger.error("No se pudo inicializar el cliente de Supabase (service_role): %s", e)
 
     def _guardar_filas(self, filas):
-        """Upsert por lotes (idempotente: activo+temporalidad+tiempo es
+        """Upsert por lotes (idempotente: par+temporalidad+tiempo es
         UNIQUE en velas_cripto, así que correr el pipeline dos veces no
         duplica). Cada lote en su propio try/except."""
         if not self.db or not filas:
@@ -127,32 +165,32 @@ class PipelineVelas:
         for i in range(0, len(filas), TAMANO_LOTE_INSERT):
             lote = filas[i:i + TAMANO_LOTE_INSERT]
             try:
-                self.db.table(TABLA_VELAS).upsert(lote, on_conflict="activo,temporalidad,tiempo").execute()
+                self.db.table(TABLA_VELAS).upsert(lote, on_conflict="par,temporalidad,tiempo").execute()
                 guardadas += len(lote)
             except Exception as e:
                 logger.error(
                     "Fallo guardando lote de %d velas (%s, filas %d-%d): %s",
-                    len(lote), filas[0]["activo"], i, i + len(lote), e,
+                    len(lote), filas[0]["par"], i, i + len(lote), e,
                 )
         return guardadas
 
-    def _ingestar_una_combinacion(self, activo, temporalidad):
+    def _ingestar_una_combinacion(self, par, temporalidad):
         if not self.exchange:
             return 0
         timeframe_ccxt = TEMPORALIDADES[temporalidad]
         try:
-            ohlcv = _con_reintentos(self.exchange.fetch_ohlcv, activo, timeframe=timeframe_ccxt, limit=self.limite)
+            ohlcv = _con_reintentos(self.exchange.fetch_ohlcv, par, timeframe=timeframe_ccxt, limit=self.limite)
         except Exception as e:
-            logger.error("Fallo definitivo trayendo %s %s tras %d reintentos: %s", activo, temporalidad, MAX_REINTENTOS, e)
+            logger.error("Fallo definitivo trayendo %s %s tras %d reintentos: %s", par, temporalidad, MAX_REINTENTOS, e)
             return 0
 
         if not ohlcv:
-            logger.warning("El exchange devolvió 0 velas para %s %s.", activo, temporalidad)
+            logger.warning("El exchange devolvió 0 velas para %s %s.", par, temporalidad)
             return 0
 
-        filas = _velas_a_filas(ohlcv, activo, temporalidad)
+        filas = _velas_a_filas(ohlcv, par, temporalidad)
         guardadas = self._guardar_filas(filas)
-        logger.info("%s %s: %d velas traídas, %d guardadas.", activo, temporalidad, len(ohlcv), guardadas)
+        logger.info("%s %s: %d velas traídas, %d guardadas.", par, temporalidad, len(ohlcv), guardadas)
         return guardadas
 
     def ejecutar(self):
@@ -160,14 +198,14 @@ class PipelineVelas:
         se procesa en su propio try/except, igual que trade_agent.py con sus
         ítems -- un símbolo caído no debe frenar al resto."""
         total_guardadas = 0
-        for activo in self.pares:
+        for par in self.pares:
             for temporalidad in self.temporalidades:
                 try:
-                    total_guardadas += self._ingestar_una_combinacion(activo, temporalidad)
+                    total_guardadas += self._ingestar_una_combinacion(par, temporalidad)
                 except Exception:
                     logger.error(
                         "Excepción no controlada ingiriendo %s %s:\n%s",
-                        activo, temporalidad, traceback.format_exc(),
+                        par, temporalidad, traceback.format_exc(),
                     )
                     continue
         logger.info(
@@ -176,35 +214,35 @@ class PipelineVelas:
         )
         return total_guardadas
 
-    def obtener_velas(self, activo, temporalidad, limite=100):
+    def obtener_velas(self, par, temporalidad, limite=100):
         """Velas para análisis: primero Supabase, si no alcanza, directo del exchange."""
         if self.db:
             try:
                 result = (
                     self.db.table(TABLA_VELAS)
                     .select("*")
-                    .eq("activo", activo)
+                    .eq("par", par)
                     .eq("temporalidad", temporalidad)
                     .order("tiempo", desc=True)
                     .limit(limite)
                     .execute()
                 )
                 if result.data and len(result.data) >= limite:
-                    return list(reversed(result.data))
+                    return [_fila_a_vela(f) for f in reversed(result.data)]
             except Exception as e:
-                logger.warning("No se pudo leer velas desde Supabase (%s %s): %s", activo, temporalidad, e)
+                logger.warning("No se pudo leer velas desde Supabase (%s %s): %s", par, temporalidad, e)
 
         if not self.exchange:
             return []
         timeframe_ccxt = TEMPORALIDADES.get(temporalidad, temporalidad)
         try:
-            ohlcv = _con_reintentos(self.exchange.fetch_ohlcv, activo, timeframe=timeframe_ccxt, limit=limite)
+            ohlcv = _con_reintentos(self.exchange.fetch_ohlcv, par, timeframe=timeframe_ccxt, limit=limite)
         except Exception as e:
-            logger.error("Fallo trayendo velas para análisis %s %s: %s", activo, temporalidad, e)
+            logger.error("Fallo trayendo velas para análisis %s %s: %s", par, temporalidad, e)
             return []
-        filas = _velas_a_filas(ohlcv, activo, temporalidad)
+        filas = _velas_a_filas(ohlcv, par, temporalidad)
         self._guardar_filas(filas)
-        return filas
+        return [_fila_a_vela(f) for f in filas]
 
 
 def main():
