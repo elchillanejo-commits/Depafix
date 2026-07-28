@@ -137,12 +137,12 @@ def ejecutar_ciclo(exchange, exchange_id, activos, limite, modo):
                 balance = exchange.fetch_balance()
 
                 if senal == 'COMPRA':
-        # --- GUARD: COMENTADO TEMPORALMENTE ---
-    if senal == 'COMPRA':
-        ultima = db.table('operaciones_ejecutadas').select('senal','ejecutada').eq('activo', activo).order('timestamp', desc=True).limit(1).execute()
-        if ultima.data and ultima.data[0]['senal'] == 'COMPRA' and ultima.data[0]['ejecutada'] == True:
-            logger.warning(f"⛔ Ya hay posición abierta en {activo}. No se comprará de nuevo.")
-            continue
+                    db = DatabaseManager.get_service_client()
+                    ultima = db.table('operaciones_ejecutadas').select('senal','ejecutada').eq('activo', activo).order('timestamp', desc=True).limit(1).execute()
+                    if ultima.data and ultima.data[0]['senal'] == 'COMPRA' and ultima.data[0]['ejecutada'] == True:
+                        logger.warning(f"⛔ Ya hay posición abierta en {activo}. No se comprará de nuevo.")
+                        continue
+
                     usdt_free = balance.get('USDT', {}).get('free', 0) or 0
                     if usdt_free < float(TRADE_AMOUNT_USDT):
                         logger.warning(f"Saldo insuficiente: {usdt_free:.2f} USDT < {TRADE_AMOUNT_USDT}")
