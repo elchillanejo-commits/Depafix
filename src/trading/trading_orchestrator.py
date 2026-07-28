@@ -137,7 +137,7 @@ def ejecutar_ciclo(exchange, exchange_id, activos, limite, modo):
                 balance = exchange.fetch_balance()
 
                 if senal == 'COMPRA':
-        # --- GUARD: Verificar si ya hay posición abierta ---
+        # --- GUARD: COMENTADO TEMPORALMENTE ---
     if senal == 'COMPRA':
         ultima = db.table('operaciones_ejecutadas').select('senal','ejecutada').eq('activo', activo).order('timestamp', desc=True).limit(1).execute()
         if ultima.data and ultima.data[0]['senal'] == 'COMPRA' and ultima.data[0]['ejecutada'] == True:
