@@ -184,9 +184,9 @@ def generar_senal(velas: List[Dict]) -> Dict[str, Any]:
         venta_score += 1
     
     # Decisión final
-    if compra_score >= 3:
+    if compra_score >= 2:
         return {'senal': 'COMPRA', 'motivo': f'Confluencia alcista ({compra_score}/4)', 'score': compra_score}
-    elif venta_score >= 3:
+    elif venta_score >= 2:
         return {'senal': 'VENTA', 'motivo': f'Confluencia bajista ({venta_score}/4)', 'score': venta_score}
     else:
         return {'senal': 'ESPERA', 'motivo': f'No hay confluencia suficiente (C:{compra_score}/V:{venta_score})', 'score': max(compra_score, venta_score)}
