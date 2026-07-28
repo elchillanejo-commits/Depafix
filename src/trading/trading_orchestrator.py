@@ -29,8 +29,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ========== CONFIGURACIÓN ==========
-TRADE_AMOUNT_USDT = Decimal("10.50")
-MIN_ORDER_USDT = Decimal("10.0")
+TRADE_AMOUNT_USDT = Decimal("3.00")
+MIN_ORDER_USDT = Decimal("2.0")
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Trading Orchestrator')
