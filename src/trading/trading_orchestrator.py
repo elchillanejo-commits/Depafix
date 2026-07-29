@@ -137,10 +137,10 @@ def ejecutar_ciclo(exchange, exchange_id, activos, limite, modo):
                 balance = exchange.fetch_balance()
 
                 if senal == 'COMPRA':
-                    db = DatabaseManager.get_service_client()
-                    ultima = db.table('operaciones_ejecutadas').select('senal','ejecutada').eq('activo', activo).order('timestamp', desc=True).limit(1).execute()
-                    if ultima.data and ultima.data[0]['senal'] == 'COMPRA' and ultima.data[0]['ejecutada'] == True:
-                        logger.warning(f"⛔ Ya hay posición abierta en {activo}. No se comprará de nuevo.")
+                    base = activo.split('/')[0]
+                    base_free = balance.get(base, {}).get('free', 0) or 0
+                    if base_free > 0:
+                        logger.warning(f"⛔ Ya hay {base_free} {base} en cartera. No se comprará de nuevo.")
                         continue
 
                     usdt_free = balance.get('USDT', {}).get('free', 0) or 0
