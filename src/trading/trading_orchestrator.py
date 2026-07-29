@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 # ========== CONFIGURACIÓN ==========
 TRADE_AMOUNT_USDT = Decimal("6.50")
-MIN_ORDER_USDT = Decimal("6.5")
+MIN_ORDER_USDT = Decimal("6.49")
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Trading Orchestrator')
@@ -67,8 +67,8 @@ def execute_order(exchange, symbol, side, quantity, price):
         quantity = float(exchange.amount_to_precision(symbol, quantity))
         notional = quantity * price
 
-        if notional < float(MIN_ORDER_USDT):
-            logger.warning(f"Monto muy pequeño: {quantity} {symbol} (${notional:.2f} < ${MIN_ORDER_USDT})")
+        if notional < float(MIN_ORDER_USDT) - 0.01:
+            logger.warning(f"Monto muy pequeño: {quantity} {symbol} (${notional:.4f} < ${MIN_ORDER_USDT})")
             return None
 
         logger.info(f"💰 Ejecutando orden {side} {quantity} {symbol} a ${price:.2f}")
