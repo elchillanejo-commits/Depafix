@@ -83,3 +83,16 @@ backups/
 *.json
 *.jsonl
 .venv/
+# Secretos
+core/aquiles
+core/aquiles_definitivo.py
+core/agente_aquiles_claude.py
+core/agente_aquiles_final.py
+core/aquiles.sh
+
+# Archivos pesados
+01_SERVIU_backup/
+data/
+backups/
+ingreso_sence/
+*.tar.gz
