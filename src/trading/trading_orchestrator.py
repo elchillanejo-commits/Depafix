@@ -29,7 +29,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ========== CONFIGURACIÓN ==========
-TRADE_AMOUNT_USDT = Decimal("6.50")
+TRADE_AMOUNT_USDT = Decimal("10.00")
 MIN_ORDER_USDT = Decimal("6.49")
 
 def parse_args():
