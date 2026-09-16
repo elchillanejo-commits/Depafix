@@ -1,98 +1,55 @@
-# Python
-__pycache__/
-*.py[cod]
-*.pyc
-*.pyo
-*.pyd
-*$py.class
-.Python
+# ============ PYTHON ============
 venv/
 .venv/
 env/
 ENV/
-env.bak/
-venv.bak/
-*.egg
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 *.egg-info/
-build/
 dist/
+build/
 
-# Secretos / entornos
+# ============ NODE ============
+node_modules/
+.next/
+.cache/
+out/
+
+# ============ SECRETOS (NUNCA COMMITEAR) ============
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+*.crt
+secrets.*
+credentials.*
 
-# Logs
-*.log
-auditor_*.log
-logs/
-
-# Temporales / editor / OS (además de IDE/OS más abajo)
-*.tmp
-*.swp
-*~
-
-# Datos crudos y de trabajo (no se versionan, se regeneran o vienen de scrapers/auditores).
-# NO incluye config/*.json ni frontend/*.json: esos son config de la app, no datos crudos.
-datos/
-data/*.json
-data/*.pkl
-*.pkl
+# ============ DATOS LOCALES ============
 *.db
 *.sqlite
 *.sqlite3
-*_pendientes.jsonl
-analisis_local.jsonl
-materiales_adjudicados.json
-prueba.json
-
-# Archivos basura sueltos en la raíz (artefactos de un redirect roto en una
-# sesión anterior -- no son módulos Python reales, ver commit 7018af2).
-# Confirmado 2026-07-16: ninguno de estos nombres corresponde a un
-# archivo/directorio real trackeado en el repo.
-/socket
-/subprocess
-/sys
-/time
-/logging
-/URL
-/ingesta
-/batch_predict
-/analisis_apu
-/unicodedata
-
-# Build artifacts de frontend
-frontend/.next/
-frontend/node_modules/
-frontend/dist/
-
-# Backup
 *.bak
-*.backup
+data/*.bak
+_ARCHIVE/
+*.log
+logs/*.log
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# ============ RAILWAY ============
+.railway*
+*.railway-config-*
 
-# OS
-.DS_Store
-Thumbs.db
-backups/
-*.json
-*.jsonl
-.venv/
-# Secretos
-core/aquiles
-core/aquiles_definitivo.py
-core/agente_aquiles_claude.py
-core/agente_aquiles_final.py
-core/aquiles.sh
-
-# Archivos pesados
-01_SERVIU_backup/
-data/
-backups/
-ingreso_sence/
-*.tar.gz
+# ============ BASURA (nombres de módulos Python como archivo) ============
+/os
+/re
+/json
+/hashlib
+/hmac
+/argparse
+/base64
+/anthropic
+/yake
