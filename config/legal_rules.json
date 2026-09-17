@@ -1,0 +1,22 @@
+{
+  "reglas_criticas": [
+    {
+      "palabra_clave": "prescripción",
+      "severidad": "CRITICA",
+      "tipo": "Prescripción",
+      "mensaje": "Posible prescripción extintiva según art. 2515 CC."
+    },
+    {
+      "palabra_clave": "abuso",
+      "severidad": "ALTA",
+      "tipo": "Abuso de derecho",
+      "mensaje": "Posible abuso de derecho según art. 19 N°24 de la Constitución."
+    },
+    {
+      "palabra_clave": "incumplimiento grave",
+      "severidad": "ALTA",
+      "tipo": "Incumplimiento",
+      "mensaje": "Incumplimiento grave que puede activar la póliza de garantía."
+    }
+  ]
+}

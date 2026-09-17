@@ -1,0 +1,35 @@
+3e52d64f:
+  area_especializada: CEO_INFORMATICO
+  asignacion_recursos_clp: 1250000.0
+  bloque: 06_AGENTES
+  descripcion_tarea: "Implementaci\xF3n de arquitectura de Web Scraping moderna basada\
+    \ en Playwright sin drivers externos, auto-wait y persistencia agn\xF3stica"
+  motor_ia: Activo y Sincronizado
+  status: success
+  tarea_id: 3e52d64f
+a5439a7e:
+  area_especializada: MARKETING
+  asignacion_recursos_clp: 0.0
+  bloque: 06_AGENTES
+  descripcion_tarea: "Configuraci\xF3n y despliegue de campa\xF1a org\xE1nica y tr\xE1\
+    fico gratuito en Meta Ads y Redes Sociales"
+  motor_ia: Activo y Sincronizado
+  status: success
+  tarea_id: a5439a7e
+e3af2f8e:
+  area_especializada: MARKETING
+  asignacion_recursos_clp: 350000.0
+  bloque: 06_AGENTES
+  descripcion_tarea: "Auditor\xEDa de conocimientos Meta Ads: optimizaci\xF3n de conversiones,\
+    \ segmentaci\xF3n avanzada y estructura de campa\xF1as"
+  motor_ia: Activo y Sincronizado
+  status: success
+  tarea_id: e3af2f8e
+f649ccb3:
+  area_especializada: MARKETING
+  asignacion_recursos_clp: 750000.0
+  bloque: 06_AGENTES
+  descripcion_tarea: Estrategia persistente en YAML para DepaFix
+  motor_ia: Activo y Sincronizado
+  status: success
+  tarea_id: f649ccb3
