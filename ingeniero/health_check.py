@@ -1,103 +1,98 @@
 #!/usr/bin/env python3
-"""
-health_check.py — Ingeniero Informático DepaFix
-Chequea el estado del sistema SIN llamar a Claude.
-Exit 0 = todo OK. Exit 1 = algún check falló.
-Salida: JSON en stdout + append a ingeniero/logs/health.log
-"""
 import json
 import os
 import subprocess
 import sys
-from datetime import datetime, timezone, timedelta
-from pathlib import Path
+import datetime
+import urllib.request
+import urllib.error
 
-BASE = Path(__file__).resolve().parent.parent
-LOG_FILE = Path(__file__).resolve().parent / "logs" / "health.log"
-STALE_MIN = 15  # umbral para detectar data stale
+# Configuration
+LOG_FILE = "ingeniero/logs/health.log"
+MAX_LOG_SIZE = 10 * 1024 * 1024 # 10MB
 
-def run(cmd, timeout=10):
+def rotate_log():
+    if os.path.exists(LOG_FILE) and os.path.getsize(LOG_FILE) > MAX_LOG_SIZE:
+        os.truncate(LOG_FILE, 0)
+
+def run_command(cmd):
     try:
-        r = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=timeout)
-        return r.returncode == 0, (r.stdout or r.stderr).strip()
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=10)
+        return result.stdout.strip(), result.returncode
     except Exception as e:
-        return False, f"EXCEPTION: {e}"
-
-def check_systemd():
-    ok, out = run("systemctl --user is-active depafix-trading.service")
-    return {"name": "systemd_trading", "ok": ok and out == "active", "output": out}
-
-def check_docker_postgres():
-    ok, out = run("docker ps --filter name=core-postgres --format '{{.Status}}'")
-    return {"name": "docker_postgres", "ok": ok and "Up" in out, "output": out}
+        return str(e), 1
 
 def check_supabase():
+    url = f"{os.environ.get('SUPABASE_URL')}/rest/v1/velas_cripto?select=created_at&limit=1&order=created_at.desc"
+    key = os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
+    
+    headers = {
+        "apikey": key,
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json"
+    }
+    
     try:
-        from dotenv import load_dotenv
-        load_dotenv(BASE / ".env")
-        from supabase import create_client
-        url = os.getenv("SUPABASE_URL")
-        key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-        if not url or not key:
-            return {"name": "supabase_ping", "ok": False, "output": "faltan variables SUPABASE_*"}
-        client = create_client(url, key)
-        r = client.table("velas_cripto").select("tiempo").order("tiempo", desc=True).limit(1).execute()
-        return {"name": "supabase_ping", "ok": True, "output": f"velas_cripto last: {r.data[0]['tiempo'] if r.data else 'empty'}"}
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=5) as response:
+            if response.status != 200:
+                return False, f"Status: {response.status}"
+            data = json.loads(response.read().decode())
+            if not data:
+                return False, "No data in velas_cripto"
+            
+            # Assuming created_at is in ISO format
+            last_created_at = datetime.datetime.fromisoformat(data[0]['created_at'].replace('Z', '+00:00'))
+            now = datetime.datetime.now(datetime.timezone.utc)
+            if (now - last_created_at).total_seconds() > 900:
+                return False, f"Stale: {last_created_at}"
+            return True, "OK"
     except Exception as e:
-        return {"name": "supabase_ping", "ok": False, "output": f"ERROR: {str(e)[:120]}"}
+        return False, str(e)
 
-def check_log_errors():
-    log = BASE / "logs" / "trading_systemd.log"
-    if not log.exists():
-        return {"name": "log_errors", "ok": False, "output": "log no existe"}
-    ok, out = run(f"tail -200 {log} | grep -c ERROR || true")
-    try:
-        n = int(out) if out else 0
-        return {"name": "log_errors", "ok": n < 5, "output": f"{n} errores en últimas 200 líneas"}
-    except Exception:
-        return {"name": "log_errors", "ok": True, "output": out[:80]}
-
-def check_velas_fresh():
-    try:
-        from dotenv import load_dotenv
-        load_dotenv(BASE / ".env")
-        from supabase import create_client
-        client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_ROLE_KEY"))
-        r = client.table("velas_cripto").select("tiempo").order("tiempo", desc=True).limit(1).execute()
-        if not r.data:
-            return {"name": "velas_fresh", "ok": False, "output": "tabla vacía"}
-        last = r.data[0]["tiempo"]
-        # Parse ISO
-        last_dt = datetime.fromisoformat(last.replace("Z", "+00:00"))
-        now = datetime.now(timezone.utc)
-        age_min = (now - last_dt).total_seconds() / 60
-        return {"name": "velas_fresh", "ok": age_min < 120, "output": f"última vela hace {age_min:.0f} min"}
-    except Exception as e:
-        return {"name": "velas_fresh", "ok": False, "output": f"ERROR: {str(e)[:120]}"}
+def load_env():
+    if os.path.exists(".env"):
+        with open(".env") as f:
+            for line in f:
+                if "=" in line:
+                    key, value = line.split("=", 1)
+                    os.environ[key.strip()] = value.strip()
 
 def main():
-    checks = [
-        check_systemd(),
-        check_docker_postgres(),
-        check_supabase(),
-        check_log_errors(),
-        check_velas_fresh(),
-    ]
-    all_ok = all(c["ok"] for c in checks)
-    result = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "all_ok": all_ok,
-        "checks": checks,
-    }
-    # Stdout
-    print(json.dumps(result, indent=2, ensure_ascii=False))
-    # Append al log
-    LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
-    # Rotar si >10MB
-    if LOG_FILE.exists() and LOG_FILE.stat().st_size > 10 * 1024 * 1024:
-        LOG_FILE.write_text("")
-    with LOG_FILE.open("a") as f:
-        f.write(json.dumps(result, ensure_ascii=False) + "\n")
+    load_env()
+    checks = []
+    all_ok = True
+
+    # 1. Systemctl
+    out, code = run_command("systemctl --user is-active depafix-trading.service")
+    checks.append({"name": "bot_service", "ok": code == 0, "output": out})
+    if code != 0: all_ok = False
+
+    # 2. Docker
+    out, code = run_command("docker ps --filter name=core-postgres --format '{{.Status}}'")
+    checks.append({"name": "postgres_container", "ok": code == 0 and "Up" in out, "output": out})
+    if not (code == 0 and "Up" in out): all_ok = False
+
+    # 3. Supabase
+    ok, msg = check_supabase()
+    checks.append({"name": "supabase_db", "ok": ok, "output": msg})
+    if not ok: all_ok = False
+
+    # 4. Logs
+    out, _ = run_command("tail -100 logs/trading_systemd.log | grep -c ERROR")
+    error_count = int(out) if out.isdigit() else 0
+    checks.append({"name": "error_logs", "ok": error_count == 0, "output": f"{error_count} errors found"})
+    if error_count > 0: all_ok = False
+
+    # Output
+    result = {"timestamp": datetime.datetime.now().isoformat(), "checks": checks}
+    print(json.dumps(result))
+    
+    # Log
+    rotate_log()
+    with open(LOG_FILE, "a") as f:
+        f.write(json.dumps(result) + "\n")
+        
     sys.exit(0 if all_ok else 1)
 
 if __name__ == "__main__":
