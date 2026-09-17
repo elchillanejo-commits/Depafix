@@ -61,7 +61,10 @@ def _parse_ts(s):
     if not m:
         return None
     try:
-        return datetime.fromisoformat(m.group(1).replace(" ", "T"))
+        dt = datetime.fromisoformat(m.group(1).replace(" ", "T"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
     except ValueError:
         return None
 
@@ -78,7 +81,7 @@ def collect_health():
     lines = _tail(HEALTH_LOG)
     if not lines:
         return None
-    cutoff = datetime.now() - timedelta(hours=WINDOW_H)
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=WINDOW_H)
     ok = warn = err = 0
     for ln in lines:
         try:
@@ -88,6 +91,8 @@ def collect_health():
         ts_s = data.get("timestamp", "")
         try:
             ts = datetime.fromisoformat(ts_s.replace("Z", "+00:00"))
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
         except (ValueError, AttributeError):
             continue
         if ts < cutoff:
@@ -104,7 +109,7 @@ def collect_trading():
     lines = _tail(TRADING_LOG)
     if not lines:
         return None
-    cutoff = datetime.now() - timedelta(hours=WINDOW_H)
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=WINDOW_H)
     ciclos = senales = errores = 0
     for ln in lines:
         ts = _parse_ts(ln)
@@ -137,6 +142,8 @@ def collect_projects():
             info["last_ts"] = last.strip()
             try:
                 lt = datetime.fromisoformat(info["last_ts"].replace("Z", "+00:00"))
+                if lt.tzinfo is None:
+                    lt = lt.replace(tzinfo=timezone.utc)
                 info["days_since"] = (datetime.now(timezone.utc) - lt).days
             except ValueError:
                 pass
