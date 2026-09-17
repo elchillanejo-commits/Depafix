@@ -1,53 +1,61 @@
 'use client'
-import { useUser, SignInButton, SignOutButton } from '@clerk/nextjs'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 export default function Home() {
-  const { isSignedIn, user } = useUser()
-  const [data, setData] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [resultado, setResultado] = useState(null)
+  const [cargando, setCargando] = useState(false)
+  const [error, setError] = useState(null)
 
-  useEffect(() => {
-    if (isSignedIn) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/obras/`)
-        .then(res => res.json())
-        .then(setData)
-        .catch(console.error)
-        .finally(() => setLoading(false))
-    } else {
-      setLoading(false)
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setCargando(true)
+    setError(null)
+    setResultado(null)
+    const formData = new FormData(e.target)
+    try {
+      const res = await fetch('http://localhost:8000/api/serviu/analizar-presupuesto', {
+        method: 'POST',
+        body: formData
+      })
+      if (!res.ok) throw new Error('Error ' + res.status)
+      const data = await res.json()
+      setResultado(data)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setCargando(false)
     }
-  }, [isSignedIn])
+  }
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'system-ui' }}>
-      <h1>🏗️ DepaFix Dashboard</h1>
-      {!isSignedIn ? (
-        <SignInButton mode="modal">
-          <button style={{ padding: '10px 20px', background: '#1E3A8A', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
-            Iniciar sesión
-          </button>
-        </SignInButton>
-      ) : (
-        <div>
-          <p>👋 Bienvenido, {user?.firstName || 'usuario'}</p>
-          <SignOutButton>
-            <button style={{ padding: '8px 16px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
-              Cerrar sesión
+    <div style={{padding:20,fontFamily:'system-ui',background:'#111827',color:'white',minHeight:'100vh'}}>
+      <h1 style={{color:'#60A5FA'}}>🏗️ DepaFix — SERVIU Presupuestos</h1>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginTop:20}}>
+        <div style={{background:'#1F2937',padding:20,borderRadius:12}}>
+          <h2>📤 Subir Presupuesto CSV</h2>
+          <p style={{fontSize:12,color:'#9CA3AF'}}>Columnas: partida,monto,anticipo,retencion,garantia</p>
+          <form onSubmit={handleSubmit}>
+            <input type="file" name="archivo" accept=".csv" required style={{margin:'10px 0'}}/>
+            <button type="submit" disabled={cargando} style={{padding:'10px 20px',background:cargando?'#4B5563':'#2563EB',color:'white',border:'none',borderRadius:8,cursor:'pointer'}}>
+              {cargando ? '⏳ Analizando...' : '📊 Analizar'}
             </button>
-          </SignOutButton>
-          <h2>📊 Obras recientes</h2>
-          {loading ? (
-            <p>Cargando...</p>
-          ) : (
-            <ul>
-              {Array.isArray(data) && data.slice(0, 5).map((item, i) => (
-                <li key={i}>{item.descripcion || 'Sin nombre'} - ${item.total?.toFixed(0) || 0}</li>
-              ))}
-            </ul>
+          </form>
+          {error && <p style={{color:'#FCA5A5',fontSize:14}}>❌ {error}</p>}
+        </div>
+        <div style={{background:'#1F2937',padding:20,borderRadius:12}}>
+          <h2>📈 Resultados</h2>
+          {!resultado && <p style={{color:'#6B7280'}}>Sube un archivo para ver resultados.</p>}
+          {resultado && (
+            <div>
+              <p>Subtotal: <strong>${resultado.calculo_financiero?.subtotal_base?.toLocaleString('es-CL')}</strong></p>
+              <p>Total IVA 19%: <strong style={{color:'#34D399'}}>${resultado.calculo_financiero?.total_cliente_iva?.toLocaleString('es-CL')}</strong></p>
+              <p>Cascada 30/15/5: <strong style={{color:'#60A5FA'}}>${resultado.calculo_financiero?.total_interno_cascada?.toLocaleString('es-CL')}</strong></p>
+              <p style={{fontSize:12,color:'#9CA3AF',marginTop:10}}>{resultado.analisis_normativo?.recomendacion}</p>
+              {resultado.pdf_generado && <p style={{fontSize:12,color:'#93C5FD'}}>📄 {resultado.pdf_generado}</p>}
+            </div>
           )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
