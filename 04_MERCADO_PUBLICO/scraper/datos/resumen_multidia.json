@@ -1,0 +1,95 @@
+{
+  "Construcción": {
+    "licitaciones": 1,
+    "precios_extraidos": 1,
+    "precios_nuevos_serviu": 0,
+    "ejemplos": [
+      {
+        "codigo_licitacion": "5908-16-LE26",
+        "nombre_licitacion": "CONSTRUCCIÓN CIERRE PERIMETRAL CIRCUITO BICICROSS COMUNA DE HUARA",
+        "proveedor": "CONSTRUCTORA SANTA CRUZ LIMITADA",
+        "producto": "Construcción de obras civiles",
+        "categoria": "Servicios de construcción y mantenimiento / Construcción de edificios en general / Construcción de obras civiles y infraestructuras",
+        "codigo_producto": 72131702,
+        "cantidad": 1.0,
+        "unidad_medida": "Global",
+        "precio_unitario": 27434000.0,
+        "fecha_adjudicacion": "2026-07-29T17:01:25.707"
+      }
+    ]
+  },
+  "Electricidad": {
+    "licitaciones": 0,
+    "precios_extraidos": 0,
+    "precios_nuevos_serviu": 0,
+    "ejemplos": []
+  },
+  "Fontanería": {
+    "licitaciones": 0,
+    "precios_extraidos": 0,
+    "precios_nuevos_serviu": 0,
+    "ejemplos": []
+  },
+  "Gráfica": {
+    "licitaciones": 1,
+    "precios_extraidos": 3,
+    "precios_nuevos_serviu": 0,
+    "ejemplos": [
+      {
+        "codigo_licitacion": "2785-53-LE26",
+        "nombre_licitacion": "SDA 6152 SERVICIOS DE PUBLICIDAD Y DIFUSIÓN GESTIÓN MUNICIPAL DEPARTAMENTO DE COMUNICACIONES",
+        "proveedor": "SABES COMUNICACIONES SPA",
+        "producto": "Publicidad en Internet",
+        "categoria": "Servicios editoriales, de diseño, publicidad, gráficos y artistas / Publicidad / Publicidad en medios no impresos",
+        "codigo_producto": 82101603,
+        "cantidad": 5.0,
+        "unidad_medida": "Mes",
+        "precio_unitario": 1680673.0,
+        "fecha_adjudicacion": "2026-07-29T17:25:50.207"
+      },
+      {
+        "codigo_licitacion": "2785-53-LE26",
+        "nombre_licitacion": "SDA 6152 SERVICIOS DE PUBLICIDAD Y DIFUSIÓN GESTIÓN MUNICIPAL DEPARTAMENTO DE COMUNICACIONES",
+        "proveedor": "AGENCIA DE COMUNICACIÓN CESAR ALONSO VILUGRON SPA",
+        "producto": "Campañas publicitarias",
+        "categoria": "Servicios editoriales, de diseño, publicidad, gráficos y artistas / Publicidad / Agencias de publicidad",
+        "codigo_producto": 82101801,
+        "cantidad": 5.0,
+        "unidad_medida": "Mes",
+        "precio_unitario": 650000.0,
+        "fecha_adjudicacion": "2026-07-29T17:25:50.207"
+      },
+      {
+        "codigo_licitacion": "2785-53-LE26",
+        "nombre_licitacion": "SDA 6152 SERVICIOS DE PUBLICIDAD Y DIFUSIÓN GESTIÓN MUNICIPAL DEPARTAMENTO DE COMUNICACIONES",
+        "proveedor": "PLAN TACTIC SPA",
+        "producto": "Publicidad en periódicos",
+        "categoria": "Servicios editoriales, de diseño, publicidad, gráficos y artistas / Publicidad / Publicidad impresa",
+        "codigo_producto": 82101504,
+        "cantidad": 5.0,
+        "unidad_medida": "Unidad",
+        "precio_unitario": 590000.0,
+        "fecha_adjudicacion": "2026-07-29T17:25:50.207"
+      }
+    ]
+  },
+  "Capacitación": {
+    "licitaciones": 1,
+    "precios_extraidos": 1,
+    "precios_nuevos_serviu": 0,
+    "ejemplos": [
+      {
+        "codigo_licitacion": "4284-90-L126",
+        "nombre_licitacion": "SERVICIO DE CAPACITACIÓN FORMATIVOS PARA EL FORTALECIMIENTO DEL EMPRENDIMIENTO Y AUTOCUIDADO PROGRAMA JEFAS DE HOGAR”. según B.A.G Bases administrativas Generales",
+        "proveedor": "PROCONSULTORES CAPACITACIONES SPA",
+        "producto": "Formación, capacitación y entrenamiento de personal",
+        "categoria": "Servicios profesionales, administrativos y consultorías de gestión empresarial / Servicios de recursos humanos / Consultorías para el desarrollo de recursos humanos",
+        "codigo_producto": 80111504,
+        "cantidad": 1.0,
+        "unidad_medida": "Unidad",
+        "precio_unitario": 3053000.0,
+        "fecha_adjudicacion": "2026-07-29T17:37:46.673"
+      }
+    ]
+  }
+}
