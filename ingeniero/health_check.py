@@ -23,32 +23,47 @@ def run_command(cmd):
         return str(e), 1
 
 def check_supabase():
-    url = f"{os.environ.get('SUPABASE_URL')}/rest/v1/velas_cripto?select=created_at&limit=1&order=created_at.desc"
-    key = os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
-    
-    headers = {
-        "apikey": key,
-        "Authorization": f"Bearer {key}",
-        "Content-Type": "application/json"
-    }
-    
+    """Chequea frescura de operaciones_ejecutadas (no velas_cripto).
+    Arregla 3 bugs: imports faltantes, tz-aware, campo correcto."""
     try:
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=5) as response:
-            if response.status != 200:
-                return False, f"Status: {response.status}"
-            data = json.loads(response.read().decode())
-            if not data:
-                return False, "No data in velas_cripto"
-            
-            # Assuming created_at is in ISO format
-            last_created_at = datetime.datetime.fromisoformat(data[0]['created_at'].replace('Z', '+00:00'))
-            now = datetime.datetime.now(datetime.timezone.utc)
-            if (now - last_created_at).total_seconds() > 900:
-                return False, f"Stale: {last_created_at}"
-            return True, "OK"
+        from dotenv import load_dotenv
+        load_dotenv()
+        from supabase import create_client
+
+        url = os.getenv("SUPABASE_URL")
+        key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        if not url or not key:
+            return {"name": "supabase_db", "ok": False,
+                    "output": "faltan SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY"}
+
+        client = create_client(url, key)
+        data = (client.table("operaciones_ejecutadas")
+                .select("timestamp")
+                .order("timestamp", desc=True)
+                .limit(1)
+                .execute().data)
+
+        if not data:
+            return {"name": "supabase_db", "ok": False, "output": "sin operaciones"}
+
+        raw = data[0].get("timestamp")
+        if not raw:
+            return {"name": "supabase_db", "ok": False, "output": "sin timestamp"}
+
+        import datetime as dt_mod
+        dt = dt_mod.datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=dt_mod.timezone.utc)
+
+        now = dt_mod.datetime.now(dt_mod.timezone.utc)
+        delta = (now - dt).total_seconds()
+        if delta > 1800:
+            return {"name": "supabase_db", "ok": False,
+                    "output": f"stale: {dt.isoformat()} ({int(delta)}s)"}
+        return {"name": "supabase_db", "ok": True, "output": f"OK: {dt.isoformat()}"}
     except Exception as e:
-        return False, str(e)
+        return {"name": "supabase_db", "ok": False, "output": f"{type(e).__name__}: {e}"}
+
 
 def load_env():
     if os.path.exists(".env"):
