@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-import os, sys, json, time, logging
+import os, sys, json, time, logging, tempfile
 from datetime import datetime
 from pathlib import Path
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import jsonschema
@@ -135,3 +135,48 @@ async def ejecutar_cripto(request: Request):
         "stderr": result.stderr,
         "returncode": result.returncode
     }
+
+# ===== ENDPOINT PARA EL AGENTE RESUMIDOR (OCR + Claude) =====
+@app.post("/api/agentes/resumir")
+async def resumir_endpoint(
+    archivo: UploadFile = File(None),
+    texto: str = Form(None),
+    max_tokens: int = Form(500),
+):
+    """Recibe un archivo (PDF/imagen) o texto directo, llama al agente
+    resumidor (06_AGENTES/resumidor_ocr/agente_resumidor.py) y devuelve el
+    resumen junto con el ID con el que quedó persistido en Supabase."""
+    if not archivo and not texto:
+        raise HTTPException(400, detail="Enviá 'archivo' (PDF/imagen) o 'texto'")
+
+    import importlib
+    agente = importlib.import_module("06_AGENTES.resumidor_ocr.agente_resumidor")
+
+    try:
+        if archivo:
+            sufijo = Path(archivo.filename or "").suffix.lower()
+            with tempfile.NamedTemporaryFile(suffix=sufijo, delete=False) as tmp:
+                tmp.write(await archivo.read())
+                tmp_path = tmp.name
+            try:
+                texto_extraido = (
+                    agente.extraer_texto_pdf(tmp_path) if sufijo == ".pdf"
+                    else agente.extraer_texto_imagen(tmp_path)
+                )
+            finally:
+                os.unlink(tmp_path)
+            fuente = archivo.filename
+        else:
+            texto_extraido = texto
+            fuente = "texto_directo"
+
+        resultado = agente.resumir_y_guardar(texto_extraido, max_tokens=max_tokens, fuente=fuente)
+        return JSONResponse({
+            "id": resultado["id"],
+            "resumen": resultado["resumen"],
+            "modelo_usado": resultado["modelo_usado"],
+        })
+    except ValueError as e:
+        raise HTTPException(422, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(500, detail=str(e))
