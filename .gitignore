@@ -53,3 +53,23 @@ logs/*.log
 /base64
 /anthropic
 /yake
+
+# ============ BACKUPS Y DATOS GRANDES ============
+01_SERVIU_backup/
+05_TRADE_CRIPTO_NEW/
+data/*.faiss
+data/*.pdf
+data/raw/
+data/expedientes/
+data/documentos_estrategicos/
+compliance_logs_pendientes.jsonl
+presupuesto.csv
+
+# ============ DATOS LOCALES ============
+*.csv
+!requirements.txt
+
+# ============ RAG / VECTOR STORES ============
+*.faiss
+*.index
+*.pkl
