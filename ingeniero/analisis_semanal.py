@@ -42,7 +42,6 @@ def fetch_data(client):
             res = (client.table("operaciones_ejecutadas")
                    .select("*")
                    .gte("timestamp", cutoff)
-                   .not_("precio_entrada", "is", "null")
                    .range(i, i + 999)
                    .execute())
             if not res.data: break
