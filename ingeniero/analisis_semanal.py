@@ -56,8 +56,19 @@ def calcular_win_rate(df, velas_df):
     if velas_df.empty: return 0.0
     precios_actuales = velas_df.groupby('par')['cierre'].last().to_dict()
 
+    def _precio_para(activo):
+        """Lookup con fallback: BTC/USDT → BTC/USD (Kraken vs Binance)."""
+        if activo in precios_actuales:
+            return precios_actuales[activo]
+        # Fallback: quitar la 'T' final de USDT
+        if activo.endswith('/USDT'):
+            alt = activo.replace('/USDT', '/USD')
+            if alt in precios_actuales:
+                return precios_actuales[alt]
+        return None
+
     def evaluar(row):
-        precio_final = row['precio_salida'] if pd.notna(row['precio_salida']) else precios_actuales.get(row['activo'])
+        precio_final = row['precio_salida'] if pd.notna(row['precio_salida']) else _precio_para(row['activo'])
         if not precio_final or pd.isna(row['precio_entrada']) or row['precio_entrada'] == 0:
             return None
         if row['senal'] == 'COMPRA':
