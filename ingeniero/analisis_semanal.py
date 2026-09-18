@@ -36,10 +36,22 @@ def get_supabase():
 
 def fetch_data(client):
     try:
-        dias_atras = datetime.now(timezone.utc) - timedelta(days=7)
-        ops = client.table("operaciones_ejecutadas").select("*").gte("timestamp", dias_atras.isoformat()).execute()
-        velas = client.table("velas_cripto").select("par,cierre").order("tiempo", desc=True).limit(100).execute()
-        return pd.DataFrame(ops.data), pd.DataFrame(velas.data)
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+        ops_data = []
+        for i in range(0, 3000, 1000):
+            res = (client.table("operaciones_ejecutadas")
+                   .select("*")
+                   .gte("timestamp", cutoff)
+                   .not_("precio_entrada", "is", "null")
+                   .range(i, i + 999)
+                   .execute())
+            if not res.data: break
+            ops_data.extend(res.data)
+
+        v1 = client.table("velas_cripto").select("par,cierre").order("tiempo", desc=True).limit(1000).execute()
+        v2 = client.table("velas_cripto").select("par,cierre").order("tiempo", desc=True).range(1000, 1999).execute()
+
+        return pd.DataFrame(ops_data), pd.DataFrame(v1.data + v2.data)
     except Exception as e:
         print(f"Error extrayendo datos: {e}")
         return None, None
