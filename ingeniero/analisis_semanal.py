@@ -7,6 +7,7 @@ import os
 import sys
 import json
 import pandas as pd
+import numpy as np
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
@@ -20,6 +21,12 @@ HILO_PATH = Path.home() / "Documentos/HILO_CONDUCTOR.txt"
 
 load_dotenv(ENV_PATH)
 
+# Helper para convertir tipos numpy a nativos para JSON
+def np_encoder(object):
+    if isinstance(object, np.generic):
+        return object.item()
+    raise TypeError(f"Type {type(object)} not serializable")
+
 def get_supabase():
     url = os.getenv("SUPABASE_URL")
     key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
@@ -29,7 +36,6 @@ def get_supabase():
 
 def fetch_data(client):
     try:
-        # Extraer últimos 7 días
         dias_atras = datetime.now(timezone.utc) - timedelta(days=7)
         ops = client.table("operaciones_ejecutadas").select("*").gte("timestamp", dias_atras.isoformat()).execute()
         velas = client.table("velas_cripto").select("par,cierre").order("tiempo", desc=True).limit(100).execute()
@@ -43,10 +49,11 @@ def analizar_factores(df):
     factores = ["EMA50", "RSI", "Golden Pocket", "FVG", "OB"]
     resultados = {}
     for f in factores:
-        resultados[f] = df['confluencia_detalle'].apply(lambda x: any(f in str(i) for i in x)).sum()
+        resultados[f] = int(df['confluencia_detalle'].apply(lambda x: any(f in str(i) for i in x)).sum())
     return resultados
 
 def calcular_win_rate(df, velas_df):
+    if velas_df.empty: return 0.0
     precios_actuales = velas_df.groupby('par')['cierre'].last().to_dict()
     def evaluar(row):
         precio_actual = precios_actuales.get(row['activo'])
@@ -56,12 +63,13 @@ def calcular_win_rate(df, velas_df):
         return None
     
     df['win'] = df.apply(evaluar, axis=1)
-    return df[df['senal'].isin(['COMPRA', 'VENTA'])]['win'].mean()
+    win_rate = df[df['senal'].isin(['COMPRA', 'VENTA'])]['win'].mean()
+    return float(win_rate) if not pd.isna(win_rate) else 0.0
 
 def generar_informe(df, velas_df):
-    # A. Distribución
-    dist_senal = df['senal'].value_counts().to_dict()
-    dist_activo = df['activo'].value_counts().to_dict()
+    # A. Distribución (convertir numpy a nativo)
+    dist_senal = df['senal'].value_counts().astype(int).to_dict()
+    dist_activo = df['activo'].value_counts().astype(int).to_dict()
     
     # B. Factores
     factores = analizar_factores(df)
@@ -71,17 +79,17 @@ def generar_informe(df, velas_df):
     
     # D. Riesgo/Beneficio
     df['rb_ratio'] = (df['take_profit_1'] - df['precio_entrada']).abs() / (df['precio_entrada'] - df['stop_loss']).abs()
-    rb_prom = df['rb_ratio'].mean()
+    rb_prom = float(df['rb_ratio'].mean()) if not df['rb_ratio'].empty else 0.0
 
     informe = f"""
 ## 📊 INFORME CUANTITATIVO SEMANAL — {datetime.now().strftime('%Y-%m-%d')}
 
 ### A. Distribución de señales
 - COMPRA: {dist_senal.get('COMPRA', 0)} | VENTA: {dist_senal.get('VENTA', 0)} | ESPERA: {dist_senal.get('ESPERA', 0)}
-- Activos: {json.dumps(dist_activo)}
+- Activos: {json.dumps(dist_activo, default=np_encoder)}
 
 ### B. Análisis de factores
-{json.dumps(factores, indent=2)}
+{json.dumps(factores, indent=2, default=np_encoder)}
 
 ### C. Métricas de Rendimiento
 - Win Rate Hipotético: {win_rate*100:.2f}%
@@ -96,7 +104,9 @@ def main():
     try:
         client = get_supabase()
         df, velas_df = fetch_data(client)
-        if df is None: return
+        if df is None or df.empty:
+            print("No hay datos para analizar.")
+            return
         
         informe = generar_informe(df, velas_df)
         
@@ -115,6 +125,8 @@ def main():
                 
     except Exception as e:
         print(f"Error crítico en reporte: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     main()
