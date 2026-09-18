@@ -55,16 +55,22 @@ def analizar_factores(df):
 def calcular_win_rate(df, velas_df):
     if velas_df.empty: return 0.0
     precios_actuales = velas_df.groupby('par')['cierre'].last().to_dict()
+
     def evaluar(row):
-        precio_actual = precios_actuales.get(row['activo'])
-        if not precio_actual or pd.isna(row['precio_entrada']): return None
-        if row['senal'] == 'COMPRA': return precio_actual > row['precio_entrada']
-        if row['senal'] == 'VENTA': return precio_actual < row['precio_entrada']
+        precio_final = row['precio_salida'] if pd.notna(row['precio_salida']) else precios_actuales.get(row['activo'])
+        if not precio_final or pd.isna(row['precio_entrada']) or row['precio_entrada'] == 0:
+            return None
+        if row['senal'] == 'COMPRA':
+            return precio_final > row['precio_entrada']
+        if row['senal'] == 'VENTA':
+            return precio_final < row['precio_entrada']
         return None
-    
+
     df['win'] = df.apply(evaluar, axis=1)
-    win_rate = df[df['senal'].isin(['COMPRA', 'VENTA'])]['win'].mean()
-    return float(win_rate) if not pd.isna(win_rate) else 0.0
+    validos = df[df['win'].notna()]
+    if validos.empty:
+        return 0.0
+    return float(validos['win'].mean())
 
 def generar_informe(df, velas_df):
     # A. Distribución (convertir numpy a nativo)
