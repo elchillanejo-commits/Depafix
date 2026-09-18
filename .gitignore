@@ -73,3 +73,29 @@ presupuesto.csv
 *.faiss
 *.index
 *.pkl
+
+# Logs locales
+logs_*.txt
+*.log
+
+# Backups de requirements y código
+requirements.txt.bak.*
+src/trading/*.bak.*
+scripts/check_paper.sh
+
+# Estado del ingeniero (local)
+ingeniero/state.json
+ingeniero/logs/*.log
+
+# Logs locales
+logs_*.txt
+*.log
+
+# Backups de requirements y código
+requirements.txt.bak.*
+src/trading/*.bak.*
+scripts/check_paper.sh
+
+# Estado del ingeniero (local)
+ingeniero/state.json
+ingeniero/logs/*.log
