@@ -27,3 +27,5 @@ pytest-asyncio>=0.23.0
 # Métricas
 psutil>=5.9.0
 cachetools>=5.3.0
+ccxt>=4.0.0
+requests>=2.31.0
