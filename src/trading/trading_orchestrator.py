@@ -8,7 +8,7 @@ import sys
 import time
 import logging
 import argparse
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from decimal import Decimal
 import traceback
@@ -82,7 +82,7 @@ def execute_order(exchange, symbol, side, quantity, price):
         logger.error(f"❌ Error ejecutando orden: {e}")
         return None
 
-def registrar_senal(activo, senal, precio, motivo, puntuacion, modo, cantidad=None, ejecutada=False, orden_id=None):
+def registrar_senal(activo, senal, precio, motivo, puntuacion, modo, cantidad=None, ejecutada=False, orden_id=None, stop_loss=None, take_profit_1=None, confluencia_detalle=None):
     """Guarda la señal en operaciones_ejecutadas"""
     try:
         data = {
@@ -96,7 +96,10 @@ def registrar_senal(activo, senal, precio, motivo, puntuacion, modo, cantidad=No
             'puntuacion_confluencia': puntuacion,
             'ejecutada': ejecutada,
             'orden_id': orden_id,
-            'timestamp': datetime.utcnow().isoformat()
+            'stop_loss': float(stop_loss) if stop_loss else None,
+            'take_profit_1': float(take_profit_1) if take_profit_1 else None,
+            'confluencia_detalle': confluencia_detalle,
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
         db_client = DatabaseManager.get_service_client()
         result = db_client.table('operaciones_ejecutadas').insert(data).execute()
@@ -176,7 +179,10 @@ def ejecutar_ciclo(exchange, exchange_id, activos, limite, modo):
                 cantidad=cantidad,
                 ejecutada=ejecutada,
                 orden_id=orden_id
-            )
+            ,
+                stop_loss=resultado.get('stop_loss'),
+                take_profit_1=resultado.get('take_profit_1'),
+                confluencia_detalle=resultado.get('confluencia_detalle'))
 
         except Exception as e:
             logger.error(f"❌ Error procesando {activo}: {e}")
