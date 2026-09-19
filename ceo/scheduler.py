@@ -128,6 +128,7 @@ async def _tick() -> None:
 async def start_scheduler() -> None:
     """Loop principal del scheduler. Corre infinito."""
     logger.info("Scheduler iniciado — polling cada 60s")
+    logger.info(f"WORKERS disponibles: {list(WORKERS.keys())}")
     while True:
         try:
             await _tick()

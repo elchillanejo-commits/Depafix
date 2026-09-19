@@ -5,10 +5,14 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# COPY explícito del código (bypass cache genérico)
+COPY ceo/ ./ceo/
+COPY src/ ./src/ 2>/dev/null || true
+COPY config/ ./config/ 2>/dev/null || true
+COPY .env* ./
+COPY sql/ ./sql/ 2>/dev/null || true
 
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
 CMD ["uvicorn", "ceo.main:app", "--host", "0.0.0.0", "--port", "8000"]
-# Build 1789738769
