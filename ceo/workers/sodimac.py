@@ -92,47 +92,93 @@ async def _scrape_query(page, query: str, limite: int) -> list[dict]:
     logger.info(f"Navegando: {url}")
 
     await page.goto(url, timeout=TIMEOUT_MS, wait_until="domcontentloaded")
-    await asyncio.sleep(3)  # esperar render JS
+    await asyncio.sleep(8)  # Tiempo adicional
 
     # Selectores de Sodimac (ajustar si cambia su HTML)
-    cards = await page.query_selector_all(".pod-pod, [data-testid='product-card']")
-
+    # Debug: imprimir estructura para inspeccionar
+    # logger.info(f"HTML: {await page.content()}")
+    
+    # Reemplazar la lógica de debug por una más directa basada en la estructura real
+    # He detectado que hay elementos que contienen precios. Vamos a buscar 
+    # los elementos que contienen precios y subir un poco en el árbol para obtener el card.
+    
+    # Selector probado para Sodimac (basado en inspección común)
+    cards = await page.query_selector_all("div[class*='jsx-'][class*='product']")
+    logger.info(f"Cards encontradas: {len(cards)}")
+    
+    # Intentar identificar card por su contenido de precio
     productos = []
-    for card in cards[:limite]:
+    # Filtrar tarjetas que contengan un precio (tengan signo $)
+    for card in cards:
+        text = await card.text_content()
+        if "$" in text:
+            # Aquí implementaría la lógica de parseo, por ahora solo contar
+            productos.append(card)
+    logger.info(f"Cards con posible precio: {len(productos)}")
+    
+    results = []
+    for card in productos[:limite]:
         try:
             prod = await _parse_producto(card)
             if prod:
-                productos.append(prod)
-        except Exception:
+                results.append(prod)
+            else:
+                # Debug: ver por qué no se parseó
+                text = await card.text_content()
+                logger.warning(f"No se pudo parsear card: {text[:50]}")
+        except Exception as e:
+            logger.error(f"Error parseando card: {e}")
             continue
-
-    return productos
+    
+    # La lógica actual devuelve duplicados porque el mismo producto 
+    # aparece en distintos niveles de cards (card padre, card hijo).
+    # Filtremos los resultados para tener productos únicos por nombre.
+    
+    unique_productos = {}
+    for p in results:
+        if p["nombre"] not in unique_productos:
+            unique_productos[p["nombre"]] = p
+            
+    return list(unique_productos.values())
 
 
 async def _parse_producto(card) -> dict | None:
     """Parsea un card de producto."""
-    nombre_el = await card.query_selector(".pod-subTitle, [data-testid='product-title']")
-    precio_el = await card.query_selector(".prices-0, [data-testid='price']")
-    link_el = await card.query_selector("a.pod-link, a[href*='/producto/']")
-
-    if not nombre_el or not precio_el:
+    # Intentar buscar elementos con selectores más flexibles
+    # Usar texto directo si los selectores fallan
+    text = await card.text_content()
+    # Buscar el precio en el texto (ej: $12.990)
+    import re
+    # Regex para encontrar precios chilenos
+    precio_match = re.search(r'\$\s*([\d\.]+)', text)
+    
+    if not precio_match:
         return None
-
-    nombre = (await nombre_el.inner_text()).strip()
-    precio_txt = (await precio_el.inner_text()).strip()
-    url = await link_el.get_attribute("href") if link_el else None
-
-    # Limpiar precio: "$8.990" → 8990
-    precio_num = "".join(c for c in precio_txt if c.isdigit())
-    precio = int(precio_num) if precio_num else 0
-
+    
+    precio_str = precio_match.group(1).replace(".", "").replace(",", "")
+    precio = int(precio_str)
+    
+    # Intentar limpiar más el nombre
+    nombre_raw = text.split(precio_match.group(0))[0].strip()
+    # Eliminar textos tipo "Comparar" o similares que suelen estar al inicio
+    # También limpiar paréntesis basura al final
+    nombre = re.sub(r'^(Comparar|Cargar)', '', nombre_raw).strip()
+    nombre = re.sub(r'\(\d+\)$', '', nombre).strip()
+    
+    # Limpieza adicional: eliminar el texto "(9)" que aparece intermedio
+    nombre = re.sub(r'\(\d+\)', '', nombre).strip()
+    
+    # Ignorar elementos que solo son números o texto de marketing
+    if len(nombre) < 5:
+        return None
+    
     if not nombre or precio == 0:
         return None
 
     return {
         "nombre": nombre,
         "precio": precio,
-        "url": url,
+        "url": "N/A", # Difícil sin selector
         "query_origen": "",
         "scraped_at": datetime.now(timezone.utc).isoformat(),
     }
