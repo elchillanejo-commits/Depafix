@@ -67,12 +67,15 @@ async def youtube_ingest_worker(params: dict) -> dict:
 
     logger.info(f"Procesando YouTube: {video_id}")
 
-    # 1. Descargar transcript
+    # 1. Descargar transcript (API nueva v1.x)
     try:
-        transcript_list = YouTubeTranscriptApi.get_transcript(
-            video_id,
-            languages=["es", "en"],
-        )
+        api = YouTubeTranscriptApi()
+        fetched = api.fetch(video_id, languages=["es", "en"])
+        # Convertir snippets a lista de dicts (compatibilidad)
+        transcript_list = [
+            {"text": s.text, "start": s.start, "duration": s.duration}
+            for s in fetched.snippets
+        ]
     except TranscriptsDisabled:
         return {"ok": False, "error": "Subtítulos deshabilitados"}
     except NoTranscriptFound:
