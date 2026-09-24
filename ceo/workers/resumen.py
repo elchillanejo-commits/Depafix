@@ -6,7 +6,8 @@ from datetime import datetime, timezone
 from dotenv import load_dotenv
 from supabase import create_client
 
-load_dotenv(os.path.expanduser("~/PROYECTOS/Proyectos/DepaFix/.env"))
+# Carga de envs: si no hay archivo, no pasa nada (Railway usa env vars nativas)
+load_dotenv()
 logger = logging.getLogger(__name__)
 
 
@@ -16,7 +17,7 @@ async def resumen_ia_worker(params: dict) -> dict:
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
-        return {"ok": False, "error": "Falta ANTHROPIC_API_KEY en .env"}
+        return {"ok": False, "error": "Falta ANTHROPIC_API_KEY"}
 
     try:
         import anthropic
@@ -48,7 +49,7 @@ async def resumen_ia_worker(params: dict) -> dict:
         try:
             contenido = (item.get("contenido") or "")[:8000]
             resp = anthropic_client.messages.create(
-                model="claude-3-5-haiku-20241022",
+                model="claude-haiku-4-5-20251001",
                 max_tokens=300,
                 messages=[{
                     "role": "user",
