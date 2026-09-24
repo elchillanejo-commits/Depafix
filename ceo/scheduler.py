@@ -3,7 +3,6 @@ import asyncio
 import logging
 import os
 from datetime import datetime, timezone
-from pathlib import Path
 
 from croniter import croniter
 from dotenv import load_dotenv
@@ -11,8 +10,8 @@ from supabase import create_client, Client
 
 from ceo.workers import WORKERS
 
-# Config
-load_dotenv(Path.home() / "PROYECTOS/Proyectos/DepaFix/.env")
+# Config: cargar .env si existe, si no, usa variables de entorno
+load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
