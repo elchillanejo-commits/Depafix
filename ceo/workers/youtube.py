@@ -1,135 +1,71 @@
-"""youtube.py — Descarga transcript de YouTube a knowledge_items."""
-import asyncio
-import logging
 import os
 import re
-from datetime import datetime, timezone
-
+import logging
 import requests
-from dotenv import load_dotenv
-from supabase import create_client
+from datetime import datetime, timezone
 from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api._errors import (
-    TranscriptsDisabled,
-    NoTranscriptFound,
-    VideoUnavailable,
-)
+from supabase import create_client
 
-load_dotenv(os.path.expanduser("~/PROYECTOS/Proyectos/DepaFix/.env"))
 logger = logging.getLogger(__name__)
 
-
-def _extraer_video_id(url: str) -> str | None:
-    """Extrae video_id de cualquier formato de URL de YouTube."""
-    patrones = [
-        r"(?:v=|/v/|youtu\.be/|/embed/|/shorts/)([a-zA-Z0-9_-]{11})",
-    ]
-    for p in patrones:
-        m = re.search(p, url)
-        if m:
-            return m.group(1)
-    return None
-
-
-def _obtener_metadatos(url: str) -> dict:
-    """Obtiene título y autor vía oEmbed de YouTube."""
-    try:
-        oembed = f"https://www.youtube.com/oembed?url={url}&format=json"
-        r = requests.get(oembed, timeout=10)
-        if r.status_code == 200:
-            data = r.json()
-            return {
-                "titulo": data.get("title", ""),
-                "autor": data.get("author_name", ""),
-            }
-    except Exception as e:
-        logger.warning(f"oEmbed falló: {e}")
-    return {"titulo": "", "autor": ""}
-
-
 async def youtube_ingest_worker(params: dict) -> dict:
-    """
-    Descarga transcript de YouTube y lo guarda en knowledge_items.
-    
-    Params:
-        url: URL del video
-        tags: lista de tags opcionales
-    """
-    url = params.get("url", "").strip()
+    """Descarga transcript de YouTube y lo guarda en knowledge_items."""
+    url = params.get("url")
     tags = params.get("tags", [])
-
+    
     if not url:
-        return {"ok": False, "error": "Falta parámetro 'url'"}
-
-    video_id = _extraer_video_id(url)
-    if not video_id:
-        return {"ok": False, "error": f"URL no es de YouTube: {url}"}
-
-    logger.info(f"Procesando YouTube: {video_id}")
-
-    # 1. Descargar transcript (API nueva v1.x)
+        return {"ok": False, "error": "Falta url"}
+        
+    # 1. Extraer video_id
+    video_id_match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11}).*", url)
+    if not video_id_match:
+        return {"ok": False, "error": "No se pudo extraer video_id"}
+    video_id = video_id_match.group(1)
+    
+    # 2. Descargar transcript
     try:
-        api = YouTubeTranscriptApi()
-        fetched = api.fetch(video_id, languages=["es", "en"])
-        # Convertir snippets a lista de dicts (compatibilidad)
-        transcript_list = [
-            {"text": s.text, "start": s.start, "duration": s.duration}
-            for s in fetched.snippets
-        ]
-    except TranscriptsDisabled:
-        return {"ok": False, "error": "Subtítulos deshabilitados"}
-    except NoTranscriptFound:
-        return {"ok": False, "error": "No hay transcript disponible"}
-    except VideoUnavailable:
-        return {"ok": False, "error": "Video no disponible"}
+        transcript_list = YouTubeTranscriptApi.get_transcript(video_id, languages=["es", "en"])
+        contenido = " ".join([item["text"] for item in transcript_list])
     except Exception as e:
-        return {"ok": False, "error": f"YouTube error: {str(e)[:150]}"}
-
-    # 2. Concatenar en texto plano
-    contenido = " ".join(frag.get("text", "") for frag in transcript_list)
-    contenido = contenido.strip()
-
-    if not contenido:
-        return {"ok": False, "error": "Transcript vacío"}
-
-    # 3. Duración aproximada
-    duracion_seg = 0
-    if transcript_list:
-        last = transcript_list[-1]
-        duracion_seg = int(last.get("start", 0) + last.get("duration", 0))
-
-    # 4. Metadatos (en thread para no bloquear el loop)
-    meta = await asyncio.to_thread(_obtener_metadatos, url)
-
+        return {"ok": False, "error": f"Error obteniendo transcript: {str(e)}"}
+        
+    # 4. Obtener metadatos con oEmbed
+    oembed_url = f"https://www.youtube.com/oembed?url={url}&format=json"
+    meta = {}
+    try:
+        resp = requests.get(oembed_url, timeout=5)
+        if resp.status_code == 200:
+            meta = resp.json()
+    except:
+        pass
+        
     # 5. Guardar en Supabase
     client = create_client(
         os.getenv("SUPABASE_URL"),
         os.getenv("SUPABASE_SERVICE_ROLE_KEY"),
     )
-
-    registro = {
+    
+    data = {
         "source": "youtube",
         "url": url,
-        "title": meta["titulo"] or f"YouTube {video_id}",
-        "autor": meta["autor"],
+        "title": meta.get("title", "Unknown"),
+        "autor": meta.get("author_name", "Unknown"),
         "contenido": contenido,
         "tags": tags,
-        "duracion_seg": duracion_seg,
-        "procesado": False,
+        "duracion_seg": 0, # Opcional: calcular a partir de meta si disponible
+        "creado_en": datetime.now(timezone.utc).isoformat(),
+        "procesado": False
     }
-
-    resp = client.table("knowledge_items").insert(registro).execute()
-
-    if not resp.data:
-        return {"ok": False, "error": "No se pudo guardar en Supabase"}
-
+    
+    insert = client.table("knowledge_items").insert(data).execute()
+    knowledge_id = insert.data[0]["id"]
+    
     return {
         "ok": True,
-        "knowledge_id": resp.data[0]["id"],
-        "titulo": registro["title"],
-        "autor": registro["autor"],
-        "duracion_min": duracion_seg // 60,
+        "knowledge_id": knowledge_id,
+        "titulo": data["title"],
+        "autor": data["autor"],
+        "duracion_min": 0,
         "caracteres_transcript": len(contenido),
-        "video_id": video_id,
-        "ejecutado": datetime.now(timezone.utc).isoformat(),
+        "ejecutado": datetime.now(timezone.utc).isoformat()
     }
