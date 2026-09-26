@@ -31,7 +31,7 @@ async def properties_page_worker(params: dict) -> dict:
         query = query.eq("comuna", comuna)
     if precio_max:
         query = query.lte("precio_clp", precio_max)
-    query = query.order("precio_clp", desc=False).limit(50)
+    query = query.order("precio_clp", desc=False).limit(500)
 
     resp = query.execute()
     propiedades = resp.data or []
@@ -52,7 +52,7 @@ async def properties_page_worker(params: dict) -> dict:
                 <span>🚿 {p.get('banos', '?')}B</span>
                 <span>📐 {p.get('m2', '?')} m²</span>
             </div>
-            <p class="direccion">📍 {p.get('direccion', '')}</p>
+            <p class="direccion">📍 {p.get('direccion') or ''}</p>
             <p class="descripcion">{p.get('descripcion', '')}</p>
             <a href="{p.get('url', '#')}" class="btn">Ver más</a>
         </div>
