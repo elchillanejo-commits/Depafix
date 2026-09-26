@@ -109,3 +109,31 @@ tags: [roadmap, gantt, planeacion]
 ---
 
 _Última actualización: 2026-09-26 22:50_
+
+---
+
+## 💰 INVERSIÓN EN SCRAPING (Postergado)
+
+**Decisión:** NO invertir en servicios pagados hasta que haya caja.
+
+**Servicios evaluados (para retomar cuando negocio facture):**
+- **Apify** → $4/1K listings (MLC/Yapo/Portales LATAM)
+- **ScrapingBee** → $49.99/mes (250K créditos)
+- **Bright Data** → $1.50/1K requests (5K gratis/mes)
+- **ZenRows** → $19/mes (45K créditos)
+
+**Trigger para retomar:** primer cliente pagando $100+/mes.
+
+**Mientras:** usar dataset TocToc (367 props reales ya disponibles) + API oficial MercadoLibre (gratis).
+
+---
+
+## 📅 SEMANA ACTUAL (28-sep a 4-oct)
+
+| Día | Tarea | Estado |
+|---|---|---|
+| Lun 28 | Kutt scraper (DESCARTADO) + HILO review | ✅ Cerrado |
+| **Mar 29** | **Configurar Telegram + notifier** | 🔄 HOY |
+| Mié 30 | Analytics (precio/m² por comuna) | ⏳ |
+| Jue 1 | Web profesional con datos reales | ⏳ |
+| Vie 2 | Cierre semana + Gantt | ⏳ |
