@@ -8,3 +8,4 @@ ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 CMD ["uvicorn", "ceo.main:app", "--host", "0.0.0.0", "--port", "8000"]
 # Rebuild 1790275172
+# Rebuild 1790384263

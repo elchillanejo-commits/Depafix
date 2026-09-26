@@ -24,7 +24,12 @@ async def youtube_ingest_worker(params: dict) -> dict:
     
     # 2. Descargar transcript
     try:
-        transcript_list = YouTubeTranscriptApi.get_transcript(video_id, languages=["es", "en"])
+        api = YouTubeTranscriptApi()
+        fetched = api.fetch(video_id, languages=["es", "en"])
+        transcript_list = [
+            {"text": s.text, "start": s.start, "duration": s.duration}
+            for s in fetched.snippets
+        ]
         contenido = " ".join([item["text"] for item in transcript_list])
     except Exception as e:
         return {"ok": False, "error": f"Error obteniendo transcript: {str(e)}"}
