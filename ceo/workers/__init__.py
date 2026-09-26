@@ -36,6 +36,7 @@ _safe_import("analizar_tendencias", "ceo.workers.tendencias", "analizar_tendenci
 _safe_import("properties_page", "ceo.workers.properties", "properties_page_worker")
 _safe_import("scrape_mercadolibre", "ceo.workers.mercadolibre", "scrape_mercadolibre_worker")
 _safe_import("scrape_yapo", "ceo.workers.yapo", "scrape_yapo_worker")
+_safe_import("scrape_toctoc", "ceo.workers.toctoc", "scrape_toctoc_worker")
 
 # Reportar estado
 logger.info(f"Workers cargados: {len(WORKERS)}")

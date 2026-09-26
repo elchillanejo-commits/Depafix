@@ -1,30 +1,44 @@
-"""yapo.py — Scraper de arriendos Yapo.cl con Playwright."""
+"""yapo.py — Scraper Yapo.cl vía API interna (sin navegador)."""
 import asyncio
+import json
 import logging
 import os
 import re
+import urllib.parse
 from datetime import datetime, timezone
 
+import requests
 from dotenv import load_dotenv
-from playwright.async_api import async_playwright
 from supabase import create_client
 
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-USER_AGENT = (
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-)
-
-BASE_URL = "https://www.yapo.cl"
-TIMEOUT_MS = 30000
+API_BASE = "https://public-api.yapo.cl/buyers"
+HEADERS = {
+    "accept": "application/json, text/plain, */*",
+    "accept-language": "es-CL,es;q=0.9,en;q=0.8",
+    "origin": "https://www.yapo.cl",
+    "referer": "https://www.yapo.cl/",
+    "user-agent": (
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+    ),
+    "x-chref": "WEB",
+    "x-cmref": "client",
+    "x-commerce": "Yapo",
+    "x-country": "CL",
+    "x-domain": "Buyer",
+    "x-rhsref": "www.yapo.cl",
+    "x-txref": "fcbbbb37-6f67-4cc0-a39a-367769e7eb3b",
+}
 
 
 async def scrape_yapo_worker(params: dict) -> dict:
-    """Scrapea arriendos de Yapo por comuna."""
+    """Scrapea Yapo vía API interna."""
     comunas = params.get("comunas", ["las-condes", "providencia"])
     limite = params.get("limite_por_comuna", 20)
+    region_id = params.get("region_id", 15)  # 15 = RM
 
     client = create_client(
         os.getenv("SUPABASE_URL"),
@@ -36,30 +50,18 @@ async def scrape_yapo_worker(params: dict) -> dict:
     por_comuna = {}
     errores = []
 
-    async with async_playwright() as pw:
-        browser = await pw.chromium.launch(
-            headless=True,
-            args=["--no-sandbox", "--disable-dev-shm-usage"],
-        )
-        context = await browser.new_context(
-            user_agent=USER_AGENT,
-            viewport={"width": 1920, "height": 1080},
-            locale="es-CL",
-        )
-        page = await context.new_page()
-
-        for comuna in comunas:
-            try:
-                nuevos, actualizados = await _scrape_comuna(page, client, comuna, limite)
-                total_nuevas += nuevos
-                total_actualizadas += actualizados
-                por_comuna[comuna] = {"nuevas": nuevos, "actualizadas": actualizados}
-                await asyncio.sleep(2)
-            except Exception as e:
-                logger.error(f"Error en {comuna}: {e}")
-                errores.append({"comuna": comuna, "error": str(e)[:100]})
-
-        await browser.close()
+    for comuna in comunas:
+        try:
+            nuevas, actualizadas = await _scrape_comuna(
+                client, comuna, region_id, limite
+            )
+            total_nuevas += nuevas
+            total_actualizadas += actualizadas
+            por_comuna[comuna] = {"nuevas": nuevas, "actualizadas": actualizadas}
+            await asyncio.sleep(2)
+        except Exception as e:
+            logger.error(f"Error Yapo {comuna}: {e}")
+            errores.append({"comuna": comuna, "error": str(e)[:150]})
 
     return {
         "ok": True,
@@ -71,93 +73,155 @@ async def scrape_yapo_worker(params: dict) -> dict:
     }
 
 
-async def _scrape_comuna(page, client, comuna: str, limite: int):
-    """Scrapea una comuna de Yapo."""
+async def _scrape_comuna(client, comuna: str, region_id: int, limite: int):
+    """Scrapea una comuna. Devuelve (nuevas, actualizadas)."""
+    query_obj = {
+        "estateType": [1, 2],
+        "regionId": region_id,
+        "category": [1240],  # arriendo
+    }
+    query_encoded = urllib.parse.quote(json.dumps(query_obj, separators=(",", ":")))
+    orders_encoded = urllib.parse.quote(
+        json.dumps({"orderBy": "listTime", "typeOrder": "desc"}, separators=(",", ":"))
+    )
+
     nuevas = 0
     actualizadas = 0
     procesados = 0
+    page = 0
+    max_pages = 3
 
-    # Yapo URL típica: /region-metropolitana/arrendar/departamento?comuna=las-condes
-    url = f"{BASE_URL}/region-metropolitana/arrendar/departamento?comuna={comuna}"
+    while procesados < limite and page < max_pages:
+        url = (
+            f"{API_BASE}/search?page={page}&limit=47"
+            f"&query={query_encoded}&orders={orders_encoded}"
+        )
+        try:
+            resp = requests.get(url, headers=HEADERS, timeout=20)
+            if resp.status_code != 200:
+                logger.warning(f"Yapo API HTTP {resp.status_code}")
+                break
+            data = resp.json()
+            ads = data.get("ads", [])
+            if not ads:
+                break
 
-    try:
-        await page.goto(url, timeout=TIMEOUT_MS, wait_until="domcontentloaded")
-        await asyncio.sleep(3)
-    except Exception as e:
-        logger.warning(f"Yapo goto error: {e}")
-        return 0, 0
+            logger.info(f"Yapo {comuna} p{page}: {len(ads)} ads")
 
-    cards = await page.query_selector_all("div.ad-card, article.ad-card, div[class*='listing']")
-    logger.info(f"Yapo {comuna}: {len(cards)} cards")
+            for ad in ads[:limite - procesados]:
+                prop = _parse_ad(ad, comuna)
+                if not prop:
+                    continue
+                accion = _upsert_property(client, prop)
+                if accion == "nueva":
+                    nuevas += 1
+                elif accion == "actualizada":
+                    actualizadas += 1
+                procesados += 1
 
-    for card in cards[:limite]:
-        prop = await _parse_card(card, comuna)
-        if not prop:
-            continue
-        accion = _upsert_property(client, prop)
-        if accion == "nueva":
-            nuevas += 1
-        elif accion == "actualizada":
-            actualizadas += 1
-        procesados += 1
+            # Check pagination
+            pag = data.get("pagination", {})
+            if not pag.get("hasNext"):
+                break
+
+            page += 1
+            await asyncio.sleep(1.5)
+        except Exception as e:
+            logger.warning(f"Yapo loop error: {e}")
+            break
 
     return nuevas, actualizadas
 
 
-async def _parse_card(card, comuna: str):
-    """Extrae datos del card de Yapo."""
+def _parse_ad(ad: dict, comuna: str):
+    """Parsea un ad de Yapo API."""
     try:
-        title_el = await card.query_selector("a.title, h3, h2, .title")
-        if not title_el:
+        list_id = ad.get("listId")
+        if not list_id:
             return None
-        title = (await title_el.inner_text()).strip()
 
-        price_el = await card.query_selector(".price, span[class*='price']")
-        if not price_el:
+        subject = (ad.get("subject") or "").strip()
+        if not subject:
             return None
-        precio_txt = (await price_el.inner_text()).strip()
-        precio_num = "".join(c for c in precio_txt if c.isdigit())
-        if not precio_num or int(precio_num) < 100000:
+
+        # Precio: puede venir como {amount, currency, period}
+        price_obj = ad.get("price") or {}
+        if isinstance(price_obj, dict):
+            precio = price_obj.get("amount") or 0
+        else:
+            precio = float(price_obj or 0)
+        if not precio or precio <= 0:
             return None
-        precio = int(precio_num)
 
-        url_el = await card.query_selector("a[href*='/arriendo/']")
-        url_item = await url_el.get_attribute("href") if url_el else ""
-        if url_item and url_item.startswith("/"):
-            url_item = BASE_URL + url_item
+        # Solo arriendos (filtrar UF vs CLP)
+        currency = price_obj.get("currency") if isinstance(price_obj, dict) else "CLP"
+        if currency == "UF":
+            return None  # ignorar UF por ahora
 
-        img_el = await card.query_selector("img")
-        img_url = await img_el.get_attribute("src") if img_el else None
+        # Atributos comunes
+        attrs = {}
+        for a in (ad.get("attributes") or []):
+            k = a.get("key") or a.get("name")
+            v = a.get("value")
+            if k:
+                attrs[k.lower()] = v
 
-        source_id = f"yapo-{hash(url_item or title) & 0xFFFFFFFF}"
+        dorms = _safe_int(attrs.get("bedrooms") or attrs.get("dormitorios"))
+        banos = _safe_int(attrs.get("bathrooms") or attrs.get("banos"))
+        m2 = _safe_int(attrs.get("surface") or attrs.get("metros_cuadrados"))
 
-        m2_match = re.search(r"(\d+)\s*m[²2]", title, re.IGNORECASE)
-        dorms_match = re.search(r"(\d+)\s*(dorm|D\b|amb)", title, re.IGNORECASE)
-        banos_match = re.search(r"(\d+)\s*(ba[ñn]o|B\b)", title, re.IGNORECASE)
+        # Fallback regex sobre subject
+        if m2 is None:
+            m = re.search(r"(\d+)\s*m[²2]", subject, re.IGNORECASE)
+            m2 = int(m.group(1)) if m else None
+        if dorms is None:
+            m = re.search(r"(\d+)\s*(dorm|D\b|amb)", subject, re.IGNORECASE)
+            dorms = int(m.group(1)) if m else None
+        if banos is None:
+            m = re.search(r"(\d+)\s*(ba[ñn]o|B\b)", subject, re.IGNORECASE)
+            banos = int(m.group(1)) if m else None
 
-        m2 = int(m2_match.group(1)) if m2_match else None
-        dorms = int(dorms_match.group(1)) if dorms_match else None
-        banos = int(banos_match.group(1)) if banos_match else None
         precio_m2 = int(precio / m2) if m2 and m2 > 0 else None
 
+        # Comuna desde el ad
+        loc = ad.get("location") or {}
+        comuna_ad = loc.get("name") or comuna.replace("-", " ").title()
+
+        # URL normalizada
+        cleaned = re.sub(r"[^a-zA-Z0-9\s]", "", subject.lower())
+        cleaned = re.sub(r"\s+", "-", cleaned.strip())
+        url = f"https://www.yapo.cl/inmuebles/{cleaned}_{list_id}"
+
+        # Imagen
+        img = ad.get("thumbnail") or ad.get("image") or ""
+        if img and img.startswith("http://"):
+            img = img.replace("http://", "https://")
+
         return {
-            "source_id": source_id,
+            "source_id": f"yapo-{list_id}",
             "source_portal": "yapo",
-            "titulo": title[:200],
-            "precio_clp": precio,
+            "titulo": subject[:200],
+            "precio_clp": int(precio),
             "precio_m2": precio_m2,
             "dormitorios": dorms,
             "banos": banos,
             "m2": m2,
-            "direccion": "",
-            "comuna": comuna.replace("-", " ").title(),
-            "url": url_item,
-            "imagen_url": img_url,
+            "direccion": (loc.get("name") or "")[:200],
+            "comuna": comuna_ad.replace("-", " ").title(),
+            "url": url,
+            "imagen_url": img or None,
             "activa": True,
             "ultimo_scrape": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as e:
         logger.warning(f"Yapo parse error: {e}")
+        return None
+
+
+def _safe_int(v):
+    try:
+        return int(v) if v is not None else None
+    except (ValueError, TypeError):
         return None
 
 
@@ -183,5 +247,5 @@ def _upsert_property(client, prop: dict) -> str:
             client.table("properties").insert(prop).execute()
             return "nueva"
     except Exception as e:
-        logger.warning(f"Yapo upsert error: {e}")
+        logger.warning(f"Upsert error: {e}")
         return "error"
