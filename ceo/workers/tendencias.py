@@ -24,7 +24,7 @@ async def analizar_tendencias_worker(params: dict) -> dict:
     
     por_hora = df['timestamp'].dt.strftime('%H').value_counts().sort_index().to_dict()
     por_dia = df['timestamp'].dt.day_name().value_counts().to_dict()
-    distribucion = df['tipo'].value_counts().to_dict()
+    distribucion = df['senal'].value_counts().to_dict()
     
     total = len(df)
     compra_pct = distribucion.get('COMPRA', 0) / total
