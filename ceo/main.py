@@ -52,6 +52,20 @@ app = FastAPI(title="DepaFix CEO Service", version="1.0.0", lifespan=lifespan)
 
 
 # Endpoints
+
+@app.get("/properties-public")
+async def properties_public(comuna: str = None, precio_max: int = None):
+    """Página pública de propiedades."""
+    from fastapi.responses import HTMLResponse
+    from ceo.workers.properties import properties_page_worker
+    
+    params = {}
+    if comuna: params["comuna"] = comuna
+    if precio_max: params["precio_max"] = precio_max
+    
+    result = await properties_page_worker(params)
+    return HTMLResponse(content=result.get("html", "<h1>Error</h1>"))
+
 @app.get("/health")
 def health():
     return {"status": "ok", "ts": datetime.now(timezone.utc).isoformat()}
