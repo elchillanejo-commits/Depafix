@@ -11,7 +11,7 @@ async def analizar_tendencias_worker(params: dict) -> dict:
     
     fecha_inicio = (datetime.now(timezone.utc) - timedelta(days=dias)).isoformat()
     
-    query = client.table("operaciones_ejecutadas").select("*").gte("ejecutado_en", fecha_inicio)
+    query = client.table("operaciones_ejecutadas").select("*").gte("timestamp", fecha_inicio)
     if activo:
         query = query.eq("activo", activo)
         
@@ -20,10 +20,10 @@ async def analizar_tendencias_worker(params: dict) -> dict:
         return {"ok": True, "total_señales": 0, "insight": "Sin datos"}
         
     df = pd.DataFrame(data)
-    df['ejecutado_en'] = pd.to_datetime(df['ejecutado_en'])
+    df['timestamp'] = pd.to_datetime(df['timestamp'])
     
-    por_hora = df['ejecutado_en'].dt.strftime('%H').value_counts().sort_index().to_dict()
-    por_dia = df['ejecutado_en'].dt.day_name().value_counts().to_dict()
+    por_hora = df['timestamp'].dt.strftime('%H').value_counts().sort_index().to_dict()
+    por_dia = df['timestamp'].dt.day_name().value_counts().to_dict()
     distribucion = df['tipo'].value_counts().to_dict()
     
     total = len(df)
