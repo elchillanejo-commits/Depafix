@@ -34,6 +34,8 @@ _safe_import("notifier_telegram", "ceo.workers.notifier", "notifier_telegram_wor
 _safe_import("cleanup_old_tasks", "ceo.workers.cleanup", "cleanup_old_tasks_worker")
 _safe_import("analizar_tendencias", "ceo.workers.tendencias", "analizar_tendencias_worker")
 _safe_import("properties_page", "ceo.workers.properties", "properties_page_worker")
+_safe_import("scrape_mercadolibre", "ceo.workers.mercadolibre", "scrape_mercadolibre_worker")
+_safe_import("scrape_yapo", "ceo.workers.yapo", "scrape_yapo_worker")
 
 # Reportar estado
 logger.info(f"Workers cargados: {len(WORKERS)}")
