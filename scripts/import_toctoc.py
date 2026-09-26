@@ -13,104 +13,77 @@ client = create_client(
     os.getenv("SUPABASE_SERVICE_ROLE_KEY"),
 )
 
-UF_CLP = 38800  # UF de referencia 2026
+UF = 38800
 
-def normalizar_precio(prop: dict) -> int:
-    """Detecta si el precio está en UF o CLP y lo normaliza a CLP."""
-    precio_peso = prop.get("precio_peso") or 0
-    precio_uf = prop.get("precio_uf") or 0
 
-    # Si precio_peso < 10000, probablemente es UF
-    if 0 < precio_peso < 10000:
-        return int(precio_peso * UF_CLP)
-    if precio_peso >= 10000:
-        return int(precio_peso)
+def norm_precio(item):
+    """Normaliza precio. Acepta CLP directo o UF."""
+    vals = [item.get("precio_peso") or 0, item.get("precio_uf") or 0]
+    # CLP directo (100K - 5M)
+    for v in vals:
+        if 100000 <= v <= 5000000:
+            return int(v)
+    # UF (3 - 200)
+    for v in vals:
+        if 3 <= v <= 200:
+            return int(v * UF)
+    return None
 
-    # Fallback: usar precio_uf (que también puede estar invertido)
-    if precio_uf > 100000:
-        return int(precio_uf)
-    if 0 < precio_uf < 10000:
-        return int(precio_uf * UF_CLP)
 
-    return 0
-
-def importar(archivo: str, tipo: str):
-    print(f"\n📂 Importando {archivo}...")
-    with open(archivo) as f:
-        props = json.load(f)
-
-    print(f"   Total: {len(props)} propiedades")
-
+def importar(archivo):
+    items = json.loads(Path(archivo).read_text())
     nuevas = 0
     actualizadas = 0
     saltadas = 0
-
-    for p in props:
-        try:
-            precio = normalizar_precio(p)
-            if precio <= 0:
-                saltadas += 1
-                continue
-
-            source_id = f"toctoc-{p['id']}"
-            m2 = int(p.get("m2_superficie") or 0) or None
-            precio_m2 = int(precio / m2) if m2 and m2 > 0 else None
-
-            # Fecha
-            fecha_str = p.get("fecha_publicacion") or ""
-            try:
-                fecha = datetime.strptime(fecha_str, "%d-%m-%Y %H:%M:%S").isoformat()
-            except:
-                fecha = None
-
-            data = {
-                "source_id": source_id,
-                "source_portal": "toctoc",
-                "titulo": (p.get("titulo") or "")[:200],
-                "precio_clp": precio,
-                "precio_m2": precio_m2,
-                "dormitorios": p.get("dormitorios"),
-                "banos": p.get("baños"),
-                "m2": m2,
-                "direccion": "",
-                "comuna": p.get("comuna") or "",
-                "url": p.get("url") or "",
-                "imagen_url": p.get("imagen") or None,
-                "activa": True,
-                "fecha_publicacion": fecha,
-                "ultimo_scrape": datetime.now(timezone.utc).isoformat(),
-            }
-
-            existing = client.table("properties").select("id").eq("source_id", source_id).limit(1).execute()
-            if existing.data:
-                client.table("properties").update({
-                    "precio_clp": precio,
-                    "precio_m2": precio_m2,
-                    "ultimo_scrape": data["ultimo_scrape"],
-                }).eq("source_id", source_id).execute()
-                actualizadas += 1
-            else:
-                client.table("properties").insert(data).execute()
-                nuevas += 1
-
-        except Exception as e:
-            print(f"   ⚠️ Error en {p.get('id')}: {str(e)[:100]}")
+    for it in items:
+        precio = norm_precio(it)
+        if not precio:
             saltadas += 1
+            continue
+        sid = f"toctoc-{it['id']}"
+        m2 = int(it.get("m2_superficie") or 0) or None
+        data = {
+            "source_id": sid,
+            "source_portal": "toctoc",
+            "titulo": (it.get("titulo") or "")[:200],
+            "precio_clp": precio,
+            "precio_m2": int(precio / m2) if m2 else None,
+            "dormitorios": it.get("dormitorios"),
+            "banos": it.get("baños"),
+            "m2": m2,
+            "comuna": it.get("comuna") or "",
+            "url": it.get("url") or "",
+            "imagen_url": it.get("imagen") or None,
+            "activa": True,
+            "ultimo_scrape": datetime.now(timezone.utc).isoformat(),
+        }
+        ex = (
+            client.table("properties")
+            .select("id")
+            .eq("source_id", sid)
+            .limit(1)
+            .execute()
+        )
+        if ex.data:
+            client.table("properties").update(data).eq("source_id", sid).execute()
+            actualizadas += 1
+        else:
+            client.table("properties").insert(data).execute()
+            nuevas += 1
+    return nuevas, actualizadas, saltadas
 
-    print(f"   ✅ Nuevas: {nuevas} | Actualizadas: {actualizadas} | Saltadas: {saltadas}")
-    return nuevas, actualizadas
 
-# Ejecutar para arriendos deptos y casas
 base = Path("/tmp/toctoc-dataset-inmobiliario")
-total_n = total_a = 0
+total_n = total_a = total_s = 0
+for f in ["depto-arriendo-toctoc.json", "casa-arriendo-toctoc.json"]:
+    p = base / f
+    if not p.exists():
+        print(f"❌ No existe: {p}")
+        continue
+    n, a, s = importar(str(p))
+    total_n += n
+    total_a += a
+    total_s += s
+    print(f"{f}: {n} nuevas, {a} actualizadas, {s} saltadas")
 
-for archivo, tipo in [
-    (base / "depto-arriendo-toctoc.json", "departamento"),
-    (base / "casa-arriendo-toctoc.json", "casa"),
-]:
-    if archivo.exists():
-        n, a = importar(str(archivo), tipo)
-        total_n += n
-        total_a += a
-
-print(f"\n🎯 TOTAL: {total_n} nuevas, {total_a} actualizadas")
+print(f"\n🎯 TOTAL: {total_n} nuevas, {total_a} actualizadas, {total_s} saltadas")
