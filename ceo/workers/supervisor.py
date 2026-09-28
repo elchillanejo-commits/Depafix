@@ -65,7 +65,7 @@ async def supervisor_trading_worker(params: dict) -> dict:
         veredicto = "PAUSAR"
         razon = f"Win rate bajo: {win_rate:.1%}"
         pausar = True
-    elif ops_por_hora > 20:
+    elif ops_por_hora > 100:
         veredicto = "PAUSAR"
         razon = f"Posible loop: {ops_por_hora:.1f} ops/hora"
         pausar = True
