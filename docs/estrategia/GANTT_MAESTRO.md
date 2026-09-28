@@ -1,139 +1,116 @@
 ---
 titulo: Gantt Maestro DepaFix
-version: 1.0
-fecha: 2026-09-26
-autor: ibar + Claude DT
-proposito: Fuente de verdad del roadmap. Alimentar al CEO.
-tags: [roadmap, gantt, planeacion]
+version: 2.4
+fecha: 2026-09-28
+autor: ibar + DT
+progreso_global: 87%
 ---
 
-# 🗓️ GANTT MAESTRO — CEO DepaFix
+# 🗓️ GANTT MAESTRO — DepaFix Ecosystem
 
-## 📊 Progreso Global: 85%
+## 📊 Progreso Global: 87%
 
-| Fase | Estado | % | Notas |
-|---|---|---|---|
-| F0-F3 Base | ✅ | 100% | Bot, procurador, infra |
-| F6 Ingeniero | ✅ | 100% | 6 módulos + timers |
-| F8 Bug 100% COMPRA | ✅ | 100% | Resuelto con refactor v2 |
-| F9 Worker Railway v2 | ✅ | 100% | Producción 24/7 |
-| F10 CEO Service | 🔄 | 95% | 12 workers activos |
-| F11 Producto Inmobiliario | 🔄 | 40% | Dataset TocToc cargado |
-| F12 Mercado Público | ⏸️ | 0% | Pausado |
-| F7 Kimi API | ⏳ | 0% | Pendiente |
-
----
-
-## 🚧 PENDIENTE MAÑANA (Lunes simulado)
-
-### 1. Kutt Property Scraper (prioridad ALTA)
-- **Contexto:** Soy corredor, tengo login en `plataforma.kutt.cl`
-- **Descubierto:**
-  - Base URL: `https://plataforma.kutt.cl/`
-  - Endpoint conocido: `/OrdenVentaArriendo/GetConfigOrden?tipo=1&idCorredora=85`
-  - Requiere autenticación (HTTP 401 sin cookie)
-  - Patrón API: .NET MVC clásico (`/Controller/Method`)
-- **Plan:**
-  - Creado `ceo/workers/kutt.py` (Playwright con login)
-  - Falta: cargar `KUTT_USER` + `KUTT_PASS` en .env + Railway
-  - Falta: test local y ajuste de selectores
-- **Hallazgos clave:**
-  - Botón "Descargar cartera" en la UI (alternativa rápida)
-  - DevTools → Network → Copy as cURL (si se necesita cookie)
-
-### 2. Revisar HILO_CONDUCTOR
-- Verificar que las últimas sesiones están registradas
-- Limpiar duplicados
-- Consolidar pendientes
-
-### 3. "Nutrición del sistema"
-- La carpeta `~/Documentos/CEO_DepaFix/` es el nuevo repo de documentación estratégica
-- Objetivo: alimentar al CEO con contexto para decisiones futuras
-- Próximos documentos: HILO.md, ROADMAP.md, METRICAS.md
-
----
-
-## 📅 SEMANA ACTUAL
-
-| Día | Tarea | Estado |
+| Fase | Estado | % |
 |---|---|---|
-| Vie 25 | CEO 9 workers + pipeline knowledge | ✅ |
-| Sáb 26 (hoy) | Dataset TocToc + intento scrapers | ✅ |
-| Dom 27 | DESCANSO | — |
-| Lun 28 | Kutt scraper + HILO review | ⏳ |
-| Mar 29 | Configurar Telegram | ⏳ |
-| Mié 30 | Analytics (precio/m² por comuna) | ⏳ |
-| Jue 1 | Web profesional con datos reales | ⏳ |
-| Vie 2 | Cierre semana + Gantt | ⏳ |
+| F0-F3 Base (saneamiento, core, Kraken, procurador) | ✅ | 100% |
+| F6 Ingeniero Informático (6 módulos) | ✅ | 100% |
+| F8-F9 Bot Trading v2 (5 factores) | ✅ | 100% |
+| F10 CEO Service | 🔄 | 90% |
+| F11 Producto Inmobiliario | 🔄 | 40% |
+| F12 Mercado Público | ⏸️ | 0% |
+| F7 Kimi API | ⏳ | 0% |
 
 ---
 
-## 🎯 SEMANA 2 (2-8 oct): Producto vendible
+## ✅ LO QUE LLEVAMOS
 
-- Publicar página web de propiedades
-- SEO básico (meta tags, sitemap)
-- Alertas automáticas (nuevas props bajo precio)
-- Reporte semanal por email
-- Dominio propio
+- CEO Service en Railway con 6 workers activos
+- Bot Kraken corriendo 24/7 en paper trading ($89 intactos)
+- Página web /properties-public con 372 props TocToc
+- Pipeline knowledge end-to-end (YouTube → Claude → query)
+- Ingeniero con health_check, auto_repair, notifier, reportes
+- Supervisor_trading con kill-switch (5 reglas de riesgo)
+
+## 🎯 LO QUE ESTAMOS HACIENDO
+
+- Pulir supervisor_trading (fix umbral ops/hora aplicado hoy)
+- Poblar knowledge_items con reglas de riesgo
+- Configurar Telegram para alertas reales
 
 ---
 
-## 🔴 RIESGOS ACTIVOS
+## 📅 SEMANA 1 — 28-SEP a 4-OCT
 
-| Riesgo | Impacto | Mitigación |
+### CEO INTELIGENTE + SUPERVISIÓN
+
+| Día | Objetivo | Estado |
 |---|---|---|
-| Portales bloquean scraping | Alto | Dataset público + Kutt propio |
-| Keys expiran | Medio | Rotación mensual |
-| Claude API sin cap | Alto | Configurar hard-cap $2/día |
-| Single point of failure (Vostro) | Alto | CEO en Railway + health check |
+| **Lun 28** | supervisor_trading + bot_control + fix umbral | ✅ |
+| **Mar 29** | Configurar Telegram (bot token + chat ID) | ⏳ |
+| **Mié 30** | Analytics inmobiliario (precio/m² por comuna) | ⏳ |
+| **Jue 1** | Fix import TocToc (precios realistas) | ⏳ |
+| **Vie 2** | Cierre semana + decisión estratégica | ⏳ |
+| **Sáb 3** | DESCANSO | — |
+| **Dom 4** | DESCANSO | — |
 
----
+## 📅 SEMANA 2 — 5-OCT a 11-OCT
 
-## 💰 TOKENS CLAUDE
+### VALIDACIÓN DE NEGOCIO
 
-- Gastado: ~$12
-- Restante: ~$2
-- Estrategia: migrar a Kimi API en 2 semanas
-
----
-
-## 🎁 ACTIVOS DIGITALES
-
-1. **CEO Service** → 12 workers en Railway
-2. **Knowledge base** → 8 items procesados
-3. **Properties** → 19 propiedades (5 manuales + 14 TocToc)
-4. **Bot trade** → 33% COMPRA / 33% VENTA / 34% ESPERA
-5. **Kraken** → $89 intacto
-6. **Repo** → github.com/elchillanejo-commits/Depafix
-
----
-
-_Última actualización: 2026-09-26 22:50_
-
----
-
-## 💰 INVERSIÓN EN SCRAPING (Postergado)
-
-**Decisión:** NO invertir en servicios pagados hasta que haya caja.
-
-**Servicios evaluados (para retomar cuando negocio facture):**
-- **Apify** → $4/1K listings (MLC/Yapo/Portales LATAM)
-- **ScrapingBee** → $49.99/mes (250K créditos)
-- **Bright Data** → $1.50/1K requests (5K gratis/mes)
-- **ZenRows** → $19/mes (45K créditos)
-
-**Trigger para retomar:** primer cliente pagando $100+/mes.
-
-**Mientras:** usar dataset TocToc (367 props reales ya disponibles) + API oficial MercadoLibre (gratis).
-
----
-
-## 📅 SEMANA ACTUAL (28-sep a 4-oct)
-
-| Día | Tarea | Estado |
+| Día | Objetivo | Estado |
 |---|---|---|
-| Lun 28 | Kutt scraper (DESCARTADO) + HILO review | ✅ Cerrado |
-| **Mar 29** | **Configurar Telegram + notifier** | 🔄 HOY |
-| Mié 30 | Analytics (precio/m² por comuna) | ⏳ |
-| Jue 1 | Web profesional con datos reales | ⏳ |
-| Vie 2 | Cierre semana + Gantt | ⏳ |
+| **Lun 5** | Elegir producto ganador (Mercado Público vs Inmobiliaria) | ⏳ |
+| **Mar 6** | Landing page (propuesta de valor) | ⏳ |
+| **Mié 7** | Primer contacto con PYMEs constructoras | ⏳ |
+| **Jue 8** | Generador de reportes express para clientes | ⏳ |
+| **Vie 9** | Cierre semana + Gantt v2.5 | ⏳ |
+| **Sáb-Dom** | DESCANSO | — |
+
+---
+
+## 🔧 WORKERS ACTIVOS (CEO Service)
+
+| Worker | Estado | Función |
+|---|---|---|
+| properties_page | ✅ | Sirve HTML con propiedades |
+| cleanup_old_tasks | ✅ | Limpia tasks >30 días |
+| notifier_telegram | ⚠️ | Falta configurar token |
+| scrape_sodimac | ⚠️ | Placeholder (selectores rotos) |
+| scrape_toctoc | ✅ | 372 props cargadas |
+| **supervisor_trading** | ✅ | Kill-switch con 5 reglas |
+
+---
+
+## 🎯 PRÓXIMAS ACCIONES (Semana 1)
+
+1. **Mar 29** — Configurar Telegram (bot + chat ID)
+2. **Mié 30** — Worker `calculate_market_stats`
+3. **Jue 1** — Fix import precios irreales
+4. **Vie 2** — Decisión estratégica
+
+---
+
+## 💰 RECURSOS
+
+| Recurso | Estado |
+|---|---|
+| Tokens Claude | ~$2 USD restantes |
+| Kimi API | No activada (postergada) |
+| Railway | 7 servicios activos |
+| Supabase | Free tier (bajo uso) |
+| Kraken | $89 intactos (paper) |
+
+---
+
+## ⚠️ RIESGOS ACTIVOS
+
+| Riesgo | Mitigación |
+|---|---|
+| Tokens Claude agotándose | Migrar a Kimi cuando haya caja |
+| Umbrales mal calibrados | Ajustar según datos reales |
+| Sin cliente pagando | Validar Mercado Público semana 2 |
+| Dataset TocToc desactualizado | Scraper vivo (Apify pago) |
+
+---
+
+_Última actualización: 2026-09-28 17:00_
