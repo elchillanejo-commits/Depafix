@@ -23,6 +23,7 @@ _safe_import("cleanup_old_tasks", "ceo.workers.cleanup", "cleanup_old_tasks_work
 _safe_import("notifier_telegram", "ceo.workers.notifier", "notifier_telegram_worker")
 _safe_import("scrape_sodimac", "ceo.workers.sodimac", "scrape_sodimac_worker")
 _safe_import("scrape_toctoc", "ceo.workers.toctoc", "scrape_toctoc_worker")
+_safe_import("supervisor_trading", "ceo.workers.supervisor", "supervisor_trading_worker")
 
 logger.info(f"Workers cargados: {len(WORKERS)}")
 if _LOAD_ERRORS:
