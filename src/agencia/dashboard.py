@@ -27,22 +27,61 @@ st.title("🚀 Ikki Agency - Panel de Control")
 def generar_html(data, cliente, rubro):
     fee = data["configuracion"]["fee_calculado"]
     copys = data["configuracion"]["copys_generados"]
+    
+    # Nuevos datos reales del backend
+    benchmarks = data["configuracion"].get("benchmarks_mercado", {})
+    proyecciones = data["configuracion"].get("proyecciones", {})
+    
+    plataforma = benchmarks.get("plataforma_recomendada", "Meta Ads")
+    justificacion = benchmarks.get("justificacion", "Estrategia estándar.")
+    impresiones = f"{proyecciones.get('impresiones_estimadas', 0):,}".replace(",", ".")
+    clics = f"{proyecciones.get('clics_estimados', 0):,}".replace(",", ".")
+
     copys_html = "".join([f"<div style='border:1px solid #eee;padding:20px;margin-bottom:20px;background:#fafafa;border-radius:8px;'><span style='background:#000;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px;'>Opción {i}</span><h3 style='margin-top:10px;font-size:18px;'>{c['titulo']}</h3><p style='color:#555;'>{c['cuerpo']}</p><button style='background:#0066ff;color:#fff;border:none;padding:10px 20px;border-radius:5px;font-weight:bold;'>{c['cta']}</button></div>" for i, c in enumerate(copys, 1)])
     
     return f"""<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
         body {{ font-family: Arial; background: #f4f7f6; padding: 40px; }}
         .container {{ max-width: 800px; margin: auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }}
         .header {{ text-align: center; border-bottom: 2px solid #000; margin-bottom: 30px; }}
-        .financials {{ display: flex; justify-content: space-between; background: #000; color: #fff; padding: 20px; border-radius: 8px; margin-bottom: 40px; }}
+        .financials {{ display: flex; justify-content: space-between; background: #000; color: #fff; padding: 20px; border-radius: 8px; margin-bottom: 30px; }}
         .financials span {{ font-size: 12px; color: #aaa; display: block; }} .financials strong {{ font-size: 20px; }}
+        .projections {{ display: flex; gap: 20px; margin-bottom: 30px; }}
+        .proj-card {{ flex: 1; background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #ddd; text-align: center; }}
+        .proj-card h4 {{ margin: 0 0 10px 0; color: #333; }}
+        .proj-card .number {{ font-size: 24px; font-weight: bold; color: #0066ff; }}
+        .justification {{ font-size: 13px; color: #666; margin-top: 10px; font-style: italic; }}
+        h2 {{ border-bottom: 1px solid #eee; padding-bottom: 10px; }}
     </style></head><body><div class="container">
         <div class="header"><h1>Propuesta de Campaña Digital</h1><p>Para: <strong>{cliente.replace('_', ' ').title()}</strong> ({rubro.title()})</p></div>
+        
         <div class="financials">
             <div><span>Pauta Meta Ads</span><strong>${fee['pauta_neta']:,}</strong></div>
             <div><span>Fee Agencia</span><strong>${fee['fee_fijo']:,}</strong></div>
             <div><span>Comisión (15%)</span><strong>${fee['comision_agencia']:,}</strong></div>
             <div><span>Inversión Total</span><strong style="color: #00ffcc;">${fee['total_facturar_clp']:,}</strong></div>
-        </div><h2>Propuestas de Anuncios</h2>{copys_html}
+        </div>
+
+        <h2>Estrategia y Proyecciones Reales (2026)</h2>
+        <div class="projections">
+            <div class="proj-card">
+                <h4>Plataforma Recomendada</h4>
+                <div class="number">{plataforma}</div>
+                <div class="justification">{justificacion}</div>
+            </div>
+            <div class="proj-card">
+                <h4>Impresiones Estimadas</h4>
+                <div class="number">{impresiones}</div>
+                <div class="justification">Basado en CPM real del mercado.</div>
+            </div>
+            <div class="proj-card">
+                <h4>Clics Estimados</h4>
+                <div class="number">{clics}</div>
+                <div class="justification">Tráfico potencial a tu sitio.</div>
+            </div>
+        </div>
+
+        <h2>Propuestas de Anuncios</h2>
+        {copys_html}
         <p style="text-align: center; margin-top: 40px; font-size: 12px; color: #888;">Ikki Agency.</p>
     </div></body></html>"""
 
@@ -86,45 +125,33 @@ with tab2:
             st.success(f"¡{len(df)} reportes generados!")
             st.download_button("📥 Descargar ZIP", zip_buffer.getvalue(), file_name="reportes_ikki.zip", mime="application/zip", type="primary")
 
-# ---------------- TAB 3: CRM MEJORADO ----------------
 with tab3:
     st.header("Gestión de Prospectos (CRM)")
     if SUPABASE_URL and SUPABASE_KEY:
         client = create_client(SUPABASE_URL, SUPABASE_KEY)
         res = client.table("campanas_meta").select("id", "cliente_id", "presupuesto_total", "estado").execute()
-        
         if res.data:
             df_crm = pd.DataFrame(res.data).rename(columns={"cliente_id": "Cliente", "presupuesto_total": "Pauta (CLP)", "estado": "Estado"})
-            
-            # --- CÁLCULO DEL LEAD SCORE ---
             def calcular_score(row):
                 base = 50
                 bonus_pauta = row["Pauta (CLP)"] / 10000
                 estado = row["Estado"]
                 bonus_estado = {"BORRADOR": 0, "ENVIADO": 10, "RESPONDIO": 25, "CERRADO": 40}.get(estado, 0)
                 return int(base + bonus_pauta + bonus_estado)
-            
             df_crm["Score"] = df_crm.apply(calcular_score, axis=1)
-            
-            # Generar link de WhatsApp
             mensaje_base = "Hola! Te escribo de Agencia Ikki. Vi tu negocio y preparé un reporte gratuito con 3 opciones de anuncios para tu rubro. ¿Te gustaría que te lo envíe por aquí para que lo revises sin compromiso?"
             df_crm["Contactar"] = f"https://wa.me/?text={urllib.parse.quote(mensaje_base)}"
-            
-            # Editor interactivo
             edited_df = st.data_editor(
                 df_crm,
                 column_config={
                     "Estado": st.column_config.SelectboxColumn("Estado", options=["BORRADOR", "ENVIADO", "RESPONDIO", "CERRADO"], required=True),
                     "Contactar": st.column_config.LinkColumn("Acción", display_text="💬 Enviar Pitch")
                 },
-                disabled=["id", "Cliente", "Pauta (CLP)", "Score", "Contactar"], 
-                hide_index=True, 
-                width="stretch"
+                disabled=["id", "Cliente", "Pauta (CLP)", "Score", "Contactar"], hide_index=True, width="stretch"
             )
-            
             col_save, col_export = st.columns(2)
             with col_save:
-                if st.button("💾 Guardar Cambios de Estado", type="primary"):
+                if st.button("💾 Guardar Cambios", type="primary"):
                     cambios = 0
                     for index, row in edited_df.iterrows():
                         if row["Estado"] != df_crm.iloc[index]["Estado"]:
@@ -132,15 +159,8 @@ with tab3:
                             cambios += 1
                     if cambios > 0: st.success(f"¡Se actualizaron {cambios} prospectos!")
                     else: st.info("No hubo cambios.")
-            
             with col_export:
-                # Botón para exportar a CSV
                 csv = edited_df.to_csv(index=False).encode('utf-8')
-                st.download_button(
-                    label="📥 Exportar CRM a CSV",
-                    data=csv,
-                    file_name='ikki_crm_export.csv',
-                    mime='text/csv',
-                )
+                st.download_button("📥 Exportar CRM a CSV", data=csv, file_name='ikki_crm_export.csv', mime='text/csv')
         else: 
             st.info("Sin prospectos.")
