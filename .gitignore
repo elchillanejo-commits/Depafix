@@ -99,3 +99,5 @@ scripts/check_paper.sh
 # Estado del ingeniero (local)
 ingeniero/state.json
 ingeniero/logs/*.log
+.depafix_secrets
+*_secrets

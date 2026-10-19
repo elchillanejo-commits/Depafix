@@ -1,0 +1,66 @@
+import unittest
+from unittest.mock import MagicMock, patch
+from ceo.predictor import predecir
+
+class TestPredictor(unittest.TestCase):
+    def setUp(self):
+        self.mock_client = MagicMock()
+        # Mocking Supabase chain
+        self.mock_table = self.mock_client.table.return_value
+        self.mock_select = self.mock_table.select.return_value
+        self.mock_order = self.mock_select.order.return_value
+        self.mock_limit = self.mock_order.limit.return_value
+        self.mock_execute = self.mock_limit.execute.return_value
+
+    def test_trend_detected(self):
+        # Mock data showing fail_recurrente (12 consecutive fails)
+        self.mock_execute.data = [
+            {'source': 's1', 'target': 't1', 'status': 'fail', 'latency_ms': 0, 'ts': '2023-10-06T10:00:00'},
+            {'source': 's1', 'target': 't1', 'status': 'fail', 'latency_ms': 0, 'ts': '2023-10-06T10:01:00'},
+            {'source': 's1', 'target': 't1', 'status': 'fail', 'latency_ms': 0, 'ts': '2023-10-06T10:02:00'},
+            {'source': 's1', 'target': 't1', 'status': 'fail', 'latency_ms': 0, 'ts': '2023-10-06T10:03:00'},
+            {'source': 's1', 'target': 't1', 'status': 'fail', 'latency_ms': 0, 'ts': '2023-10-06T10:04:00'},
+            {'source': 's1', 'target': 't1', 'status': 'fail', 'latency_ms': 0, 'ts': '2023-10-06T10:05:00'},
+            {'source': 's1', 'target': 't1', 'status': 'fail', 'latency_ms': 0, 'ts': '2023-10-06T10:06:00'},
+            {'source': 's1', 'target': 't1', 'status': 'fail', 'latency_ms': 0, 'ts': '2023-10-06T10:07:00'},
+            {'source': 's1', 'target': 't1', 'status': 'fail', 'latency_ms': 0, 'ts': '2023-10-06T10:08:00'},
+            {'source': 's1', 'target': 't1', 'status': 'fail', 'latency_ms': 0, 'ts': '2023-10-06T10:09:00'},
+            {'source': 's1', 'target': 't1', 'status': 'fail', 'latency_ms': 0, 'ts': '2023-10-06T10:10:00'},
+            {'source': 's1', 'target': 't1', 'status': 'fail', 'latency_ms': 0, 'ts': '2023-10-06T10:11:00'}
+        ]
+        # Mock predictions query (empty to bypass hysteresis)
+        self.mock_table.select.return_value.eq.return_value.eq.return_value.gte.return_value.execute.return_value.data = []
+        
+        preds = predecir(self.mock_client)
+        self.assertTrue(any(p['patron'] == 'fail_recurrente' for p in preds))
+
+    def test_no_false_positive_flat(self):
+        self.mock_execute.data = [
+            {'source': 's1', 'target': 't1', 'status': 'ok', 'latency_ms': 160, 'ts': '2023-10-06T10:00:00'},
+            {'source': 's1', 'target': 't1', 'status': 'ok', 'latency_ms': 160, 'ts': '2023-10-06T09:45:00'},
+            {'source': 's1', 'target': 't1', 'status': 'ok', 'latency_ms': 160, 'ts': '2023-10-06T09:30:00'},
+            {'source': 's1', 'target': 't1', 'status': 'ok', 'latency_ms': 160, 'ts': '2023-10-06T09:15:00'}
+        ]
+        preds = predecir(self.mock_client)
+        self.assertFalse(any(p['patron'] == 'latencia_alza' for p in preds))
+
+    def test_fail_open_supabase_error(self):
+        self.mock_execute.side_effect = Exception("Supabase down")
+        preds = predecir(self.mock_client)
+        self.assertEqual(preds, [])
+
+    def test_hysteresis_no_repite(self):
+        # Already has trend_latency in last 2h
+        self.mock_table.select.return_value.eq.return_value.eq.return_value.gte.return_value.execute.return_value.data = [{'patron': 'latencia_alza'}]
+        # Data that would trigger it
+        self.mock_execute.data = [
+            {'source': 's1', 'target': 't1', 'status': 'ok', 'latency_ms': 200, 'ts': '2023-10-06T10:00:00'},
+            {'source': 's1', 'target': 't1', 'status': 'ok', 'latency_ms': 180, 'ts': '2023-10-06T09:45:00'},
+            {'source': 's1', 'target': 't1', 'status': 'ok', 'latency_ms': 160, 'ts': '2023-10-06T09:30:00'},
+            {'source': 's1', 'target': 't1', 'status': 'ok', 'latency_ms': 140, 'ts': '2023-10-06T09:15:00'}
+        ]
+        preds = predecir(self.mock_client)
+        self.assertFalse(any(p['patron'] == 'latencia_alza' for p in preds))
+
+if __name__ == "__main__":
+    unittest.main()

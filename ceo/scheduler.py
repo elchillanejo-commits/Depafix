@@ -92,11 +92,29 @@ async def _execute_task(task: dict) -> None:
 
     except Exception as e:
         logger.error(f"Tarea {task_id} falló: {e}")
-        supabase.table("ceo_tasks").update({
-            "estado": "failed",
+        update_data = {
             "error": str(e)[:500],
             "ejecutado_en": datetime.now(timezone.utc).isoformat(),
-        }).eq("id", task_id).execute()
+        }
+        schedule = task.get("schedule")
+        if schedule:
+            try:
+                next_run = croniter(
+                    schedule, datetime.now(timezone.utc)
+                ).get_next(datetime)
+                update_data["proxima_ejecucion"] = next_run.isoformat()
+                update_data["estado"] = "pending"
+                logger.warning(
+                    f"Tarea recurrente {task_id} falló, reprogramada para {next_run}"
+                )
+            except Exception as cron_e:
+                logger.error(f"Error croniter en {task_id}: {cron_e}")
+                update_data["estado"] = "failed"
+                update_data["error"] = f"croniter: {cron_e} | original: {str(e)[:400]}"
+        else:
+            update_data["estado"] = "failed"
+
+        supabase.table("ceo_tasks").update(update_data).eq("id", task_id).execute()
 
 
 async def _tick() -> None:

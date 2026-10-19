@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "required": ["version", "campos"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "integer" },
+    "campos": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["tipo", "obligatorio", "fuente"],
+        "additionalProperties": false,
+        "properties": {
+          "tipo":        { "type": "string" },
+          "obligatorio": { "type": "boolean" },
+          "fuente":      { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,122 @@
+"""position_manager.py — Gestiona posiciones abiertas con trailing stops.
+
+Detecta posición abierta (última COMPRA sin VENTA posterior) y decide
+cierre por trailing stop. Fail-open: ante duda, retorna (False, ...).
+"""
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass
+from typing import Any, Literal
+
+import pandas as pd
+
+from src.trading.trailing_stops import (
+    atr_trail,
+    bar_trail,
+    debe_salir,
+    ema_trail,
+)
+
+log = logging.getLogger(__name__)
+
+TipoStop = Literal["bar", "atr", "ema"]
+TIPO_STOP_DEFAULT: TipoStop = "atr"
+
+
+@dataclass
+class Posicion:
+    activo: str
+    precio_entrada: float
+    cantidad: float
+    posicion_usd: float
+    stop_actual: float | None
+    timestamp: str
+
+
+def get_posicion_abierta(client: Any, activo: str) -> Posicion | None:
+    """Última COMPRA sin VENTA posterior. None si no hay posición abierta."""
+    try:
+        resp = (
+            client.table("operaciones_ejecutadas")
+            .select("senal,precio_entrada,cantidad,stop_loss,posicion_usd,timestamp")
+            .eq("activo", activo)
+            .in_("senal", ["COMPRA", "VENTA"])
+            .order("timestamp", desc=True)
+            .limit(1)
+            .execute()
+        )
+    except Exception as e:
+        log.warning("get_posicion_abierta %s falló: %s", activo, e)
+        return None
+
+    rows = resp.data or []
+    if not rows:
+        return None
+
+    last = rows[0]
+    if last["senal"] == "VENTA":
+        return None
+
+    return Posicion(
+        activo=activo,
+        precio_entrada=float(last["precio_entrada"]),
+        cantidad=float(last.get("cantidad") or 0.0),
+        posicion_usd=float(last.get("posicion_usd") or 0.0),
+        stop_actual=float(last["stop_loss"]) if last.get("stop_loss") else None,
+        timestamp=str(last.get("timestamp") or ""),
+    )
+
+
+def _calcular_stop(df: pd.DataFrame, tipo: TipoStop) -> float:
+    if tipo == "bar":
+        return bar_trail(df, "LONG", bars_back=2)
+    if tipo == "ema":
+        return ema_trail(df, "LONG", ema_period=9)
+    return atr_trail(df, "LONG", atr_period=3, atr_factor=3.0)
+
+
+def debe_cerrar(
+    df: pd.DataFrame,
+    posicion: Posicion,
+    tipo: TipoStop = TIPO_STOP_DEFAULT,
+) -> tuple[bool, float, str]:
+    """Decide si cerrar posición por trailing stop.
+
+    Retorna (cerrar, nuevo_stop, motivo).
+    Trailing LONG: el stop solo sube, nunca baja.
+    Fail-open: si falla el cálculo, no cierra.
+    """
+    try:
+        stop_calculado = _calcular_stop(df, tipo)
+    except Exception as e:
+        log.warning("_calcular_stop %s falló: %s", tipo, e)
+        return (False, posicion.stop_actual or 0.0, f"error_stop_{tipo}")
+
+    if posicion.stop_actual is None:
+        nuevo_stop = stop_calculado
+    else:
+        nuevo_stop = max(posicion.stop_actual, stop_calculado)
+
+    try:
+        cerrar = debe_salir(df, "LONG", nuevo_stop)
+    except Exception as e:
+        log.warning("debe_salir falló: %s", e)
+        return (False, nuevo_stop, "error_debe_salir")
+
+    if cerrar:
+        return (True, nuevo_stop, f"trailing_stop_{tipo}")
+    return (False, nuevo_stop, f"mantener_{tipo}")
+
+
+def df_desde_velas(velas: list[dict]) -> pd.DataFrame:
+    """Convierte lista de velas del orchestrator a DataFrame."""
+    df = pd.DataFrame(velas)
+    df = df.rename(columns={
+        "cierre": "close", "apertura": "open",
+        "maximo": "high", "minimo": "low",
+        "volumen": "volume",
+    })
+    if "tiempo" in df.columns:
+        df = df.sort_values("tiempo").reset_index(drop=True)
+    return df

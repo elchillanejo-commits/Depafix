@@ -1,0 +1,30 @@
+GANTT MAESTRO — DepaFix (v3.4 — 2026-09-28)
+============================================================
+
+LOGROS HOY
+-----------
+[x] Telegram operativo (E2E: tasks 37, 38, 41, 42)
+[x] market_stats creado + worker en PROD (14 grupos)
+[x] velas_cripto poblado — kraken_feed.py operativo (200 velas frescas)
+[x] Historial bash limpiado + .depafix_secrets en gitignore
+
+BLOQUEANTES ACTUALES
+--------------------
+[!] ccxt no instalado (orchestrator no corre)
+[!] Bot 100% COMPRA — pendiente confirmar si persiste con datos frescos
+[!] depafix-trading.service disabled
+[!] Sin position sizing, sin trailing stops, sin walk-forward
+
+PLAN MAÑANA (29-sep)
+--------------------
+1. Instalar ccxt en venv
+2. Correr orchestrator con velas frescas -> confirmar si bug 100% COMPRA persiste
+3. Si persiste: crear market_regime.py (transcript 4)
+4. Si no persiste: saltar a position_sizer.py (transcript 2)
+
+FASES
+-----
+F10 CEO Service       [=========] 100%
+F11 Inmobiliario      [=====    ]  50%
+F15 Trading Cuant.    [=        ]  10%  <- REABIERTA
+F12 Mercado Público   [         ]   0%

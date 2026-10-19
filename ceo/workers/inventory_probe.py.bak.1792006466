@@ -1,0 +1,80 @@
+"""inventory_probe.py — Alertas de stock con precios SERVIU 2026."""
+from __future__ import annotations
+
+import logging
+import os
+from decimal import Decimal
+
+from dotenv import load_dotenv
+from supabase import create_client
+
+from ceo.state import registrar_health
+
+load_dotenv()
+log = logging.getLogger(__name__)
+
+UF_REF_2026_CLP = Decimal("39779.29")
+CATEGORIAS_CRITICAS = {"Hormigones", "Enfierradura", "Albañilería", "Estructura"}
+
+
+def inventory_probe_worker(params: dict | None = None) -> dict:
+    """Cruza stock real con precios SERVIU 2026. Fail-open."""
+    try:
+        client = create_client(
+            os.environ["SUPABASE_URL"],
+            os.environ["SUPABASE_SERVICE_ROLE_KEY"],
+        )
+
+        resp = (client.table("inventario_real")
+                .select("sku,nombre,stock,stock_min,precio_clp,categoria,codigo_serviu,precio_serviu_uf")
+                .limit(500).execute())
+        items = resp.data or []
+
+        if not items:
+            registrar_health(client, "inventory", "stock", "warn", None,
+                             {"razon": "sin SKUs"})
+            return {"ok": True, "total": 0}
+
+        bajos = [i for i in items if int(i["stock"]) < int(i["stock_min"])]
+        criticos = [i for i in bajos
+                    if i.get("categoria") in CATEGORIAS_CRITICAS and int(i["stock"]) == 0]
+        sin_codigo = [i for i in items if not i.get("codigo_serviu")]
+
+        desviaciones = []
+        for i in items:
+            if i.get("precio_serviu_uf") and i.get("precio_clp"):
+                serviu_clp = Decimal(str(i["precio_serviu_uf"])) * UF_REF_2026_CLP
+                actual = Decimal(str(i["precio_clp"]))
+                if serviu_clp > 0:
+                    pct = float(abs(actual - serviu_clp) / serviu_clp * 100)
+                    if pct > 25:
+                        desviaciones.append({
+                            "sku": i["sku"], "pct": round(pct, 1),
+                            "actual": float(actual),
+                            "serviu": float(serviu_clp),
+                        })
+
+        status = "fail" if criticos else ("warn" if (bajos or desviaciones) else "ok")
+
+        payload = {
+            "total_skus": len(items),
+            "bajos_minimo": len(bajos),
+            "criticos_sin_stock": len(criticos),
+            "sin_codigo_serviu": len(sin_codigo),
+            "desviaciones_precio": len(desviaciones),
+            "detalle_bajos": [f"{i['sku']}:{i['stock']}/{i['stock_min']}" for i in bajos[:5]],
+            "detalle_desviaciones": desviaciones[:3],
+        }
+        registrar_health(client, "inventory", "stock", status, None, payload)
+        return {"ok": True, "total": len(items), "bajos": len(bajos),
+                "criticos": len(criticos), "desviaciones": len(desviaciones),
+                "status": status}
+    except Exception as e:
+        log.exception("inventory_probe falló")
+        return {"ok": False, "error": str(e)[:200]}
+
+
+if __name__ == "__main__":
+    import json
+    logging.basicConfig(level=logging.INFO)
+    print(json.dumps(inventory_probe_worker({}), indent=2, ensure_ascii=False, default=str))

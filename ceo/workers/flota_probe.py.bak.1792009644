@@ -1,0 +1,133 @@
+"""flota_probe.py — Alertas de flota: service, documentos, rendimiento."""
+from __future__ import annotations
+
+import json
+import logging
+import os
+from datetime import date, datetime, timedelta, timezone
+
+from dotenv import load_dotenv
+from supabase import create_client
+
+from ceo.state import registrar_health
+
+load_dotenv()
+log = logging.getLogger(__name__)
+
+DIAS_DOC_POR_VENCER = 30
+DIAS_SIN_VIAJE_ALERTA = 7
+FACTOR_RENDIMIENTO_ANORMAL = 1.25  # >25% sobre rendimiento esperado = problema
+VENTANA_VIAJES_DIAS = 30
+
+
+def _service_vencido(v: dict) -> bool:
+    return int(v["km_actual"]) >= int(v["km_proximo_service"])
+
+
+def _docs_por_vencer(v: dict) -> bool:
+    if not v.get("documentos_vencen"):
+        return False
+    try:
+        f = date.fromisoformat(str(v["documentos_vencen"])[:10])
+        return (f - date.today()).days <= DIAS_DOC_POR_VENCER
+    except Exception:
+        return False
+
+
+def _rendimiento_anormal(v: dict, viajes: list[dict]) -> dict | None:
+    """Detecta viajes con litros/km > factor * esperado."""
+    if not v.get("rendimiento_km_l"):
+        return None
+    esperado_l_km = 1.0 / float(v["rendimiento_km_l"])
+    outliers = []
+    for viaje in viajes:
+        km = float(viaje["km"])
+        litros = float(viaje["litros"])
+        if km <= 0:
+            continue
+        real_l_km = litros / km
+        if real_l_km > esperado_l_km * FACTOR_RENDIMIENTO_ANORMAL:
+            outliers.append({
+                "viaje_id": viaje["id"],
+                "fecha": str(viaje["fecha"])[:10],
+                "km": km,
+                "litros": litros,
+                "ratio_pct": round((real_l_km / esperado_l_km - 1) * 100, 1),
+            })
+    return {"total_outliers": len(outliers), "detalle": outliers[:2]} if outliers else None
+
+
+def flota_probe_worker(params: dict | None = None) -> dict:
+    """Detecta problemas de flota. Fail-open."""
+    try:
+        client = create_client(
+            os.environ["SUPABASE_URL"],
+            os.environ["SUPABASE_SERVICE_ROLE_KEY"],
+        )
+        corte = (date.today() - timedelta(days=VENTANA_VIAJES_DIAS)).isoformat()
+
+        vehiculos = (client.table("flota_vehiculos")
+                     .select("patente,marca,modelo,km_actual,km_proximo_service,"
+                             "rendimiento_km_l,tipo_combustible,documentos_vencen")
+                     .execute()).data or []
+
+        if not vehiculos:
+            registrar_health(client, "flota", "vehiculos", "warn", None,
+                             {"razon": "sin vehículos"})
+            return {"ok": True, "total": 0, "status": "warn"}
+
+        viajes = (client.table("viajes")
+                  .select("id,patente,fecha,km,litros")
+                  .gte("fecha", corte)
+                  .execute()).data or []
+
+        por_patente: dict[str, list[dict]] = {}
+        for v in viajes:
+            por_patente.setdefault(v["patente"], []).append(v)
+
+        service_vencidos = [v["patente"] for v in vehiculos if _service_vencido(v)]
+        docs_por_vencer = [v["patente"] for v in vehiculos if _docs_por_vencer(v)]
+
+        anomalias_rendimiento = []
+        for v in vehiculos:
+            r = _rendimiento_anormal(v, por_patente.get(v["patente"], []))
+            if r:
+                anomalias_rendimiento.append({"patente": v["patente"], **r})
+
+        sin_viajes: list[str] = []
+        for v in vehiculos:
+            if not por_patente.get(v["patente"]):
+                sin_viajes.append(v["patente"])
+
+        if service_vencidos or anomalias_rendimiento:
+            status = "fail"
+        elif docs_por_vencer or sin_viajes:
+            status = "warn"
+        else:
+            status = "ok"
+
+        payload = {
+            "total_vehiculos": len(vehiculos),
+            "total_viajes_30d": len(viajes),
+            "service_vencidos": service_vencidos,
+            "docs_por_vencer_30d": docs_por_vencer,
+            "anomalias_rendimiento": anomalias_rendimiento[:3],
+            "sin_viajes_30d": sin_viajes,
+        }
+        registrar_health(client, "flota", "vehiculos", status, None, payload)
+
+        return {
+            "ok": True, "total_vehiculos": len(vehiculos),
+            "service_vencidos": len(service_vencidos),
+            "docs_por_vencer": len(docs_por_vencer),
+            "anomalias_rendimiento": len(anomalias_rendimiento),
+            "status": status,
+        }
+    except Exception as e:
+        log.exception("flota_probe falló")
+        return {"ok": False, "error": str(e)[:200]}
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    print(json.dumps(flota_probe_worker({}), indent=2, ensure_ascii=False, default=str))

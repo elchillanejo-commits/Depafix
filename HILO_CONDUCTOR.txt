@@ -1,0 +1,86 @@
+================================================================
+DEPAFIX — HILO CONDUCTOR (v5 — 19-oct-2026)
+================================================================
+Estado: MVP Agencia Ikki desplegado y probado en Producción.
+URL Base: https://ikki-api-production.up.railway.app
+Endpoints: POST /api/v1/simular | GET /api/v1/campanas
+Costo de operación: $0 (Modo MOCK / ADR01)
+================================================================
+
+1. CEO INFORMÁTICO (Completado)
+----------------------------------------------------------------
+- 5/5 casos migrados (Properties, Caja, Inventory, Flota, Transporte).
+- Workers operando en Railway.
+
+2. AGENCIA IKKI (MVP en Producción y Validado)
+----------------------------------------------------------------
+- Base de datos: Supabase (06_AGENTES).
+- API: FastAPI desplegada en Railway (Docker).
+- GET /campanas (Lectura) y POST /simular (Escritura) funcionando.
+- Ingesta: Script de YouTube a Supabase.
+- Archivos clave en `src/agencia/`: api.py, motor_ikki.py, nutriente.py.
+- Archivos de deploy: Dockerfile, requirements.txt, railway.json.
+
+3. PRÓXIMOS PASOS (Para mañana)
+----------------------------------------------------------------
+- [ ] Salir a vender: Armar pitch de "Auditoría de Redes Gratis" para 1er cliente.
+- [ ] Nutrir a Ikki con 5 videos reales de marketing (sacar los de prueba).
+- [ ] Diciembre: Cambiar MOCK por API real de Kimi (ADR01).
+
+================================================================
+REGLAS DE TRABAJO
+================================================================
+- Un cambio, una verificación.
+- Scripts en /tmp con heredoc <<'EOF'.
+- SQL en Supabase Editor, Python en bash.
+- Siempre usar ./venv/bin/python3 o el entorno de Railway.
+================================================================
+
+--- ACTUALIZACIÓN 19-OCT (CIERRE) ---
+[x] Herramienta CLI `generar_reporte.py` creada.
+    - Uso: ./venv/bin/python3 src/agencia/generar_reporte.py "nombre" "rubro" "presupuesto"
+    - Genera reporte HTML/PDF dinámico en 2 segundos.
+[x] Kit de ventas (SALES_KIT.txt) validado con estrategia de objeciones.
+[x] API verificada en Railway (GET y POST).
+
+--- ACTUALIZACIÓN 19-OCT (DASHBOARD FRONTEND) ---
+[x] Dashboard Streamlit creado (`src/agencia/dashboard.py`).
+[x] Conexión Frontend -> API (Railway) -> DB (Supabase) validada.
+[x] Comando de ejecución: ./venv/bin/python3 -m streamlit run src/agencia/dashboard.py
+[x] Herramienta lista para demostraciones en vivo a clientes.
+
+--- ACTUALIZACIÓN 19-OCT (CIERRE FINAL) ---
+[x] Motor Mock mejorado con variaciones de textos (Ganchos, Cuerpos, CTAs).
+[x] Dashboard Streamlit con Prospección Masiva (Subir CSV -> Descargar ZIP).
+[x] Prueba de fuego masiva completada (3 reportes en 1 ZIP).
+[x] Sistema listo para operar. Costo $0.
+
+================================================================
+🚧 PENDIENTE: INTEGRACIÓN DE DATOS REALES (FASE 5)
+================================================================
+Estado actual: El sistema usa datos MOCK y está listo para vender.
+Decisión: NO integrar las APIs reales hasta tener el primer cliente pagando.
+
+PLAN DE INTEGRACIÓN GRADUAL (Para Noviembre/Diciembre):
+1. PRIMERO: Conseguir 1 cliente con el Mock (vender el concepto).
+2. LUEGO: Integrar Meta Ads API (Costo API: $0, costo desarrollo: ~$1.9M CLP).
+3. DESPUÉS: Integrar Google Ads API (Costo API: $0).
+4. FINALMENTE: Pasarela de pagos (Stripe/Flow/Transbank).
+
+COTIZACIÓN APROXIMADA (Desarrollo Fase 5):
+- Meta + Google Ads API (100 horas de dev): $1.900.000 - $3.800.000 CLP.
+- Infraestructura extra (Railway/Supabase Pro): ~$30.000 CLP/mes.
+- Pasarela de pago: ~3.6% por transacción.
+================================================================
+
+--- HITO FINAL 19-OCT (PRODUCCIÓN Y VENTAS) ---
+[x] Prospección masiva validada: CSV -> API -> ZIP con 10 reportes HTML.
+[x] Diseño de reportes dinámicos validado (Cafetería Aroma generada OK).
+[x] CRM integrado con enlace directo a WhatsApp Web y gestión de estados.
+[x] Sistema listo para operar 24/7. Costo de infraestructura: $0.
+[x] El siguiente paso es 100% COMERCIAL: Salir a contactar clientes reales.
+
+--- HITO FINAL (DESPLIEGUE WEB) ---
+[x] Landing Page desplegada en Netlify (URL pública generada).
+[x] El ecosistema técnico (Backend, DB, Dashboard, Reportes, CRM, Landing) está 100% completo.
+[x] Próximo paso: Salir a vender usando el link de Netlify y el botón de WhatsApp del CRM.

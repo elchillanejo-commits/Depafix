@@ -19,6 +19,11 @@ sys.path.insert(0, str(BASE_DIR))
 from core.db_manager import DatabaseManager
 from src.trading.crypto_trader_agent import TradingLogic
 from src.trading.data_pipeline import PipelineVelas
+from src.trading.position_sizer import get_position_size
+from src.trading.position_manager import (
+    get_posicion_abierta, registrar_posicion, cerrar_posicion,
+    debe_cerrar, actualizar_stop, df_desde_velas,
+)
 import ccxt
 
 logging.basicConfig(
@@ -82,7 +87,7 @@ def execute_order(exchange, symbol, side, quantity, price):
         logger.error(f"❌ Error ejecutando orden: {e}")
         return None
 
-def registrar_senal(activo, senal, precio, motivo, puntuacion, modo, cantidad=None, ejecutada=False, orden_id=None, stop_loss=None, take_profit_1=None, confluencia_detalle=None):
+def registrar_senal(activo, senal, precio, motivo, puntuacion, modo, cantidad=None, ejecutada=False, orden_id=None, stop_loss=None, take_profit_1=None, confluencia_detalle=None, posicion_usd=None, regimen=None):
     """Guarda la señal en operaciones_ejecutadas"""
     try:
         data = {
@@ -99,6 +104,8 @@ def registrar_senal(activo, senal, precio, motivo, puntuacion, modo, cantidad=No
             'stop_loss': float(stop_loss) if stop_loss else None,
             'take_profit_1': float(take_profit_1) if take_profit_1 else None,
             'confluencia_detalle': confluencia_detalle,
+            'posicion_usd': float(posicion_usd) if posicion_usd is not None else None,
+            'regimen': regimen,
             'timestamp': datetime.now(timezone.utc).isoformat()
         }
         db_client = DatabaseManager.get_service_client()
@@ -122,6 +129,11 @@ def ejecutar_ciclo(exchange, exchange_id, activos, limite, modo):
                 logger.warning(f"No hay datos para {activo}")
                 continue
 
+            # Position manager: build df + fetch posición abierta
+            df_pm = df_desde_velas(velas) if len(velas) >= 10 else None
+            db_pm = DatabaseManager.get_service_client()
+            posicion = get_posicion_abierta(db_pm, activo)
+
             trading_logic = TradingLogic()
             resultado = trading_logic.analizar(velas)
 
@@ -130,7 +142,30 @@ def ejecutar_ciclo(exchange, exchange_id, activos, limite, modo):
             puntuacion = resultado.get('score', 0)
             precio_actual = resultado.get('precio_actual', velas[-1]['close'])
 
+            # Trailing stop: fuerza VENTA si rompe, actualiza stop si no
+            if posicion and df_pm is not None:
+                try:
+                    cerrar, nuevo_stop, motivo_stop = debe_cerrar(df_pm, posicion, tipo="atr")
+                    if cerrar:
+                        senal = "VENTA"
+                        motivo = f"Trailing stop: {motivo_stop}"
+                        logger.info(f"🎯 {activo} trailing stop → VENTA")
+                    else:
+                        actualizar_stop(db_pm, posicion.id, nuevo_stop)
+                except Exception as e:
+                    logger.warning(f"position_manager override falló: {e}")
+
             logger.info(f"📊 {activo} -> {senal} | {motivo} | ${precio_actual:.2f}")
+
+            # Sizing por regimen (Kelly 1/10). Fail-open: nunca debe tumbar el ciclo.
+            regimen_temp = {"COMPRA": "TREND_UP", "VENTA": "TREND_DOWN", "ESPERA": "RANGE"}.get(senal, "RANGE")
+            try:
+                capital = float(os.getenv("CAPITAL_USD", "89"))
+                posicion_usd = get_position_size(capital, regimen_temp, win_rate=0.55, ratio_ganancia=1.5)
+            except Exception as e:
+                logger.warning(f"⚠️ Sizer falló, degradando a 0.0: {e}")
+                posicion_usd = 0.0
+            logger.info(f"💰 {activo} | regimen={regimen_temp} | posicion_usd=${posicion_usd:.2f}")
 
             cantidad = None
             ejecutada = False
@@ -178,11 +213,24 @@ def ejecutar_ciclo(exchange, exchange_id, activos, limite, modo):
                 modo=modo,
                 cantidad=cantidad,
                 ejecutada=ejecutada,
-                orden_id=orden_id
-            ,
+                orden_id=orden_id,
                 stop_loss=resultado.get('stop_loss'),
                 take_profit_1=resultado.get('take_profit_1'),
-                confluencia_detalle=resultado.get('confluencia_detalle'))
+                confluencia_detalle=resultado.get('confluencia_detalle'),
+                posicion_usd=posicion_usd,
+                regimen=regimen_temp)
+
+            # Persistencia en active_positions
+            try:
+                if senal == "COMPRA" and posicion_usd and posicion_usd > 0 and not posicion:
+                    registrar_posicion(db_pm, activo, precio_actual, cantidad or 0,
+                                       posicion_usd, buy_order_id=orden_id)
+                    logger.info(f"💼 Posición abierta: {activo}")
+                elif senal == "VENTA" and posicion:
+                    cerrar_posicion(db_pm, posicion.id)
+                    logger.info(f"💼 Posición cerrada: {activo}")
+            except Exception as e:
+                logger.warning(f"error persistencia posición: {e}")
 
         except Exception as e:
             logger.error(f"❌ Error procesando {activo}: {e}")

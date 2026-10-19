@@ -1,0 +1,6 @@
+version: 1
+campos:
+  rut:
+    tipo: string
+    obligatorio: true
+    fuente: rut_postulante

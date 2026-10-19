@@ -1,0 +1,445 @@
+================================================================
+GANTT CEO INFORMÁTICO — OCTUBRE 2026 (v5 — 08-oct cierre)
+================================================================
+Estado: S1-S6 completos. 5 casos demo operativos. Watchdog activo.
+93 tests verdes + 1 skipped. 4 servicios Railway eliminados.
+================================================================
+
+PROGRESO POR SESIÓN
+-------------------
+S1 Sensores              [=========] 100%
+S2 Rules engine          [=========] 100%
+S3 Diagnostician LLM     [=========] 100%
+S4 Actuator (dry_run)    [=========] 100%
+S5 Watchdog + Reporter   [=========] 100%
+S6 Predictor             [=========] 100%
+----------------------------------------------------------------
+GLOBAL CEO INFORMÁTICO   [=========] 100%
+
+5 CASOS DEMO (para validar end-to-end)
+---------------------------------------
+A. Inventario almacén    → demo_inventario    (task 54 cada 15 min)
+B. Caja chica diaria     → demo_caja          (task 54 cada 15 min)
+C. Pedidos restaurante   → demo_pedidos       (task 54 cada 15 min)
+D. Asistencia empleados  → demo_asistencia    (task 54 cada 15 min)
+E. Mantenimiento vehículos → demo_vehiculos   (task 54 cada 15 min)
+
+Todos excluidos del pipeline real vía filtro Python startswith("demo_").
+
+FLUJO END-TO-END (funcionando)
+------------------------------
+sensores → ceo_health → rules_engine (8 reglas) → si fail
+  → diagnosticar_fallo (Claude haiku-4-5 / sonnet-4-6, cap $2/día)
+  → actuator (5 acciones whitelisted, dry_run)
+  → ceo_actions (audit trail inmutable)
+  → predictor (3 patrones proactivos) → ceo_predictions
+  → reporter_daily (08:00 UTC) → Telegram
+  → watchdog externo (Vostro, cada 5 min) → alerta si CEO cae
+
+FIXES APLICADOS HOY (08-oct)
+----------------------------
+[x] `_` wildcard en SQL LIKE → filtrado en Python
+[x] UnboundLocalError en rules_evaluator → init antes del branch
+[x] Regex target unicode (acentos + ñ) → 500 chars
+[x] R1/R3 ignoran status='skip' (no cuentan como fail)
+[x] Test predictor reescrito con FakeClient custom
+
+INFRAESTRUCTURA RAILWAY (limpia)
+--------------------------------
+✅ depafix-ceo              uvicorn ceo.main:app
+✅ mercado-publico-scraper  scraper ChileCompra
+✅ depafix-presupuestos     (sin auditar)
+❌ Depafix                  ELIMINADO 06-oct
+❌ depafix-predictor        ELIMINADO 06-oct
+❌ trade-cripto-api         ELIMINADO 06-oct
+❌ depafix-trading-worker   ELIMINADO 29-sep
+
+WORKERS RECURRENTES (ceo_tasks)
+-------------------------------
+45  kraken_feed              0 * * * *
+46  calculate_market_stats   0 */6 * * *
+47  cleanup_old_tasks        0 4 * * *
+50  supervisor_trading       */15 * * * *
+51  health_probe             */15 * * * *
+52  rules_evaluator          */15 * * * *
+53  reporter_daily           0 8 * * *
+54  demo_probes              */15 * * * *
+
+TABLAS SUPABASE (00_INFRAESTRUCTURA)
+------------------------------------
+01_ceo_health            ~600 filas
+02_ceo_llm_budget        1 fila
+03_ceo_decisions         ~6 filas
+04_ceo_actions           ~40 filas (dry_run)
+05_ceo_tasks             ~54 filas
+06_active_positions      2 filas (BTC + ETH)
+07_bot_control           0 filas
+08_ceo_predictions       ~1 fila
+10_demo_tables           5 tablas demo
+11_demo_seed             datos sintéticos
+12_cleanup_demo_old      SQL de retención 48h
+
+PRÓXIMA SESIÓN 09-OCT
+=====================
+[ ] Verificar task 52 post-fix (veredicto esperado: ok)
+[ ] Migrar 5 casos demo a datos REALES:
+    - Caso A → stock real (ferretería o constructora)
+    - Caso B → SII / contabilidad real
+    - Caso C → POS restaurante real
+    - Caso D → reloj control real
+    - Caso E → flota real
+[ ] Diseñar kill-switch (bloqueado por medir task_rerun real)
+[ ] Medir ahorro real de eliminar 4 servicios Railway
+[ ] Gantt v6
+
+SEMANA 2 (09-13 oct)
+====================
+- Migración demo → real (5 casos)
+- Kill-switch en diseño
+- Reporter daily validado 3 días
+- Cierre: Gantt v6
+
+SEMANA 3 (14-20 oct)
+====================
+- Kill-switch en producción
+- NOTIFY_ENABLED=1 (solo notificar_humano real)
+- Medir falsos positivos Telegram <20%
+
+SEMANA 4 (21-31 oct)
+====================
+- ACTUATOR_ENABLED=1 solo task_rerun
+- Evaluar extensión a Legal/Construcción
+- Cierre mes: Gantt v7 noviembre
+
+PRESUPUESTO ANTHROPIC OCTUBRE
+=============================
+Real acumulado: ~$0.03
+Proyección cierre: ~$0.50
+Cap diario: $2.00 (nunca alcanzado)
+Modelo: haiku-4-5 ($0.001/llamada), sonnet-4-6 ($0.003)
+
+DECISIONES DE DISEÑO (ADRs)
+===========================
+ADR01: LLM portable (Anthropic → Kimi en dic-ene)
+ADR02: Fail-open en TODO
+ADR03: Predictor NUNCA dispara actuator
+ADR04: bot_pausar NO activa hasta que bot local lea bot_control
+ADR05: systemctl_restart NO activa hasta SSH al Vostro (F14)
+ADR06: Kill-switch sin tabla nueva (query ceo_actions 1h)
+ADR07: Cache por contexto_hash (2h)
+ADR08: Modelo por severidad (haiku simple / sonnet complejo)
+ADR09: Demo filtrado por startswith (no LIKE con _)
+ADR10: R1/R3 ignoran 'skip' (solo fail real dispara)
+
+HITO 08-OCT
+===========
+CEO Informático completo (S1-S6)
+5 casos demo operativos
+93 tests verdes
+4 servicios Railway eliminados
+5 bugs resueltos hoy
+Sistema end-to-end funcionando
+================================================================
+
+================================================================
+GANTT CEO v6 — 09-oct-2026
+================================================================
+
+INFRAESTRUCTURA LOCAL (Vostro)
+------------------------------
+✅ depafix-trading.service     Bot Kraken paper (activo)
+✅ watchdog-ceo.timer          Chequeo CEO cada 5 min (activo)
+✅ .n8n/ + n8n-data/           Datos residuales (puede purgarse)
+❌ n8n service                 ARCHIVADO 09-oct (redundante con ceo_tasks)
+❌ Docker n8n                  Sin contenedores activos
+
+WORKFLOWS n8n ARCHIVADOS
+------------------------
+- 4_workflow_n8n.json          → _ARCHIVE/2026-10-09/n8n/
+- 05_backtesting_n8n.json       → _ARCHIVE/2026-10-09/n8n/
+
+DECISIÓN: n8n no se revive. ceo_tasks cubre todo:
+  - Recurrentes (cron interno)
+  - Workers async (APScheduler)
+  - Retry + hysteresis
+  - Audit trail (ceo_actions)
+  - UI: terminal + Supabase dashboard
+
+Si en el futuro se necesita orquestación visual:
+  - Alternativa: n8n en Railway (no en Vostro, para no consumir CPU local)
+  - Condición: cuando haya 3+ dominios conectados (trading + legal + obra)
+
+INFRAESTRUCTURA RAILWAY
+-----------------------
+✅ depafix-ceo              uvicorn ceo.main:app
+✅ mercado-publico-scraper  scraper ChileCompra
+✅ depafix-presupuestos     (sin auditar)
+
+RECURRENTES ceo_tasks (10 activas)
+----------------------------------
+45  kraken_feed              0 * * * *
+46  calculate_market_stats   0 */6 * * *
+47  cleanup_old_tasks        0 4 * * *
+50  supervisor_trading       */15 * * * *
+51  health_probe             */15 * * * *
+52  rules_evaluator          */15 * * * *
+53  reporter_daily           0 8 * * *
+54  demo_probes              */15 * * * *
+55  properties_probe         30 * * * *  ← NUEVO
+56  properties_duplicados    15 * * * *  ← Gemini escribiendo
+
+MIGRACIÓN DEMO → REAL (progreso)
+--------------------------------
+✅ Caso A: Properties (inmobiliario) → REAL (366 props, 17 gangas)
+⏳ Caso B: Inventario     → demo
+⏳ Caso C: Caja chica     → demo
+⏳ Caso D: Pedidos        → demo
+⏳ Caso E: Asistencia     → demo
+⏳ Caso F: Vehículos      → demo
+
+R9 PROPERTIES (NUEVA REGLA)
+---------------------------
+Detección de gangas al primer ciclo (no esperar R8 de 2 ciclos).
+Payload: n_gangas=17, n_comunas=3, total_props=366.
+Dispara → diagnosticar_fallo → Claude → actuator dry_run.
+
+================================================================
+PRÓXIMOS PASOS (09-oct)
+================================================================
+[ ] Verificar task 52 con R9 (17 gangas → LLM)
+[ ] Recibir código properties_duplicados de Gemini
+[ ] Migrar Caso B (inventario) a datos reales
+[ ] Purga opcional: ~/.n8n/ + ~/n8n-data/ (liberar espacio)
+================================================================
+
+================================================================
+HITO 09-OCT-2026: CEO EJECUTA ACCIONES REALES
+================================================================
+ACTUATOR_ENABLED=1 aplicado en Railway.
+Task 52 (03:00:43 UTC): ejecutó health_rerun → resultado "ok" (NO dry_run).
+Kill-switch activo sin bloqueos innecesarios.
+
+CONFIRMADO EN PROD:
+- R9 detectó 17 gangas en properties (datos reales)
+- Claude diagnosticó: health_rerun, confianza 0.45
+- Actuator ejecutó acción real → ceo_actions.id=106
+
+PROPERTIES_DUPLICADOS (funcionando):
+- 36 duplicados detectados de 366 props
+- Task 56 programada (15 * * * *)
+- Worker deployado
+
+NUEVAS TAREAS EN PRODUCCIÓN:
+56 | properties_duplicados   15 * * * *
+57 | health_probe (reprogramado)
+
+PRÓXIMA SESIÓN (10-oct):
+[ ] Monitorear kill-switch 24h (máx 2 disparos/día)
+[ ] Verificar properties_duplicados corrió en hora programada
+[ ] Migrar Caso B (Inventario) a datos reales
+[ ] Actualizar Gantt con baseline de acciones reales
+
+REGLA DE MONITOREO:
+Si kill-switch dispara > 2 veces en 24h → rollback ACTUATOR_ENABLED=0
+Si el CEO ejecuta acciones sin errores → subir confianza a semana 4
+
+================================================================
+HITO 09-OCT-2026 — 3 CASOS REALES EN PRODUCCIÓN
+================================================================
+A. Properties inmobiliario (366 props)      ✅ REAL   → R9
+B. Inventario ferretería SERVIU 2026        ✅ REAL   → R10
+C. Caja de obra vs SERVIU 2026              ✅ REAL   → R11
+
+REGLAS EN PRODUCCIÓN:
+R1  railway.services
+R2  supabase latencia
+R3  feed.depafix-ceo
+R4  velas_cripto filas
+R5  feed latencia
+R6  railway offline
+R7  ceo_tasks vencidas
+R8  fail consecutivo (2 ciclos)
+R9  properties gangas
+R10 inventory bajos
+R11 caja desviaciones
+
+NUEVAS TABLAS (01_SERVIU):
+- precios_serviu_2026 (31 partidas UF ref $39.779,29)
+- inventario_real (30 SKUs con codigo_serviu FK)
+- caja_obra (20 movimientos seed)
+
+TAREAS RECURRENTES NUEVAS:
+55 properties_probe          30 * * * *    cada hora :30
+56 properties_duplicados     15 * * * *    cada hora :15
+59 inventory_probe           45 * * * *    cada hora :45
+61 caja_probe                0 * * * *     cada hora :00
+
+MÉTRICAS:
+- 96 tests verdes + 1 skip
+- 12 workers cargados en Railway
+- CEO ejecuta acciones reales (health_rerun → ok)
+- Kill-switch activo sin bloqueos
+- Costo Anthropic mes: ~$0.10
+
+PRÓXIMA SESIÓN 10-OCT:
+[ ] Migrar Caso D (Pedidos restaurante)
+[ ] Migrar Caso E (Asistencia empleados)
+[ ] Migrar Caso F (Vehículos)
+[ ] Verificar 24h sin regresiones
+[ ] Gantt v9
+
+DÍAS RESTANTES OCTUBRE:
+- Semana 3: kill-switch en producción + NOTIFY_ENABLED=1
+- Semana 4: ACTUATOR_ENABLED=1 solo task_rerun
+- Cierre mes: decidir extensión a Legal/Construcción
+
+================================================================
+CIERRE DÍA 09-OCT-2026
+================================================================
+
+CASOS REALES EN PRODUCCIÓN (3):
+A. Properties inmobiliario      366 props, R9       ✅
+B. Inventory ferretería SERVIU  30 SKUs, R10        ✅
+C. Caja de obra vs SERVIU       20 movs, R11        ✅
+
+CASOS EN STANDBY (próxima semana con datos reales):
+D. Avance de obra por partida   (esperando cliente real)
+E. Asistencia cuadrilla obra    (esperando cliente real)
+F. Maquinaria y vehículos obra  (esperando cliente real)
+
+DESCARTADO:
+- Pedidos restaurante (no aplica a DepaFix)
+
+REGLAS ACTIVAS: R1-R11
+TAREAS RECURRENTES: 12
+TESTS: 96 verdes + 1 skip
+COSTO ANTHROPIC MES: ~$0.10
+
+PRÓXIMA SESIÓN (10-oct o lunes):
+[ ] Verificar 24h sin regresiones
+[ ] Revisar baseline de ceo_actions (acciones reales vs dry_run)
+[ ] Actualizar HILO_CONDUCTOR con cierre de semana
+[ ] Decidir planificación semana 3 (kill-switch producción)
+
+SEMANA 3 (14-20 oct):
+- NOTIFY_ENABLED=1 (notificar_humano real)
+- Medir falsos positivos <20%
+- Kill-switch stress test
+
+SEMANA 4 (21-31 oct):
+- ACTUATOR_ENABLED=1 solo task_rerun
+- Extensión a Legal/Construcción (si hay cliente real)
+
+REGLAS PARA NUEVOS CASOS (patrón consolidado):
+1. Tabla real con codigo_serviu FK cuando aplique
+2. Worker con detecciones específicas del dominio
+3. Escribe a ceo_health con source/target claros
+4. Regla R(N) dispara si status != ok
+5. Task recurrente en ceo_tasks (no pg_cron)
+6. Test manual ANTES de registrar task
+
+================================================================
+CIERRE DÍA 09-OCT-2026 (completo)
+================================================================
+
+ESTADO FINAL DEL CEO INFORMÁTICO
+--------------------------------
+S1 Sensores          [=========] 100%
+S2 Rules engine      [=========] 100%  R1-R11
+S3 Diagnostician     [=========] 100%
+S4 Actuator          [=========] 100%  ejecutando real
+S5 Watchdog+Reporter [=========] 100%
+S6 Predictor         [=========] 100%
+
+CASOS REALES EN PRODUCCIÓN (3):
+A. Properties inmobiliario      366 props    → R9
+B. Inventory ferretería SERVIU  30 SKUs      → R10
+C. Caja obra SERVIU             20 movs      → R11
+
+CASOS STANDBY (esperando datos reales):
+D. Avance de obra por partida
+E. Asistencia cuadrilla obra
+F. Maquinaria y vehículos
+
+REGLAS ACTIVAS: R1-R11 (11 reglas)
+
+TESTS: 111 passed + 1 skipped
+
+WORKERS RECURRENTES (12):
+45 kraken_feed
+46 calculate_market_stats
+47 cleanup_old_tasks
+50 supervisor_trading
+51 health_probe
+52 rules_evaluator
+53 reporter_daily
+54 demo_probes
+55 properties_probe
+56 properties_duplicados
+59 inventory_probe
+61 caja_probe
+
+BASELINE ceo_actions:
+- 38 health_rerun/dry_run
+-  3 health_rerun/ok (acciones reales)
+-  9 target_invalido (histórico, ya fixed)
+
+REPORTER DAILY (último ciclo 08-oct 08:00 UTC):
+- Health: 100 ok / 0 warn / 0 fail (sin R9-R11 aún)
+- Diagnósticos: 8 llamadas, $0.0268
+- Acciones: 56 dry_run
+- Demo noise: 384 fails suppressed
+
+PRÓXIMA SEMANA (14-18 oct):
+[ ] Casos D/E/F con datos reales del cliente
+[ ] NOTIFY_ENABLED=1 (notificar_humano real)
+[ ] Medir falsos positivos <20%
+[ ] Kill-switch stress test
+[ ] ACTUATOR_ENABLED=1 solo task_rerun
+
+PATRÓN CONSOLIDADO PARA NUEVOS CASOS:
+1. CREATE TABLE con índices + RLS
+2. Seed de 20-30 registros realistas
+3. Worker con detecciones específicas del dominio
+4. Escribe a ceo_health (source/target claros)
+5. Regla R(N) en rules_engine
+6. Task recurrente en ceo_tasks (NO pg_cron)
+7. Test manual ANTES de registrar task
+8. 5+ tests unitarios por worker
+
+================================================================
+CIERRE DÍA 13-OCT-2026
+================================================================
+
+NUEVOS CASOS REALES:
+D. Flota transporte (ficticio internet)  ✅ REAL  → R12
+   - 5 vehículos, 20 viajes
+   - Detecta: docs por vencer, service vencido, rendimiento anormal
+
+CASOS TOTALES EN PRODUCCIÓN: 4
+A. Properties inmobiliario      → R9
+B. Inventory ferretería SERVIU  → R10
+C. Caja obra SERVIU             → R11
+D. Flota transporte             → R12
+
+REGLAS ACTIVAS: R1-R12
+TAREAS RECURRENTES: 13
+TESTS: 117 passed (111 + 6 flota) + 1 skipped
+
+NUEVAS TAREAS:
+137 flota_probe    20 * * * *   cada hora :20
+
+LECCIONES APRENDIDAS HOY:
+- ALTER TABLE ... SET SCHEMA no migra GRANTs → requiere GRANT manual
+- Supabase solo expone schema public por REST → no usar schemas custom
+- Cooldown 4h para notificar_humano → reduce spam Telegram de 4/h a 1/4h
+
+STANDBY (próxima semana):
+E. Avance obra por partida
+F. Asistencia cuadrilla
+G. Maquinaria obra
+
+PRÓXIMAS SESIONES:
+- 14-18 oct: NOTIFY_ENABLED=1, kill-switch stress test
+- 21-31 oct: ACTUATOR_ENABLED=1 solo task_rerun
+- Nov: extensión Legal/Construcción si hay cliente

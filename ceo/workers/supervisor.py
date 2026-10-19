@@ -1,4 +1,6 @@
 """supervisor.py — Audita el bot de Kraken y activa kill-switch."""
+import asyncio
+import hashlib
 import logging
 import os
 from datetime import datetime, timedelta, timezone
@@ -34,13 +36,10 @@ async def supervisor_trading_worker(params: dict) -> dict:
     total = len(ops)
     direccionales = [o for o in ops if o["senal"] in ("COMPRA", "VENTA")]
 
-    # Pérdidas consecutivas (simplificado: cuenta ESPERA tras COMPRA/VENTA)
+    # Pérdidas consecutivas: DESHABILITADO hasta tener tracking real de PnL.
+    # La regla anterior contaba señales direccionales como pérdidas (falso positivo).
+    # TODO: cuando exista tabla de trades cerrados con PnL, reimplementar.
     perdidas_cons = 0
-    for o in ops:
-        if o["senal"] in ("COMPRA", "VENTA"):
-            perdidas_cons += 1
-        elif o["senal"] == "ESPERA":
-            break
 
     # Win rate (aproximado: COMPRA sobre total direccional)
     if direccionales:
@@ -57,7 +56,7 @@ async def supervisor_trading_worker(params: dict) -> dict:
     veredicto = "OK"
     pausar = False
 
-    if perdidas_cons >= 3:
+    if False:  # DESHABILITADO: regla de pérdidas consecutivas era falso positivo
         veredicto = "PAUSAR"
         razon = f"{perdidas_cons} pérdidas consecutivas detectadas"
         pausar = True
@@ -87,6 +86,52 @@ async def supervisor_trading_worker(params: dict) -> dict:
         except Exception as e:
             logger.error(f"Error guardando pausa: {e}")
 
+    # ===== 4ta regla: robustez walk-forward (solo OBSERVACIÓN) =====
+    robustez_info: dict | None = None
+    try:
+        from src.trading.robustez_check import validar_robustez
+
+        activos = ["BTC/USD", "ETH/USD"]
+        try:
+            robustez_info = await asyncio.wait_for(
+                validar_robustez(client, activos), timeout=30.0
+            )
+        except asyncio.TimeoutError:
+            logger.warning("robustez timeout 30s")
+            robustez_info = {"robusta": None, "motivo": "timeout", "por_activo": {}}
+
+        est_hash = hashlib.md5(b"trading_logic_v1").hexdigest()[:8]
+        filas: list[dict] = []
+        ts = datetime.now(timezone.utc).isoformat()
+        por_activo = (robustez_info or {}).get("por_activo", {}) or {}
+        for par, info in por_activo.items():
+            filas.append({
+                "timestamp": ts,
+                "par": par,
+                "robusta": info.get("es_robusta"),
+                "motivo": info.get("estado", "desconocido"),
+                "sharpe_train": info.get("sharpe_train"),
+                "sharpe_test": info.get("sharpe_test"),
+                "degradacion_pct": info.get("degradacion_pct"),
+                "n_velas": info.get("velas", 0),
+                "n_ventanas_ok": 1 if info.get("estado") == "ok" else 0,
+                "estrategia_hash": est_hash,
+            })
+        if filas:
+            try:
+                client.table("robustez_historico").insert(filas).execute()
+            except Exception as e:
+                logger.warning("no se pudo persistir robustez: %s", e)
+
+        if (robustez_info or {}).get("robusta") is False:
+            logger.warning("robustez NO robusta: %s", robustez_info.get("motivo"))
+        else:
+            logger.info("robustez: %s", (robustez_info or {}).get("motivo"))
+
+    except Exception as e:
+        logger.warning("robustez check fallo (fail-open): %s", e)
+        robustez_info = None
+
     return {
         "ok": True,
         "veredicto": veredicto,
@@ -98,5 +143,6 @@ async def supervisor_trading_worker(params: dict) -> dict:
             "ops_por_hora": round(ops_por_hora, 2),
         },
         "pausado": pausar,
+        "robustez": robustez_info,
         "ejecutado": datetime.now(timezone.utc).isoformat(),
     }

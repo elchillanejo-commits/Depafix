@@ -1,0 +1,417 @@
+================================================================
+GANTT 1H DIARIA — DepaFix (v4.1 — 29-sep-2026 SEMANA 1 CERRADA)
+================================================================
+REGLA: 1h/día, 21:00-22:00. Sáb/Dom apagado. Viernes = cierre.
+SI AVANZAS RÁPIDO: comprime calendario, NO el descanso.
+================================================================
+
+ESTADO AL 29-SEP-2026
+---------------------
+[x] Feed Kraken operativo         438 velas frescas, lag 42s
+[x] Scheduler recurrente          Corre cada hora sin bug
+[x] Bot local (systemd)           Active + enabled, intervalo 300s
+[x] Telegram                      E2E verificado
+[x] 8 workers Railway             Online
+[x] velas_cripto LIMPIA           62 huérfanas borradas
+[x] ceo_tasks sanas               3 recurrentes (45, 46, 47)
+[x] Tarea 1.1 cerrada             config_loader.py + tests 2/2 passed
+
+WORKFLOW MULTI-MODELO (confirmado)
+----------------------------------
+- Gemini / DeepSeek escriben código
+- Claude audita + integra + mantiene contexto largo
+- Usuario ejecuta comandos
+
+================================================================
+SEMANA 1 (29-sep) — CERRADA EN 1 DÍA ✅
+================================================================
+[x] Lun 29  Verificación feed + limpieza velas_cripto
+[x] Lun 29  Tarea 1.1: config_loader.py (validación YAML fail-fast)
+[x] Lun 29  S3 position_sizer.py (Kelly 1/10)        13 tests
+[x] Lun 29  S4 trailing_stops.py (bar/ATR/EMA)       12 tests
+[x] Lun 29  S5 walkforward.py (validación robustez)   6 tests
+[x] Lun 29  Archivar tests obsoletos
+[✓] 33 passed / 0 failed
+
+AVANCE: 4 días ganados vs calendario original
+
+================================================================
+SEMANA 2 (30-sep a 4-oct) — Deploy + limpiar deuda
+================================================================
+[ ] Mar 30  Integrar position_sizer + trailing_stops al orchestrator
+[ ] Mié 1   Integrar walkforward al supervisor_trading
+[ ] Jue 2   Deploy todo a Railway + E2E
+[ ] Vie 3   Rotación logs + fix contador workers
+[ ] Sáb-Dom DESCANSO
+
+================================================================
+SEMANA 3 (13-19 oct) — F11 Analytics UI
+================================================================
+[ ] Lun 13  Wireframe /analytics
+[ ] Mar 14  Endpoint /analytics/comunas
+[ ] Mié 15  Frontend tabla market_stats
+[ ] Jue 16  Filtros interactivos
+[ ] Vie 17  Cierre + Gantt v4.2
+
+================================================================
+SEMANA 4 (20-26 oct) — F12 Mercado Público arranque
+================================================================
+[ ] Lun 20  Verificar API ChileCompra
+[ ] Mar 21  Worker scrape_mercado_publico.py
+[ ] Mié 22  Filtrar rubro construcción
+[ ] Jue 23  Deploy a Railway
+[ ] Vie 24  Cierre + Gantt v4.3
+
+================================================================
+SEMANA 5 (27-oct a 2-nov) — F12 Alertas
+================================================================
+[ ] Lun 27  Worker alertar_clientes.py
+[ ] Mar 28  Template email SendGrid
+[ ] Mié 29  Integrar Telegram + email
+[ ] Jue 30  Deploy + primera alerta real
+[ ] Vie 31  Cierre mes
+
+================================================================
+NOVIEMBRE 2026 — Kimi + Validación
+================================================================
+[ ] S1  Evaluar Kimi API (costo vs calidad)
+[ ] S2  Migrar 1 worker test A/B
+[ ] S3  Landing Mercado Público
+[ ] S4  5 llamadas PYMEs constructoras
+
+================================================================
+DICIEMBRE 2026 — Cierre
+================================================================
+[ ] S1  Primer cliente pagando (o kill Mercado Público)
+[ ] S2  Documentar CEO Service (RUNBOOK.md)
+[ ] S3  Auditoría anual + Gantt 2027
+[ ] S4  DESCANSO
+
+================================================================
+PRIORIDAD SI HAY QUE CORTAR
+================================================================
+1. Analytics UI (F11) -> enero 2027
+2. Kimi API (F7) -> marzo 2027
+3. Mercado Público (F12) -> 2027
+NUNCA cortar: mantenimiento de lo vivo (feed, bot, Telegram)
+
+================================================================
+DÍA TÍPICO (1h)
+================================================================
+21:00  Abrir terminal, leer Gantt del día
+21:02  Verificar ayer OK (5 min)
+21:07  Trabajar objetivo (45 min)
+21:52  Guardar / commit
+21:55  Actualizar Gantt / notas (5 min)
+22:00  Cerrar laptop. Sin excepciones.
+
+================================================================
+CIERRE 29-SEP (extendido)
+================================================================
+[x] config_loader.py escrito (DeepSeek) + auditado (Claude)
+[x] 4 fixes aplicados: schema real, MappingServiu tipado,
+    _bootstrap siempre log, tests con tmp_path
+[x] pytest: 2/2 PASSED
+[x] base_schema.json real (required + additionalProperties false)
+[x] velas_cripto limpia (438 filas sanas)
+[x] Workflow multi-modelo confirmado
+
+PRÓXIMO (Mié 1-oct)
+-------------------
+S3 position_sizer.py (Kelly 1/10)
+  - Prompt en historial del chat
+  - Escribir con Gemini/DeepSeek
+  - Auditar con Claude
+  - Integrar si pasa los 5 checks
+
+
+================================================================
+CIERRE EXTENDIDO 29-SEP-2026 (avance 4 días)
+================================================================
+[x] 5 tareas del Gantt cerradas en 1 día
+[x] F15 Trading Cuantitativo: 20% -> 60%
+[x] 33 tests verdes en el módulo trading/
+[x] Semana 1 original (29-sep a 5-oct) cerrada el mismo día
+[x] Semana 2 comienza miércoles 30-sep (4 días ganados)
+
+LOGROS TÉCNICOS
+---------------
+- src/config_loader.py         fail-fast validación YAML
+- src/trading/position_sizer.py Kelly fraccional 1/10 + hard cap 5%
+- src/trading/trailing_stops.py bar/ATR/EMA trails (SMB Capital)
+- src/trading/walkforward.py   3 ventanas + degradación < 30% = robusta
+
+PRÓXIMO (30-sep)
+----------------
+1. Integrar los 4 módulos al trading_orchestrator.py
+2. Deploy a Railway
+3. E2E: 1 ciclo del bot con sizing + trails + validación
+
+NOTA DE MOTIVACIÓN
+------------------
+El plan original era 1 día/semana. Cerraste la semana 1 en 1 día.
+Compresión real: 4 días ganados. NO extiendas la próxima sesión
+para "compensar". Descansa. El sistema se sostiene si respiras.
+
+
+================================================================
+CIERRE 29-SEP-2026 EXTENDIDO (tarde)
+================================================================
+[x] Bug fantasma identificado: cron depafix-trading-worker (3 días)
+    - Corría cada 5 min con pares USDT
+    - Escribía ~1152 filas/día a operaciones_ejecutadas
+    - Contaminaba velas_cripto con backfill USDT
+[x] Cron eliminado en Railway (Service not found confirmado)
+[x] velas_cripto limpias: solo BTC/USD y ETH/USD
+[x] operaciones_ejecutadas limpias: solo BTC/USD y ETH/USD
+[x] position_sizer integrado al orchestrator ($0.89/COMPRA)
+[x] SQL posicion_usd + regimen aplicado
+
+LOGROS DEL DÍA 29-SEP (versión completa)
+----------------------------------------
+[x] 5 tareas del Gantt (S1.1, S3, S4, S5) — 33 tests verdes
+[x] Patch position_sizer + $0.89 en COMPRA real
+[x] Bug del cron USDT eliminado (3 días de contaminación)
+[x] DB limpia: velas + operaciones sin huérfanos
+[x] Gantt v4.2
+
+PENDIENTE MAÑANA (30-sep)
+-------------------------
+[ ] Confirmar que el cron USDT no revive (24h sin escribir)
+[ ] Auditar los 4 servicios Railway restantes
+    (mercado-publico-scraper, depafix-presupuestos,
+     trade-crypto-api, depafix-predictor)
+[ ] Integrar _validar_robustez en supervisor (modo observación)
+[ ] Gantt v4.3
+
+NOTA CRÍTICA
+------------
+Había 7 servicios en Railway y nadie sabía qué hacía cada uno.
+Hoy se eliminó 1. Los otros 4 no esenciales quedan a auditar.
+Riesgo: cualquiera puede escribir a Supabase sin que te enteres.
+
+================================================================
+ALERTA CRÍTICA DESCUBIERTA 29-SEP (noche)
+================================================================
+[!] API PÚBLICA SIN AUTH: depafix-production.up.railway.app
+    - Endpoint POST /trading/ejecutar-cripto
+    - Corre subprocess con params del request
+    - CERO autenticación en api.py (182 líneas)
+    - Riesgo: RCE limitado + DoS + escritura a Supabase
+
+SERVICIOS RAILWAY — MAPA FINAL
+-------------------------------
+✅ depafix-ceo              -> Dockerfile.ceo (uvicorn ceo.main)
+✅ mercado-publico-scraper  -> Dockerfile.mercado_publico
+🔴 Depafix                  -> Dockerfile (api.py, EXPUESTO)
+🟡 depafix-presupuestos     -> sin Dockerfile local, ¿zombie?
+🔴 depafix-predictor        -> 0 refs en repo, GHOST
+🔴 trade-crypto-api         -> 0 refs en repo, GHOST
+❌ depafix-trading-worker   -> ELIMINADO 29-sep
+
+ACCIONES INMEDIATAS
+-------------------
+[ ] PAUSAR Depafix (api.py expuesto públicamente)
+[ ] ELIMINAR depafix-predictor
+[ ] ELIMINAR trade-crypto-api
+[ ] AUDITAR depafix-presupuestos (logs en Railway)
+[ ] Decidir: ¿api.py tiene algún uso legítimo?
+
+
+================================================================
+CIERRE DEFINITIVO 29-SEP-2026
+================================================================
+Estado: sistema limpio, controlado, 33 tests verdes
+
+HALLAZGOS DE LA AUDITORÍA DE SERVICIOS
+---------------------------------------
+[x] depafix-trading-worker: ELIMINADO (cron USDT fantasma)
+[x] trade-crypto-api: escribe a tabla 'trades' (NO operaciones_ejecutadas)
+    -> su código 05_TRADE_CRIPTO_NEW/main.py NO está en ningún Dockerfile
+    -> corre código desconocido en Railway. PAUSAR
+[x] Depafix (api.py): EXPUESTO sin auth
+    -> POST /trading/ejecutar-cripto corre subprocess.run()
+    -> URL pública: https://depafix-production.up.railway.app
+    -> PAUSAR
+[x] depafix-predictor: 0 referencias en repo. PAUSAR
+[x] depafix-presupuestos: carpeta presupuesto/ VACÍA. Auditar UI
+[x] mercado-publico-scraper: OK, mantener
+[x] depafix-ceo: OK, mantener
+
+ÚLTIMAS 20 OPERACIONES
+----------------------
+Counter({'ETH/USD': 10, 'BTC/USD': 10})
+Timestamps: 19:12, 19:17, 19:22 cada 5 min
+Cero USDT. Sistema estable.
+
+SEMANA 1 COMPLETA
+-----------------
+[x] config_loader.py (fail-fast YAML)
+[x] position_sizer.py (Kelly 1/10, $0.89/COMPRA)
+[x] trailing_stops.py (bar/ATR/EMA)
+[x] walkforward.py (validación robustez)
+[x] 33 tests verdes
+[x] Bug cron USDT eliminado
+[x] DB limpia (velas + operaciones)
+
+PROGRESO
+--------
+F15 Trading Cuantitativo: 20% -> 60%
+F10 CEO Service: 100% (sostenido)
+Semana 1 original (5 días): completada en 1 día
+Semana 2 comienza mié 30-sep
+
+PENDIENTE MAÑANA 30-SEP (prioridad)
+-----------------------------------
+[ ] PAUSAR Depafix (api.py expuesto)
+[ ] PAUSAR trade-crypto-api
+[ ] PAUSAR depafix-predictor
+[ ] Auditar depafix-presupuestos (logs UI)
+[ ] Confirmar 24h sin USDT
+[ ] Integrar _validar_robustez en supervisor (modo observación)
+
+NOTA
+----
+Empezaste con 7 servicios y sin saber qué hacía cada uno.
+Terminas con mapa completo + 1 eliminado + 3 a pausar.
+El sistema quedará con solo 2-3 servicios esenciales.
+
+
+================================================================
+CIERRE DEFINITIVO 29-SEP-2026 (noche extendida)
+================================================================
+
+IMPLEMENTADO HOY (versión completa)
+------------------------------------
+[x] src/config_loader.py          fail-fast YAML          2 tests
+[x] src/trading/position_sizer.py Kelly 1/10             13 tests
+[x] src/trading/trailing_stops.py bar/ATR/EMA            12 tests
+[x] src/trading/walkforward.py    validación robustez     6 tests
+[x] src/trading/robustez_check.py walkforward wrapper     6 tests
+[x] ceo/workers/supervisor.py     integración observación
+[x] position_sizer en orchestrator ($0.89/COMPRA)
+[x] SQL: posicion_usd + regimen
+[x] SQL: robustez_historico (nueva tabla)
+[x] Bug fantasma cron USDT eliminado
+[x] Deduplicación de supervisor (2 bloques robustez)
+TOTAL: 39 tests verdes
+
+MODO OBSERVACIÓN (nueva capacidad)
+-----------------------------------
+- Supervisor corre cada 15 min (Railway)
+- 4ta regla añadida: walkforward de robustez
+- Escribe histórico a robustez_historico (2 filas/corrida)
+- NO pausa el bot todavía
+- Motivo actual: "pocos_datos" (219 < 400 velas)
+- Activación de pausa real: cuando haya 400+ velas/par (8-12 días)
+
+SERVICIOS RAILWAY — ESTADO AL CIERRE
+------------------------------------
+✅ depafix-ceo              -- OK, mantenido
+✅ mercado-publico-scraper  -- OK, mantenido
+🟡 Depafix (api.py)         -- A PAUSAR (endpoint sin auth)
+🟡 trade-crypto-api         -- A PAUSAR (código desconocido)
+🟡 depafix-predictor        -- A PAUSAR (ghost, 0 refs)
+🟡 depafix-presupuestos     -- Auditar logs UI
+❌ depafix-trading-worker   -- ELIMINADO (cron USDT)
+
+PENDIENTE MAÑANA 30-SEP
+-----------------------
+[ ] PAUSAR Depafix (Railway UI)
+[ ] PAUSAR trade-crypto-api (Railway UI)
+[ ] PAUSAR depafix-predictor (Railway UI)
+[ ] Auditar depafix-presupuestos (logs UI)
+[ ] Deploy supervisor con robustez a Railway
+[ ] Verificar 24h sin USDT
+[ ] Gantt v4.6
+
+HITO DEL DÍA
+------------
+5 tareas del Gantt (S1.1 + S3 + S4 + S5 + R1)
+39 tests verdes
+2 bugs fantasmas identificados (1 eliminado)
+Supervisor con capacidad de observación de robustez
+Sistema limpio en Supabase
+De 7 servicios Railway a 4-5 (según acciones mañana)
+
+
+================================================================
+UPDATE 04-OCT-2026 (parcial)
+================================================================
+[x] position_manager.py v2 (active_positions)
+    12 tests verdes
+[x] Integrado en orchestrator (trailing stops en vivo)
+[x] Bot reiniciado con position_manager activo
+[x] SQL: tabla active_positions
+[x] SQL: tabla ceo_health
+[x] CEO Informático S1: sensores supabase + feeds
+    Escriben a ceo_health cada corrida
+[x] 51 tests verdes en total
+
+SENSORES FUNCIONANDO
+--------------------
+supabase_probe  -> latencia + filas (velas=673, ops=283, tasks=45)
+feeds_probe     -> /health CEO service (200 OK)
+Cada corrida escribe 2 filas a ceo_health.
+
+CEO INFORMÁTICO — PROGRESO
+--------------------------
+S1: Sensores básicos        [====      ] 40%
+    - supabase_probe  OK
+    - feeds_probe     OK
+    - railway_probe   PENDIENTE (necesita RAILWAY_TOKEN)
+    - local_probe     PENDIENTE (necesita SSH inverso)
+    - Scheduler       PENDIENTE (integración con ceo_tasks)
+S2: Rules engine            [          ] 0%
+S3: Diagnostician LLM       [          ] 0%
+S4: Actuator whitelist      [          ] 0%
+S5: Reporter + heartbeat    [          ] 0%
+
+PRÓXIMO (próxima sesión)
+------------------------
+[ ] railway_probe (listar servicios + status)
+[ ] Integrar sensores a ceo_tasks (task recurrente cada 15 min)
+[ ] Rules engine con 8 reglas duras (S2)
+
+================================================================
+UPDATE 04-OCT-2026 (con auditoría Gemini)
+================================================================
+[x] railway_probe.py (6 tests verdes)
+[x] run_all con 3 sensores: supabase, feeds, railway
+[x] ceo_health escribiendo cada corrida
+[x] S1 CEO Informático al 60%
+
+REORDENAMIENTO SEGÚN GEMINI
+----------------------------
+S1 Sensores + ceo_health            60%  <- actual
+S2 Rules engine (Trading first)      0%  <- prioridad cambiada
+S3 Diagnostician LLM (solo trading)  0%
+S4 Feedback loop (persistencia)      0%
+S5 Watchdog externo + expansión      0%  <- watchdog ANTES de expansión
+
+3 RIESGOS NUEVOS DE GEMINI (adoptados)
+---------------------------------------
+R-A: Bucle infinito de introspección.
+     Mitigación: max_calls_per_hour=5, max_cost_per_call=$0.10.
+R-B: Parálisis por contexto multi-dominio.
+     Mitigación: chats separados por dominio (infra / trading / legal).
+R-C: Dependencia circular de supervisión.
+     Mitigación: Watchdog externo en Vostro (cron systemd cada 5 min).
+     Si ceo_health sin fila >30 min → Telegram directo.
+
+COMPONENTE FALTANTE (Watchdog)
+-------------------------------
+Watchdog Externo:
+- Corre en Vostro (systemd timer, no en Railway)
+- Consulta Supabase cada 5 min
+- Si no hay fila ceo_health en últimos 30 min -> Telegram
+- Si CEO está con error: no intenta reparar, solo notifica
+
+PENDIENTE MAÑANA (05-oct)
+-------------------------
+[ ] Eliminar 3 servicios peligrosos en Railway UI (Depafix,
+    depafix-predictor, trade-cripto-api) — sigue sin hacerse
+[ ] Deploy railway_probe + run_all actualizado a Railway
+[ ] Actualizar ceo_llm_budget: max_cost_per_call, max_calls_per_hour
+[ ] S2: rules_engine.py con 8 reglas duras
+[ ] Watchdog: watchdog.py + systemd timer en Vostro
