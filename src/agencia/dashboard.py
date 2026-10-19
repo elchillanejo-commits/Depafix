@@ -9,9 +9,6 @@ from supabase import create_client
 from dotenv import load_dotenv
 
 load_dotenv()
-
-# --- TRUCO PARA STREAMLIT CLOUD ---
-# Si estamos en Streamlit Cloud, carga las variables desde st.secrets
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 
@@ -89,29 +86,61 @@ with tab2:
             st.success(f"¡{len(df)} reportes generados!")
             st.download_button("📥 Descargar ZIP", zip_buffer.getvalue(), file_name="reportes_ikki.zip", mime="application/zip", type="primary")
 
+# ---------------- TAB 3: CRM MEJORADO ----------------
 with tab3:
     st.header("Gestión de Prospectos (CRM)")
     if SUPABASE_URL and SUPABASE_KEY:
         client = create_client(SUPABASE_URL, SUPABASE_KEY)
         res = client.table("campanas_meta").select("id", "cliente_id", "presupuesto_total", "estado").execute()
+        
         if res.data:
             df_crm = pd.DataFrame(res.data).rename(columns={"cliente_id": "Cliente", "presupuesto_total": "Pauta (CLP)", "estado": "Estado"})
+            
+            # --- CÁLCULO DEL LEAD SCORE ---
+            def calcular_score(row):
+                base = 50
+                bonus_pauta = row["Pauta (CLP)"] / 10000
+                estado = row["Estado"]
+                bonus_estado = {"BORRADOR": 0, "ENVIADO": 10, "RESPONDIO": 25, "CERRADO": 40}.get(estado, 0)
+                return int(base + bonus_pauta + bonus_estado)
+            
+            df_crm["Score"] = df_crm.apply(calcular_score, axis=1)
+            
+            # Generar link de WhatsApp
             mensaje_base = "Hola! Te escribo de Agencia Ikki. Vi tu negocio y preparé un reporte gratuito con 3 opciones de anuncios para tu rubro. ¿Te gustaría que te lo envíe por aquí para que lo revises sin compromiso?"
             df_crm["Contactar"] = f"https://wa.me/?text={urllib.parse.quote(mensaje_base)}"
+            
+            # Editor interactivo
             edited_df = st.data_editor(
                 df_crm,
                 column_config={
                     "Estado": st.column_config.SelectboxColumn("Estado", options=["BORRADOR", "ENVIADO", "RESPONDIO", "CERRADO"], required=True),
                     "Contactar": st.column_config.LinkColumn("Acción", display_text="💬 Enviar Pitch")
                 },
-                disabled=["id", "Cliente", "Pauta (CLP)", "Contactar"], hide_index=True, width="stretch"
+                disabled=["id", "Cliente", "Pauta (CLP)", "Score", "Contactar"], 
+                hide_index=True, 
+                width="stretch"
             )
-            if st.button("💾 Guardar Cambios"):
-                cambios = 0
-                for index, row in edited_df.iterrows():
-                    if row["Estado"] != df_crm.iloc[index]["Estado"]:
-                        client.table("campanas_meta").update({"estado": row["Estado"]}).eq("id", row["id"]).execute()
-                        cambios += 1
-                if cambios > 0: st.success(f"¡Se actualizaron {cambios} prospectos!")
-                else: st.info("No hubo cambios.")
-        else: st.info("Sin prospectos.")
+            
+            col_save, col_export = st.columns(2)
+            with col_save:
+                if st.button("💾 Guardar Cambios de Estado", type="primary"):
+                    cambios = 0
+                    for index, row in edited_df.iterrows():
+                        if row["Estado"] != df_crm.iloc[index]["Estado"]:
+                            client.table("campanas_meta").update({"estado": row["Estado"]}).eq("id", row["id"]).execute()
+                            cambios += 1
+                    if cambios > 0: st.success(f"¡Se actualizaron {cambios} prospectos!")
+                    else: st.info("No hubo cambios.")
+            
+            with col_export:
+                # Botón para exportar a CSV
+                csv = edited_df.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="📥 Exportar CRM a CSV",
+                    data=csv,
+                    file_name='ikki_crm_export.csv',
+                    mime='text/csv',
+                )
+        else: 
+            st.info("Sin prospectos.")
