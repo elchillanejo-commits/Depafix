@@ -1,10 +1,7 @@
-"""
-nutriente.py — Ingesta de conocimiento desde YouTube (Día 8).
-Soporte para youtube-transcript-api >= 1.0.
-"""
 import os
 import json
 import logging
+from datetime import datetime
 from youtube_transcript_api import YouTubeTranscriptApi
 from supabase import create_client
 from dotenv import load_dotenv
@@ -16,16 +13,16 @@ class Nutriente:
     def __init__(self):
         url = os.environ.get("SUPABASE_URL")
         key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
-        if not url or not key:
-            raise ValueError("Faltan credenciales de Supabase en .env")
-        self.client = create_client(url, key)
-        self.ytt_api = YouTubeTranscriptApi() # Instancia nueva para v1.x
+        self.client = create_client(url, key) if url and key else None
+        self.ytt_api = YouTubeTranscriptApi()
+        
+        # Carpeta local para el Cerebro
+        self.local_dir = "data/knowledge_base"
+        os.makedirs(self.local_dir, exist_ok=True)
 
     def extraer_id_video(self, url: str) -> str:
-        if "v=" in url:
-            return url.split("v=")[1].split("&")[0]
-        elif "youtu.be/" in url:
-            return url.split("youtu.be/")[1].split("?")[0]
+        if "v=" in url: return url.split("v=")[1].split("&")[0]
+        elif "youtu.be/" in url: return url.split("youtu.be/")[1].split("?")[0]
         return url
 
     def procesar_video(self, url: str, titulo: str) -> bool:
@@ -33,22 +30,29 @@ class Nutriente:
         log.info(f"Procesando video: {video_id} - {titulo}")
 
         try:
-            # 1. Descargar transcripción (Método actualizado v1.x)
+            # 1. Descargar transcripción
             transcript_list = self.ytt_api.fetch(video_id, languages=['es', 'en'])
-            # En v1.x se usa .text en lugar de t['text']
             texto_completo = " ".join([t.text for t in transcript_list])
             
-            # 2. Guardar en Supabase
             payload = {
                 "fuente": "youtube",
                 "url": url,
                 "titulo": titulo,
                 "contenido": texto_completo,
-                "metadata": {"video_id": video_id}
+                "metadata": {"video_id": video_id, "fecha_local": datetime.now().isoformat()}
             }
             
-            result = self.client.table("knowledge_entries").insert(payload).execute()
-            log.info(f"✅ Guardado en DB con ID: {result.data[0]['id']}")
+            # 2. Guardar en LOCAL (JSON)
+            local_path = os.path.join(self.local_dir, f"{video_id}.json")
+            with open(local_path, "w", encoding="utf-8") as f:
+                json.dump(payload, f, ensure_ascii=False, indent=2)
+            log.info(f"✅ Guardado localmente en: {local_path}")
+
+            # 3. Guardar en SUPABASE (Nube)
+            if self.client:
+                self.client.table("knowledge_entries").insert(payload).execute()
+                log.info(f"✅ Guardado en Supabase (Nube)")
+                
             return True
             
         except Exception as e:
@@ -58,6 +62,5 @@ class Nutriente:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     nutriente = Nutriente()
-    url_test = "https://www.youtube.com/watch?v=dQw4w9WgXcQ" 
-    titulo_test = "Test de Ingesta de Conocimiento"
-    nutriente.procesar_video(url_test, titulo_test)
+    # Probamos con un video de marketing
+    nutriente.procesar_video("https://www.youtube.com/watch?v=u4ZoJKF_VuA", "Simon Sinek - Start with Why")

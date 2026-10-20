@@ -110,11 +110,11 @@ with tab1:
             c1, c2 = st.columns(2)
             c1.metric("Pauta", f"${fee['pauta_neta']:,}")
             c2.metric("Total", f"${fee['total_facturar_clp']:,}")
-            
-html_data = generar_html(data, cliente_id, rubro)
-pdf_data = generar_pdf(html_data)
-st.download_button("📥 Descargar PDF", pdf_data, file_name=f"Propuesta_{cliente_id}.pdf", mime="application/pdf", type="primary")
-st.download_button("📥 Descargar HTML (Respaldo)", html_data, file_name=f"prop_{cliente_id}.html", mime="text/html")
+
+            html_data = generar_html(data, cliente_id, rubro)
+            pdf_data = generar_pdf(html_data)
+            st.download_button("📥 Descargar PDF", pdf_data, file_name=f"Propuesta_{cliente_id}.pdf", mime="application/pdf", type="primary")
+            st.download_button("📥 Descargar HTML (Respaldo)", html_data, file_name=f"prop_{cliente_id}.html", mime="text/html")
 
 
 with tab2:

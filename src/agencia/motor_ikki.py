@@ -1,6 +1,6 @@
 """
 motor_ikki.py — Motor de cálculo CDA y Copywriting (Agencia Ikki).
-Fase 5: Conectado a datos reales de benchmarks y matriz de plataformas.
+Fase 6: Conectado al Cerebro Local (RAG) y Benchmarks.
 """
 import json
 import os
@@ -15,7 +15,6 @@ load_dotenv()
 log = logging.getLogger(__name__)
 USE_MOCK_LLM = os.environ.get("IKKI_USE_MOCK", "1") == "1"
 
-# Plantillas de copys (Mock)
 GANCHOS = [
     "¿Cansado de buscar en {rubro} y no encontrar calidad?",
     "Descubre por qué somos los #1 en {rubro}.",
@@ -34,7 +33,6 @@ class AgenciaIkkiMotor:
         self.fee_fijo = Decimal(str(fee_fijo_clp))
         self.pct_pauta = Decimal(str(pct_pauta))
         
-        # Conexión a Supabase para leer Benchmarks
         url = os.environ.get("SUPABASE_URL")
         key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
         self.client = create_client(url, key) if url and key else None
@@ -53,11 +51,8 @@ class AgenciaIkkiMotor:
         }
 
     def obtener_benchmarks(self, rubro: str) -> dict:
-        """Busca proyecciones reales en Supabase según el rubro."""
         if not self.client:
-            return {"error": "Sin conexión a DB"}
-
-        # 1. Buscar recomendación de plataforma
+            return {}
         try:
             matriz = self.client.table("matriz_plataforma").select("*").ilike("rubro", f"%{rubro}%").execute().data
             red_principal = matriz[0]["red_principal"] if matriz else "Meta"
@@ -66,17 +61,12 @@ class AgenciaIkkiMotor:
         except Exception:
             red_principal, red_secundaria, justificacion = "Meta", "Google Ads", "Estrategia estándar."
 
-        # 2. Buscar CPM y CPC
         try:
-            # Buscamos en la tabla de benchmarks una industria que coincida
             bench = self.client.table("benchmarks_ads").select("*").ilike("industria", f"%{rubro}%").execute().data
-            
             if bench:
-                # Promediamos min y max para la proyección
                 cpm = (bench[0]["cpm_min_clp"] + bench[0]["cpm_max_clp"]) / 2
                 cpc = (bench[0]["cpc_min_clp"] + bench[0]["cpc_max_clp"]) / 2 if bench[0].get("cpc_min_clp") else 250
             else:
-                # Valores por defecto si no encontramos el rubro exacto
                 cpm, cpc = 5000, 250
         except Exception:
             cpm, cpc = 5000, 250
@@ -90,7 +80,29 @@ class AgenciaIkkiMotor:
         }
 
     def generar_copywriting(self, rubro: str, prospecto_nombre: str) -> list[dict]:
+        # 1. Leer el Cerebro Local (RAG)
+        contexto_ia = ""
+        brain_path = "data/contexto_maestro.txt"
+        if os.path.exists(brain_path):
+            with open(brain_path, "r", encoding="utf-8") as f:
+                contexto_ia = f.read()
+            
+            # 2. Verificación en consola (Idea de Gemini)
+            log.info(f"🧠 Cerebro Local cargado ({len(contexto_ia)} chars). Muestra: {contexto_ia[:200]}...")
+            
+            # 3. Preparación del System Instruction (para inyección futura)
+            system_instruction = (
+                "Eres un Copywriter Senior experto de la agencia Ikki. "
+                "Utiliza el siguiente conocimiento experto de nuestra base de datos "
+                "para redactar anuncios de alta conversión:\n\n"
+                f"{contexto_ia}"
+            )
+        else:
+            log.warning("⚠️ No se encontró data/contexto_maestro.txt")
+
+        # 4. Generación (Mock Actual)
         if USE_MOCK_LLM:
+            log.info("Usando Mock de Copywriting ($0 costo)")
             copys = []
             for _ in range(3):
                 gancho = random.choice(GANCHOS).format(rubro=rubro)
@@ -98,6 +110,7 @@ class AgenciaIkkiMotor:
                 cta = random.choice(CTAS)
                 copys.append({"titulo": gancho, "cuerpo": cuerpo, "cta": cta})
             return copys
+        
         return []
 
     def simular_campana_completa(self, prospecto: dict, presupuesto_pauta: int) -> dict:
@@ -105,28 +118,18 @@ class AgenciaIkkiMotor:
         fee = self.calcular_fee_campana(presupuesto_pauta)
         benchmarks = self.obtener_benchmarks(rubro)
         
-        # --- CÁLCULO DE PROYECCIONES REALES ---
         proyecciones = {}
         if benchmarks.get("cpm_promedio_clp"):
             cpm = benchmarks["cpm_promedio_clp"]
-            cpc = benchmarks["cpc_promedio_clp"]
-            
-            # Impresiones = (Pauta / CPM) * 1000
             impresiones = int((presupuesto_pauta / cpm) * 1000)
-            # Clics = Impresiones * CTR (asumimos un CTR estándar del 1% para el cálculo, o usamos CPC)
             clics = int(impresiones * 0.01)
-            
             proyecciones = {
                 "impresiones_estimadas": impresiones,
                 "clics_estimados": clics,
-                "nota": "Cálculo basado en CPM/CPC reales de la industria en Chile (Benchmarks 2026)."
+                "nota": "Cálculo basado en CPM/CPC reales (Benchmarks 2026)."
             }
 
-        if fee["total_facturar_clp"] < 200000:
-            recomendacion = "RECHAZAR: Ticket muy bajo."
-        else:
-            recomendacion = "APROBAR: Campaña rentable."
-
+        recomendacion = "APROBAR: Campaña rentable." if fee["total_facturar_clp"] >= 200000 else "RECHAZAR: Ticket muy bajo."
         copys = self.generar_copywriting(rubro, prospecto.get('id', 'demo').replace('_', ' '))
 
         return {
