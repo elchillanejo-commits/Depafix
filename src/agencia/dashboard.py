@@ -5,6 +5,7 @@ import io
 import zipfile
 import os
 import urllib.parse
+from xhtml2pdf import pisa
 from supabase import create_client
 from dotenv import load_dotenv
 
@@ -85,6 +86,12 @@ def generar_html(data, cliente, rubro):
         <p style="text-align: center; margin-top: 40px; font-size: 12px; color: #888;">Ikki Agency.</p>
     </div></body></html>"""
 
+
+def generar_pdf(html_content):
+    result = io.BytesIO()
+    pisa.CreatePDF(io.StringIO(html_content), dest=result)
+    return result.getvalue()
+
 tab1, tab2, tab3 = st.tabs(["🎯 Generador Rápido", "📦 Prospección Masiva", "📊 Gestión de Ventas (CRM)"])
 
 with tab1:
@@ -103,7 +110,12 @@ with tab1:
             c1, c2 = st.columns(2)
             c1.metric("Pauta", f"${fee['pauta_neta']:,}")
             c2.metric("Total", f"${fee['total_facturar_clp']:,}")
-            st.download_button("📥 Descargar HTML", generar_html(data, cliente_id, rubro), file_name=f"prop_{cliente_id}.html", mime="text/html")
+            
+html_data = generar_html(data, cliente_id, rubro)
+pdf_data = generar_pdf(html_data)
+st.download_button("📥 Descargar PDF", pdf_data, file_name=f"Propuesta_{cliente_id}.pdf", mime="application/pdf", type="primary")
+st.download_button("📥 Descargar HTML (Respaldo)", html_data, file_name=f"prop_{cliente_id}.html", mime="text/html")
+
 
 with tab2:
     st.header("Prospección Masiva (CSV)")
