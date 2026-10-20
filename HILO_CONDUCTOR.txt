@@ -1,86 +1,222 @@
-================================================================
-DEPAFIX — HILO CONDUCTOR (v5 — 19-oct-2026)
-================================================================
-Estado: MVP Agencia Ikki desplegado y probado en Producción.
-URL Base: https://ikki-api-production.up.railway.app
-Endpoints: POST /api/v1/simular | GET /api/v1/campanas
-Costo de operación: $0 (Modo MOCK / ADR01)
-================================================================
+### DEPAFIX — HILO CONDUCTOR (v1 — 14-oct-2026)
+### Este archivo es el contexto maestro. Cualquier chat (Claude, Gemini, ChatGPT, DeepSeek) debe leerlo primero para entender el proyecto y continuar sin perder el hilo.
 
-1. CEO INFORMÁTICO (Completado)
-----------------------------------------------------------------
-- 5/5 casos migrados (Properties, Caja, Inventory, Flota, Transporte).
-- Workers operando en Railway.
+#### QUÉ ES DEPAFIX
+Sistema multi-dominio de automatización para pymes chilenas. Tres verticales operativas:
+1. TRADING CRIPTO  — bot Kraken + Supabase (paper trading)
+2. CONSTRUCCIÓN    — SERVIU / obras / presupuestos / caja
+3. LEGAL           — Procurador (trámites judiciales)
+Y una capa transversal: CEO INFORMÁTICO — monitorea los 3 dominios vía workers, detecta fallos, diagnostica con LLM (Anthropic) y actúa con whitelist. Corre en Railway, escribe a Supabase.
+VISIÓN 2026: extender a un 4to vertical — AGENCIA DE PUBLICIDAD (costos $0 al inicio, servicios de conocimiento: auditoría, copy, reportes de ads).
 
-2. AGENCIA IKKI (MVP en Producción y Validado)
-----------------------------------------------------------------
-- Base de datos: Supabase (06_AGENTES).
-- API: FastAPI desplegada en Railway (Docker).
-- GET /campanas (Lectura) y POST /simular (Escritura) funcionando.
-- Ingesta: Script de YouTube a Supabase.
-- Archivos clave en `src/agencia/`: api.py, motor_ikki.py, nutriente.py.
-- Archivos de deploy: Dockerfile, requirements.txt, railway.json.
+### ================================================================ ARQUITECTURA TÉCNICA
+Stack:
+* Python 3.11+, FastAPI, Pydantic v2
+* Supabase (Postgres + PostgREST) como DB y API
+* Railway para workers (1 contenedor, ~$5/mes)
+* Vostro local (Ubuntu) para bot trading systemd
+* Anthropic LLM: haiku-4-5 ($0.001/llamada) y sonnet-4-6
+* Presupuesto LLM: cap $2/día, cache por contexto_hash 2h
 
-3. PRÓXIMOS PASOS (Para mañana)
-----------------------------------------------------------------
-- [ ] Salir a vender: Armar pitch de "Auditoría de Redes Gratis" para 1er cliente.
-- [ ] Nutrir a Ikki con 5 videos reales de marketing (sacar los de prueba).
-- [ ] Diciembre: Cambiar MOCK por API real de Kimi (ADR01).
+Flujo CEO Informático: sensores → ceo_health → rules_engine (8 reglas) → si fail → diagnosticar_fallo (LLM) → actuator (5 acciones whitelisted, dry_run) → ceo_actions (audit trail inmutable) → predictor (patrones proactivos) → ceo_predictions → reporter_daily (08:00 UTC) → Telegram → watchdog externo (Vostro cada 5 min)
 
-================================================================
-REGLAS DE TRABAJO
-================================================================
-- Un cambio, una verificación.
-- Scripts en /tmp con heredoc <<'EOF'.
-- SQL en Supabase Editor, Python en bash.
-- Siempre usar ./venv/bin/python3 o el entorno de Railway.
-================================================================
+ADRs vigentes (14-oct):
+* ADR01 LLM portable (Anthropic → Kimi dic-ene)
+* ADR02 Fail-open en TODO
+* ADR03 Predictor NUNCA dispara actuator
+* ADR04 bot_pausar NO activo hasta que bot local lea bot_control
+* ADR05 systemctl_restart NO activo hasta SSH al Vostro
+* ADR06 Kill-switch sin tabla nueva (query ceo_actions 1h)
+* ADR07 Cache por contexto_hash (2h)
+* ADR08 Modelo por severidad (haiku simple / sonnet complejo)
+* ADR09 Demo filtrado por startswith("demo_") en Python
+* ADR10 R1/R3 ignoran 'skip' (solo fail real dispara)
 
---- ACTUALIZACIÓN 19-OCT (CIERRE) ---
-[x] Herramienta CLI `generar_reporte.py` creada.
-    - Uso: ./venv/bin/python3 src/agencia/generar_reporte.py "nombre" "rubro" "presupuesto"
-    - Genera reporte HTML/PDF dinámico en 2 segundos.
-[x] Kit de ventas (SALES_KIT.txt) validado con estrategia de objeciones.
-[x] API verificada en Railway (GET y POST).
+### ================================================================ ESTRUCTURA SUPABASE
+Carpetas en SQL Editor (por dominio):
+* 00_INFRAESTRUCTURA  → ceo_health, ceo_tasks, ceo_actions, etc.
+* 01_SERVIU           → caja_obra, inventario_real, precios_serviu
+* 02_PROCURADOR       → legal
+* 03_GESTALT          → ?
+* 04_MERCADO_PUBLICO  → scraper ChileCompra
+* 05_TRADE_CRIPTO     → velas_cripto, operaciones_ejecutadas
+* 06_AGENTES          → ?
+* 07_IKKI_MARKETING   → estrategia y conocimiento pymes
+* 09_TRANSPORTE       → flota_vehiculos, viajes
 
---- ACTUALIZACIÓN 19-OCT (DASHBOARD FRONTEND) ---
-[x] Dashboard Streamlit creado (`src/agencia/dashboard.py`).
-[x] Conexión Frontend -> API (Railway) -> DB (Supabase) validada.
-[x] Comando de ejecución: ./venv/bin/python3 -m streamlit run src/agencia/dashboard.py
-[x] Herramienta lista para demostraciones en vivo a clientes.
+Convención de nombres:
+* NN_*_master.sql     (DDL base)
+* NN_*_seed           (seeds con datos)
+* NN_*_extend         (ALTER de extensión)
+* NN_*_verify         (SELECT de verificación)
+* NN_*_discover       (SELECT temporal de descubrimiento)
 
---- ACTUALIZACIÓN 19-OCT (CIERRE FINAL) ---
-[x] Motor Mock mejorado con variaciones de textos (Ganchos, Cuerpos, CTAs).
-[x] Dashboard Streamlit con Prospección Masiva (Subir CSV -> Descargar ZIP).
-[x] Prueba de fuego masiva completada (3 reportes en 1 ZIP).
-[x] Sistema listo para operar. Costo $0.
+Tablas clave:
+* ceo_health        (id, ts, source, target, status, latency_ms, payload) status ∈ {ok, warn, fail, skip}
+* ceo_tasks         (id, tipo, parametros, schedule, estado, resultado, error, creado_en, ejecutado_en, proxima_ejecucion, duracion_ms)
+* ceo_actions       (audit trail actuator)
+* ceo_predictions   (patrones proactivos)
+* precios_serviu_2026 (codigo_apu, descripcion, unidad, precio_uf, categoria, region, anio)
 
-================================================================
-🚧 PENDIENTE: INTEGRACIÓN DE DATOS REALES (FASE 5)
-================================================================
-Estado actual: El sistema usa datos MOCK y está listo para vender.
-Decisión: NO integrar las APIs reales hasta tener el primer cliente pagando.
+Registrar_health firma (ceo/state.py):
+registrar_health(client, source, target, status, latency_ms=None, payload=None) -> bool
 
-PLAN DE INTEGRACIÓN GRADUAL (Para Noviembre/Diciembre):
-1. PRIMERO: Conseguir 1 cliente con el Mock (vender el concepto).
-2. LUEGO: Integrar Meta Ads API (Costo API: $0, costo desarrollo: ~$1.9M CLP).
-3. DESPUÉS: Integrar Google Ads API (Costo API: $0).
-4. FINALMENTE: Pasarela de pagos (Stripe/Flow/Transbank).
+### ================================================================ WORKERS / PROBES — ESTADO
+Worker                  Source      Target      Estado
+--------------------------------------------------------------------------------
+caja_probe.py           caja        obra        ✅ v4
+inventory_probe.py      inventory   real        ✅ v1
+flota_probe.py          flota       vehiculos   ✅ v1
+properties_probe        properties  ?           ✅ v1
+kraken_feed             kraken      velas       ✅ (task 45)
+health_probe            system      ?           ✅ (task 51)
+rules_evaluator         ceo         rules       ✅ (task 52)
+reporter_daily          ceo         reporte     ✅ (task 53)
+demo_probes             demo        vario       ✅ (task 54)
 
-COTIZACIÓN APROXIMADA (Desarrollo Fase 5):
-- Meta + Google Ads API (100 horas de dev): $1.900.000 - $3.800.000 CLP.
-- Infraestructura extra (Railway/Supabase Pro): ~$30.000 CLP/mes.
-- Pasarela de pago: ~3.6% por transacción.
-================================================================
+Ubicación: ceo/workers/<nombre>_probe.py
+Ejecución manual: python3 -m ceo.workers.<nombre>_probe
 
---- HITO FINAL 19-OCT (PRODUCCIÓN Y VENTAS) ---
-[x] Prospección masiva validada: CSV -> API -> ZIP con 10 reportes HTML.
-[x] Diseño de reportes dinámicos validado (Cafetería Aroma generada OK).
-[x] CRM integrado con enlace directo a WhatsApp Web y gestión de estados.
-[x] Sistema listo para operar 24/7. Costo de infraestructura: $0.
-[x] El siguiente paso es 100% COMERCIAL: Salir a contactar clientes reales.
+### ================================================================ CASOS DEMO vs REALES — MIGRACIÓN
+CONTEXTO: la Gantt v5 (08-oct) prometió migrar 5 casos demo a reales.
+Aprendizaje clave: migrar NO es copiar seed, es auditar schema + normalizar unidades + tabla puente. Cada caso revela 2-3 bugs que no son visibles hasta correr con datos reales.
 
---- HITO FINAL (DESPLIEGUE WEB) ---
-[x] Landing Page desplegada en Netlify (URL pública generada).
-[x] El ecosistema técnico (Backend, DB, Dashboard, Reportes, CRM, Landing) está 100% completo.
-[x] Próximo paso: Salir a vender usando el link de Netlify y el botón de WhatsApp del CRM.
+Estado al 14-oct-2026:
+✅ Properties    — migrado y funcionando
+✅ Caja obra     — migrado (3 iteraciones de fix)
+✅ Inventory     — migrado (fusión demo_inventario → inventario_real)
+✅ Flota         — migrado (5 camiones, 20 viajes)
+⏳ Transporte    — stand-by (posiblemente = flota)
+
+### ================================================================ FIXES DE HOY (14-oct-2026)
+CAJA — 4 iteraciones:
+1. Comparaba total vs unitario → 12399% diff absurdo
+2. Fix × cantidad → sobreescaló (8.7M CLP para 40 sacos)
+3. abs() marcaba AHORRO como sobrecosto → fierro 8mm
+4. Desviación DESHABILITADA hasta migrar schema
+Estado final caja_probe.py v4:
+- Desviación SERVIU deshabilitada (desviacion_estado auditable)
+- Cuadre diario: saldo neto del día, NO descuadre contable
+  · fail solo si >10M CLP (absurdo)
+  · warn si >3M CLP
+- Dual auditoría pendiente: caja_obra vs partidas_presupuesto
+
+INVENTORY — fusión:
+* DROP demo_inventario (subset puro)
+* ALTER inventario_real +4 columnas (unidad, stock_serviu_calculado, desviacion_pct, ultima_revision)
+* 30 SKUs cargados, todos con codigo_serviu y precio_serviu_uf
+
+FLOTA — creado desde cero:
+* 5 camiones (Volvo, Scania, Mercedes, Chevrolet, Hyundai)
+* 20 viajes (Santiago ↔ Valparaíso, Rancagua, Talca)
+* 3 checks: service, documentos, rendimiento
+* Estado: warn por 2 camiones con docs por vencer
+
+SQL ejecutados (carpeta 01_SERVIU):
+* 15_caja_obra_extend  (ALTER + mapping_concepto_apu + seed)
+* 16_inventory_extend  (DROP demo + ALTER)
+(SQL carpeta 09_TRANSPORTE):
+* 01_transporte_ddl    (DDL referencia, idempotente)
+* 02_transporte_rls_check (estado RLS)
+
+### ================================================================ REGLAS DE TRABAJO (no negociables)
+OPERATIVAS:
+* Un cambio, un deploy, una verificación. No acumular.
+* Backup antes de tocar código: cp x x.bak.$(date +%s)
+* Verificar con query a Supabase ANTES de proponer fix
+* Scripts en /tmp con heredoc <<'EOF' para evitar corrupción
+* SQL va en Supabase SQL Editor, NO en bash
+* Guardar queries con nombre (snake_case descriptivo)
+
+PROHIBIDO:
+* Pasar Python multilínea directo en bash (se corrompe)
+* Asumir que un fix funcionó sin verificar con curl/SQL
+* Editar múltiples archivos en un mismo deploy sin verificar
+* sudo systemctl para servicios depafix-*.service
+* Deployar sin backup
+* git add -A
+* Imputar valores NULL (nunca inventar datos faltantes)
+
+CONVENCIÓN WORKERS:
+* Fail-open: si Supabase falla, return {"ok": False, "error": ...}
+* registrar_health con payload dict documentado
+* Escribir a ceo_health: source=<dominio>, target=<entidad>
+* Un worker por dominio (no mezclar)
+* Tests contract: fixture in-memory, no mockear Supabase
+
+### ================================================================ QUERIES GUARDADAS
+01_SERVIU:
+* 01_serviu_master.sql
+* 01_DS49
+* 06_caja_obra
+* 14_precios_serviu_seed
+* 15_caja_obra_extend
+* 16_inventory_extend
+* Seed 20
+* precios_serviu_2026
+
+09_TRANSPORTE:
+* 01_transporte_ddl
+* 02_transporte_rls_check
+
+### ================================================================ GANTT — REALIDAD vs PLAN
+Gantt v5 (08-oct) prometió:
+- Sem 2 (09-13 oct): 5 casos migrados → real: 4/5 (stand-by transporte)
+- Sem 3 (14-20 oct): kill-switch + NOTIFY
+- Sem 4 (21-31 oct): ACTUATOR_ENABLED=1 (solo task_rerun)
+- Cierre mes: Gantt v7
+
+Realidad 14-oct:
+✅ CEO core S1-S6 operativo (93 tests)
+✅ 4/5 casos migrados
+⏳ Migración más lenta de lo previsto (auditoría schema)
+
+GANTT v6 PROPUESTO:
+Sem 3 (14-20 oct):
+[ ] Cerrar 5/5 (transporte = flota o nuevo)
+[ ] Arreglar cuadre_max=3.5M (revisar si es real o bug)
+[ ] Diseñar kill-switch (bloqueado por medir task_rerun)
+[ ] NOTIFY_ENABLED=1 (solo notificar_humano)
+[ ] Reporter daily validado 3 días
+
+Sem 4 (21-27 oct):
+[ ] Kill-switch en producción
+[ ] Medir falsos positivos Telegram <20%
+[ ] ceo_acknowledged implementado (para demos/aceptados)
+
+Sem 5 (28-oct al 03-nov):
+[ ] ACTUATOR_ENABLED=1 solo task_rerun
+[ ] Evaluar extensión a Legal/Construcción
+[ ] Gantt v7 con roadmap noviembre
+
+DEUDA TÉCNICA IDENTIFICADA:
+* Predictor: diseñado, no implementado
+* ceo_acknowledged: diseñado, no implementado
+* mapping_concepto_apu: creado pero subutilizado
+* partidas_presupuesto: tabla existe pero no usada por caja_probe
+* RLS: activo sin policies (solo service_role lee)
+
+### ================================================================ PRÓXIMOS PASOS — ORDEN SUGERIDO
+1. CERRAR TRANSPORTE (5 min)
+2. ACTUALIZAR GANTT A v6 (15 min)
+3. CERRAR CUADRE_MAX=3.5M (30 min)
+4. EMPEZAR PUBLICIDAD (30 min, sin infra - consolidar carpeta 07_IKKI_MARKETING)
+5. CERRAR S1-S6 AL 100%
+
+### ================================================================ CONTEXTO DEL OPERADOR (IBAR)
+* Sistema: Vostro 14-3468, Ubuntu
+* Proyecto en: ~/PROYECTOS/Proyectos/DepaFix
+* Secrets en: ~/.depafix_secrets (source antes de curl)
+* Supabase project ref: gylyzcjkswltwpouktbi
+* Workers en: ceo/workers/
+* Estado del proyecto: en producción (PRODUCTION badge en SQL Editor)
+* Presupuesto actual Anthropic octubre: ~$0.05 de $2/día cap
+
+ESTILO DE TRABAJO:
+* Prefiere bloques completos, no fragmentos
+* No quiere buscar en nano — usar cat > heredoc
+* No quiere leer para ajustar — copia-pega y ejecuta
+* Acepta correcciones directas sin rodeos
+* Verifica todo con curl/SQL antes de declarar éxito
+
+### ================================================================ FIN DEL HILO CONDUCTOR
