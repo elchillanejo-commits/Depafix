@@ -5,9 +5,9 @@ import io
 import zipfile
 import os
 import urllib.parse
-from xhtml2pdf import pisa
 from supabase import create_client
 from dotenv import load_dotenv
+from xhtml2pdf import pisa
 
 load_dotenv()
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
@@ -28,8 +28,6 @@ st.title("🚀 Ikki Agency - Panel de Control")
 def generar_html(data, cliente, rubro):
     fee = data["configuracion"]["fee_calculado"]
     copys = data["configuracion"]["copys_generados"]
-    
-    # Nuevos datos reales del backend
     benchmarks = data["configuracion"].get("benchmarks_mercado", {})
     proyecciones = data["configuracion"].get("proyecciones", {})
     
@@ -86,7 +84,6 @@ def generar_html(data, cliente, rubro):
         <p style="text-align: center; margin-top: 40px; font-size: 12px; color: #888;">Ikki Agency.</p>
     </div></body></html>"""
 
-
 def generar_pdf(html_content):
     result = io.BytesIO()
     pisa.CreatePDF(io.StringIO(html_content), dest=result)
@@ -110,12 +107,12 @@ with tab1:
             c1, c2 = st.columns(2)
             c1.metric("Pauta", f"${fee['pauta_neta']:,}")
             c2.metric("Total", f"${fee['total_facturar_clp']:,}")
-
+            
             html_data = generar_html(data, cliente_id, rubro)
             pdf_data = generar_pdf(html_data)
+            
             st.download_button("📥 Descargar PDF", pdf_data, file_name=f"Propuesta_{cliente_id}.pdf", mime="application/pdf", type="primary")
             st.download_button("📥 Descargar HTML (Respaldo)", html_data, file_name=f"prop_{cliente_id}.html", mime="text/html")
-
 
 with tab2:
     st.header("Prospección Masiva (CSV)")
@@ -123,19 +120,25 @@ with tab2:
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
         st.dataframe(df, width="stretch")
-        if st.button("⚡ Generar Reportes Masivos", type="primary"):
+        
+        if st.button("⚡ Generar Reportes Masivos (PDFs)", type="primary"):
             zip_buffer = io.BytesIO()
             progress_bar = st.progress(0)
+            
             with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
                 for idx, row in df.iterrows():
                     payload = {"cliente_id": str(row['cliente_id']), "rubro": str(row['rubro']), "presupuesto_pauta": int(row['presupuesto_pauta'])}
                     res = requests.post(f"{API_URL}/api/v1/simular", json=payload)
+                    
                     if res.status_code == 200:
                         html_content = generar_html(res.json()["campaña_generada"], payload['cliente_id'], payload['rubro'])
-                        zip_file.writestr(f"propuesta_{payload['cliente_id']}.html", html_content)
+                        pdf_data = generar_pdf(html_content)
+                        zip_file.writestr(f"propuesta_{payload['cliente_id']}.pdf", pdf_data)
+                        
                     progress_bar.progress((idx + 1) / len(df))
-            st.success(f"¡{len(df)} reportes generados!")
-            st.download_button("📥 Descargar ZIP", zip_buffer.getvalue(), file_name="reportes_ikki.zip", mime="application/zip", type="primary")
+                    
+            st.success(f"¡{len(df)} reportes PDF generados!")
+            st.download_button("📥 Descargar ZIP con PDFs", zip_buffer.getvalue(), file_name="reportes_ikki_pdf.zip", mime="application/zip", type="primary")
 
 with tab3:
     st.header("Gestión de Prospectos (CRM)")
@@ -144,15 +147,19 @@ with tab3:
         res = client.table("campanas_meta").select("id", "cliente_id", "presupuesto_total", "estado").execute()
         if res.data:
             df_crm = pd.DataFrame(res.data).rename(columns={"cliente_id": "Cliente", "presupuesto_total": "Pauta (CLP)", "estado": "Estado"})
+            
             def calcular_score(row):
                 base = 50
                 bonus_pauta = row["Pauta (CLP)"] / 10000
                 estado = row["Estado"]
                 bonus_estado = {"BORRADOR": 0, "ENVIADO": 10, "RESPONDIO": 25, "CERRADO": 40}.get(estado, 0)
                 return int(base + bonus_pauta + bonus_estado)
+                
             df_crm["Score"] = df_crm.apply(calcular_score, axis=1)
+            
             mensaje_base = "Hola! Te escribo de Agencia Ikki. Vi tu negocio y preparé un reporte gratuito con 3 opciones de anuncios para tu rubro. ¿Te gustaría que te lo envíe por aquí para que lo revises sin compromiso?"
             df_crm["Contactar"] = f"https://wa.me/?text={urllib.parse.quote(mensaje_base)}"
+            
             edited_df = st.data_editor(
                 df_crm,
                 column_config={
@@ -161,6 +168,7 @@ with tab3:
                 },
                 disabled=["id", "Cliente", "Pauta (CLP)", "Score", "Contactar"], hide_index=True, width="stretch"
             )
+            
             col_save, col_export = st.columns(2)
             with col_save:
                 if st.button("💾 Guardar Cambios", type="primary"):
