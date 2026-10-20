@@ -88,7 +88,7 @@ class AgenciaIkkiMotor:
                 contexto_ia = f.read()
             
             # 2. Verificación en consola (Idea de Gemini)
-            log.info(f"🧠 Cerebro Local cargado ({len(contexto_ia)} chars). Muestra: {contexto_ia[:200]}...")
+            print(f"🧠 Cerebro Local cargado ({len(contexto_ia)} chars). Muestra: {contexto_ia[:200]}...")
             
             # 3. Preparación del System Instruction (para inyección futura)
             system_instruction = (
