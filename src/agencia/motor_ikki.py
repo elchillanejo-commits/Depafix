@@ -1,6 +1,6 @@
 """
 motor_ikki.py — Motor de cálculo CDA y Copywriting (Agencia Ikki).
-Fase 6: Conectado al Cerebro Local (RAG) y Benchmarks.
+Fase 8: Integración del Prompt Engineer con el RAG.
 """
 import json
 import os
@@ -10,6 +10,8 @@ from datetime import date
 from decimal import Decimal
 from dotenv import load_dotenv
 from supabase import create_client
+# Importamos nuestro nuevo estructurador de prompts
+from src.agencia.prompt_engineer import construir_prompt
 
 load_dotenv()
 log = logging.getLogger(__name__)
@@ -79,28 +81,47 @@ class AgenciaIkkiMotor:
             "cpc_promedio_clp": int(cpc)
         }
 
-    def generar_copywriting(self, rubro: str, prospecto_nombre: str) -> list[dict]:
-        # 1. Leer el Cerebro Local (RAG)
-        contexto_ia = ""
+    def obtener_contexto_relevante(self, rubro: str) -> str:
+        """Mini-RAG: Busca los párrafos más relevantes en el cerebro de 347 KB."""
         brain_path = "data/contexto_maestro.txt"
-        if os.path.exists(brain_path):
-            with open(brain_path, "r", encoding="utf-8") as f:
-                contexto_ia = f.read()
-            
-            # 2. Verificación en consola (Idea de Gemini)
-            print(f"🧠 Cerebro Local cargado ({len(contexto_ia)} chars). Muestra: {contexto_ia[:200]}...")
-            
-            # 3. Preparación del System Instruction (para inyección futura)
-            system_instruction = (
-                "Eres un Copywriter Senior experto de la agencia Ikki. "
-                "Utiliza el siguiente conocimiento experto de nuestra base de datos "
-                "para redactar anuncios de alta conversión:\n\n"
-                f"{contexto_ia}"
-            )
-        else:
-            log.warning("⚠️ No se encontró data/contexto_maestro.txt")
+        if not os.path.exists(brain_path):
+            return ""
 
-        # 4. Generación (Mock Actual)
+        with open(brain_path, "r", encoding="utf-8") as f:
+            texto_completo = f.read()
+
+        oraciones = texto_completo.split(". ")
+        palabras_clave = [rubro.lower(), "ventas", "clientes", "anuncios", "presupuesto", "conversión", "meta ads", "google ads"]
+        relevantes = []
+        
+        for oracion in oraciones:
+            if any(palabra in oracion.lower() for palabra in palabras_clave):
+                relevantes.append(oracion)
+
+        if len(relevantes) > 50:
+            relevantes = relevantes[:50]
+        
+        contexto = ". ".join(relevantes)
+        return contexto[:5000] # Límite duro de 5000 caracteres
+
+    def generar_copywriting(self, rubro: str, prospecto_nombre: str) -> list[dict]:
+        # 1. Buscar contexto relevante en el Cerebro (RAG)
+        contexto_ia = self.obtener_contexto_relevante(rubro)
+        
+        if contexto_ia:
+            print(f"🧠 Mini-RAG activado: Encontrados {len(contexto_ia)} caracteres relevantes para '{rubro}'.")
+            
+            # 2. Construir el Prompt Definitivo
+            messages = construir_prompt(rubro, prospecto_nombre, contexto_ia)
+            
+            # Imprimimos el System Prompt para ver la inyección del conocimiento
+            print("\n--- PREVISUALIZACIÓN DEL PROMPT PARA LA IA ---")
+            print(messages[0]["content"][:500] + "...\n[CONOCIMIENTO INYECTADO]...")
+            print("----------------------------------------------\n")
+        else:
+            log.warning("⚠️ No se encontró contexto relevante.")
+
+        # 3. Generación (Mock Actual hasta Diciembre)
         if USE_MOCK_LLM:
             log.info("Usando Mock de Copywriting ($0 costo)")
             copys = []
@@ -110,6 +131,10 @@ class AgenciaIkkiMotor:
                 cta = random.choice(CTAS)
                 copys.append({"titulo": gancho, "cuerpo": cuerpo, "cta": cta})
             return copys
+        
+        # Aquí en Diciembre conectaremos la API de Kimi:
+        # response = client.chat.completions.create(model="moonshot-v1-8k", messages=messages)
+        # return json.loads(response.choices[0].message.content)
         
         return []
 
