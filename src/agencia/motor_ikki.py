@@ -231,10 +231,91 @@ class AgenciaIkkiMotor:
         
         return []
 
+    def generar_briefing_estrategia(self, rubro: str, presupuesto_pauta, plataforma: str = "Meta") -> dict:
+        rubro_normalizado = str(rubro or "").strip().lower()
+        plataforma_normalizada = str(plataforma or "Meta").strip().lower()
+        es_inmobiliaria = "inmobiliaria" in rubro_normalizado or "propiedad" in rubro_normalizado
+
+        cpl_min, cpl_max = (3500, 9000) if es_inmobiliaria else (4000, 12000)
+
+        try:
+            presupuesto = float(presupuesto_pauta)
+        except (TypeError, ValueError):
+            presupuesto = 0.0
+        presupuesto = max(presupuesto, 0.0)
+
+        presupuesto_diario = int(round(presupuesto / 30))
+        leads_min = int(round(presupuesto / cpl_max))
+        leads_max = int(round(presupuesto / cpl_min))
+
+        def _formato_clp(valor: float) -> str:
+            return f"${int(round(valor)):,}".replace(",", ".")
+
+        if es_inmobiliaria:
+            creatividades = ["Video Testimonio"]
+            if "google" in plataforma_normalizada:
+                creatividades.extend([
+                    "Anuncio de búsqueda responsivo con precio y comuna",
+                    "Display de remarketing con propiedades vistas",
+                ])
+            else:
+                creatividades.extend([
+                    "Carrusel de propiedades con precio y comuna",
+                    "Anuncio de colección con WhatsApp",
+                ])
+        elif "google" in plataforma_normalizada:
+            creatividades = [
+                "Anuncio de búsqueda responsivo",
+                "Video corto para YouTube",
+                "Display de remarketing",
+            ]
+        else:
+            creatividades = [
+                "Video corto tipo Reel",
+                "Imagen estática con oferta",
+                "Carrusel de productos o servicios",
+            ]
+
+        if es_inmobiliaria and "google" in plataforma_normalizada:
+            publico_objetivo = (
+                "Búsqueda por intención de compra ('departamentos en venta', 'casas en venta', "
+                "'crédito hipotecario') segmentada por comuna; remarketing Display/YouTube a "
+                "visitantes de fichas de propiedades."
+            )
+        elif es_inmobiliaria:
+            publico_objetivo = (
+                "Personas de 25 a 55 años en Santiago y comunas objetivo, con intereses en compra "
+                "de vivienda, inversión inmobiliaria y crédito hipotecario; usar Advantage+ con "
+                "público amplio y remarketing a visitantes del sitio y conversaciones de WhatsApp."
+            )
+        elif "google" in plataforma_normalizada:
+            publico_objetivo = (
+                f"Búsqueda por intención de compra para '{rubro}' segmentada por comuna o zona; "
+                "remarketing Display/YouTube a visitantes del sitio."
+            )
+        else:
+            publico_objetivo = (
+                f"Personas de 25 a 55 años con intereses en {rubro}; combinar el público amplio de "
+                "Advantage+ con públicos similares y remarketing a visitantes y leads."
+            )
+
+        return {
+            "presupuesto_diario_sugerido": presupuesto_diario,
+            "cpl_estimado": f"{_formato_clp(cpl_min)} - {_formato_clp(cpl_max)} CLP",
+            "leads_esperados": {"min": leads_min, "max": leads_max},
+            "creatividades_recomendadas": creatividades,
+            "publico_objetivo_sugerido": publico_objetivo,
+        }
+
     def simular_campana_completa(self, prospecto: dict, presupuesto_pauta: int) -> dict:
         rubro = prospecto.get('rubro', 'general')
         fee = self.calcular_fee_campana(presupuesto_pauta)
         benchmarks = self.obtener_benchmarks(rubro)
+        briefing = self.generar_briefing_estrategia(
+            rubro,
+            presupuesto_pauta,
+            benchmarks.get("plataforma_recomendada", "Meta"),
+        )
         
         proyecciones = {}
         if benchmarks.get("cpm_promedio_clp"):
@@ -260,6 +341,7 @@ class AgenciaIkkiMotor:
             "fecha_inicio": date.today().isoformat(),
             "configuracion": {
                 "fee_calculado": fee,
+                "briefing_estrategia": briefing,
                 "benchmarks_mercado": benchmarks,
                 "proyecciones": proyecciones,
                 "recomendacion": recomendacion,
