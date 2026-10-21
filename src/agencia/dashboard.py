@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+import html as html_lib
 import io
 import zipfile
 import os
@@ -35,6 +36,111 @@ def generar_html(data, cliente, rubro):
     justificacion = benchmarks.get("justificacion", "Estrategia estándar.")
     impresiones = f"{proyecciones.get('impresiones_estimadas', 0):,}".replace(",", ".")
     clics = f"{proyecciones.get('clics_estimados', 0):,}".replace(",", ".")
+
+    reglas_de_oro = benchmarks.get("reglas_de_oro") or []
+    if not isinstance(reglas_de_oro, list):
+        reglas_de_oro = []
+
+    cotizaciones_raw = benchmarks.get("cotizacion_competencia") or []
+    if isinstance(cotizaciones_raw, dict):
+        cotizaciones_raw = (
+            cotizaciones_raw.get("comparativas")
+            if isinstance(cotizaciones_raw.get("comparativas"), list)
+            else [cotizaciones_raw]
+        )
+    if not isinstance(cotizaciones_raw, list):
+        cotizaciones_raw = []
+
+    def _escapar(valor):
+        return html_lib.escape(str(valor)) if valor is not None else ""
+
+    def _formato_clp(valor):
+        if isinstance(valor, (int, float)):
+            return f"${valor:,.0f}".replace(",", ".")
+        texto = str(valor).strip()
+        if not texto:
+            return "No informado"
+        limpio = texto.replace("$", "").replace(".", "").replace(",", "").strip()
+        if limpio.isdigit():
+            return f"${int(limpio):,}".replace(",", ".")
+        return texto
+
+    textos_reglas = []
+    for regla in reglas_de_oro:
+        if isinstance(regla, dict):
+            texto = regla.get("regla") or regla.get("descripcion") or regla.get("contenido")
+        else:
+            texto = regla
+        if texto:
+            textos_reglas.append(str(texto).strip())
+
+    cotizaciones = []
+    for item in cotizaciones_raw:
+        if not isinstance(item, dict):
+            continue
+        tipo = item.get("tipo") or item.get("tipo_servicio") or item.get("servicio") or "Servicio"
+        minimo = item.get("min", item.get("precio_min", item.get("precio")))
+        maximo = item.get("max", item.get("precio_max", item.get("precio")))
+        if minimo is None and maximo is None:
+            continue
+        if minimo is None:
+            minimo = maximo
+        if maximo is None:
+            maximo = minimo
+        cotizaciones.append({"tipo": str(tipo), "min": minimo, "max": maximo})
+
+    estrategia_partes = []
+    if textos_reglas:
+        items = "".join(
+            f"<li style='margin-bottom:8px;color:#333;font-size:13px;'>{_escapar(texto)}</li>"
+            for texto in textos_reglas
+        )
+        estrategia_partes.append(
+            "<div style='background:#f8f9fa;border:1px solid #ddd;border-radius:8px;padding:18px 22px;margin-bottom:20px;'>"
+            "<h3 style='margin:0 0 12px 0;color:#0066ff;font-size:16px;'>Reglas de Oro de la Industria</h3>"
+            f"<ul style='margin:0;padding-left:20px;'>{items}</ul></div>"
+        )
+
+    if cotizaciones:
+        filas = "".join(
+            "<tr>"
+            f"<td style='padding:8px;border-bottom:1px solid #eee;color:#333;'>{_escapar(c['tipo'])}</td>"
+            f"<td style='padding:8px;border-bottom:1px solid #eee;text-align:right;color:#333;'>{_escapar(_formato_clp(c['min']))}</td>"
+            f"<td style='padding:8px;border-bottom:1px solid #eee;text-align:right;color:#333;'>{_escapar(_formato_clp(c['max']))}</td>"
+            "</tr>"
+            for c in cotizaciones
+        )
+        fee_fijo = fee.get("fee_fijo", 0)
+        fee_texto = _formato_clp(fee_fijo)
+        dentro_de_rango = False
+        for c in cotizaciones:
+            try:
+                if float(c["min"]) <= float(fee_fijo) <= float(c["max"]):
+                    dentro_de_rango = True
+                    break
+            except (TypeError, ValueError):
+                continue
+        comparacion = (
+            f"Nuestro Fee Fijo de <strong>{fee_texto}</strong> se mantiene dentro de los rangos de mercado."
+            if dentro_de_rango
+            else f"Compara nuestro Fee Fijo de <strong>{fee_texto}</strong> con los rangos de la competencia."
+        )
+        estrategia_partes.append(
+            "<h3 style='margin:0 0 10px 0;color:#0066ff;font-size:16px;'>Cotizaciones de Competencia</h3>"
+            "<table style='width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid #ddd;border-radius:8px;'>"
+            "<thead><tr style='background:#000;color:#fff;'>"
+            "<th style='padding:10px;text-align:left;'>Tipo de Servicio</th>"
+            "<th style='padding:10px;text-align:right;'>Mínimo</th>"
+            "<th style='padding:10px;text-align:right;'>Máximo</th>"
+            "</tr></thead>"
+            f"<tbody>{filas}</tbody></table>"
+            f"<p style='margin:12px 0 0 0;padding:12px 16px;background:#eef5ff;border-left:4px solid #0066ff;color:#333;font-size:13px;'>{comparacion}</p>"
+        )
+
+    estrategia_html = (
+        "<h2>Estrategia de Expertos</h2>" + "".join(estrategia_partes)
+        if estrategia_partes else ""
+    )
 
     copys_html = "".join([f"<div style='border:1px solid #eee;padding:20px;margin-bottom:20px;background:#fafafa;border-radius:8px;'><span style='background:#000;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px;'>Opción {i}</span><h3 style='margin-top:10px;font-size:18px;'>{c['titulo']}</h3><p style='color:#555;'>{c['cuerpo']}</p><button style='background:#0066ff;color:#fff;border:none;padding:10px 20px;border-radius:5px;font-weight:bold;'>{c['cta']}</button></div>" for i, c in enumerate(copys, 1)])
     
@@ -78,6 +184,8 @@ def generar_html(data, cliente, rubro):
                 <div class="justification">Tráfico potencial a tu sitio.</div>
             </div>
         </div>
+
+        {estrategia_html}
 
         <h2>Propuestas de Anuncios</h2>
         {copys_html}

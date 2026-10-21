@@ -52,6 +52,70 @@ class AgenciaIkkiMotor:
             "margen_agencia_clp": int(self.fee_fijo + comision)
         }
 
+    @staticmethod
+    def _primer_valor(fila: dict, claves: tuple):
+        for clave in claves:
+            valor = fila.get(clave)
+            if valor not in (None, "", [], {}):
+                return valor
+        return None
+
+    def _consultar_por_plataforma(self, tabla: str, plataforma: str) -> list[dict]:
+        if not self.client or not plataforma:
+            return []
+        try:
+            filas = (
+                self.client.table(tabla)
+                .select("*")
+                .ilike("plataforma", f"%{plataforma}%")
+                .execute()
+                .data
+            )
+            return filas or []
+        except Exception as error:
+            log.debug(f"Filtro por plataforma no disponible en {tabla}: {error}")
+
+        try:
+            return self.client.table(tabla).select("*").execute().data or []
+        except Exception as error:
+            log.warning(f"No se pudo consultar la tabla {tabla}: {error}")
+            return []
+
+    @staticmethod
+    def _texto_regla(fila: dict) -> str:
+        if not isinstance(fila, dict):
+            return ""
+        for clave in ("regla", "regla_de_oro", "descripcion", "contenido", "texto", "insight"):
+            valor = fila.get(clave)
+            if valor not in (None, "", [], {}):
+                return str(valor).strip()
+        return ""
+
+    def _normalizar_cotizacion(self, fila: dict) -> dict:
+        if not isinstance(fila, dict):
+            return {}
+        tipo = self._primer_valor(
+            fila, ("tipo", "tipo_servicio", "servicio", "plan", "paquete", "categoria")
+        )
+        minimo = self._primer_valor(
+            fila, ("min", "precio_min", "precio_min_clp", "precio_clp_min", "min_clp")
+        )
+        maximo = self._primer_valor(
+            fila, ("max", "precio_max", "precio_max_clp", "precio_clp_max", "max_clp")
+        )
+        if minimo is None and maximo is None:
+            precio = self._primer_valor(
+                fila, ("precio_clp", "precio", "valor", "monto", "precio_mensual", "tarifa", "costo")
+            )
+            minimo = maximo = precio
+        if not tipo or (minimo is None and maximo is None):
+            return {}
+        if minimo is None:
+            minimo = maximo
+        if maximo is None:
+            maximo = minimo
+        return {"tipo": str(tipo), "min": minimo, "max": maximo}
+
     def obtener_benchmarks(self, rubro: str) -> dict:
         if not self.client:
             return {}
@@ -73,12 +137,47 @@ class AgenciaIkkiMotor:
         except Exception:
             cpm, cpc = 5000, 250
 
+        terminos_plataforma = [red_principal]
+        if "meta" in red_principal.lower() and red_principal != "Meta":
+            terminos_plataforma.append("Meta")
+        if "google" in red_principal.lower() and red_principal != "Google":
+            terminos_plataforma.append("Google")
+        terminos_plataforma.append("Agencia")
+
+        reglas_de_oro = []
+        reglas_vistas = set()
+        for termino in dict.fromkeys(terminos_plataforma):
+            for fila in self._consultar_por_plataforma("reglas_industria", termino):
+                texto = self._texto_regla(fila)
+                if texto and texto not in reglas_vistas:
+                    reglas_vistas.add(texto)
+                    reglas_de_oro.append(texto)
+
+        cotizaciones = []
+        cotizaciones_vistas = set()
+        for fila in self._consultar_por_plataforma("cotizaciones_competencia", red_principal):
+            cotizacion = self._normalizar_cotizacion(fila)
+            if not cotizacion:
+                continue
+            huella = (cotizacion["tipo"], str(cotizacion["min"]), str(cotizacion["max"]))
+            if huella in cotizaciones_vistas:
+                continue
+            cotizaciones_vistas.add(huella)
+            cotizaciones.append(cotizacion)
+
+        print(
+            f"[Ikki] Reglas de oro ({', '.join(dict.fromkeys(terminos_plataforma))}): {len(reglas_de_oro)} | "
+            f"Cotizaciones competencia: {len(cotizaciones)}"
+        )
+
         return {
             "plataforma_recomendada": red_principal,
             "plataforma_secundaria": red_secundaria,
             "justificacion": justificacion,
             "cpm_promedio_clp": int(cpm),
-            "cpc_promedio_clp": int(cpc)
+            "cpc_promedio_clp": int(cpc),
+            "reglas_de_oro": reglas_de_oro,
+            "cotizacion_competencia": cotizaciones
         }
 
     def obtener_contexto_relevante(self, rubro: str) -> str:
