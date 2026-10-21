@@ -1,6 +1,6 @@
 """
 motor_ikki.py — Motor de cálculo CDA y Copywriting (Agencia Ikki).
-Fase 8: Integración del Prompt Engineer con el RAG.
+Fase 8: Integración del Prompt Engineer con el RAG (Buscador de 347 KB).
 """
 import json
 import os
@@ -10,7 +10,7 @@ from datetime import date
 from decimal import Decimal
 from dotenv import load_dotenv
 from supabase import create_client
-# Importamos nuestro nuevo estructurador de prompts
+# Importamos el estructurador de prompts
 from src.agencia.prompt_engineer import construir_prompt
 
 load_dotenv()
@@ -105,13 +105,11 @@ class AgenciaIkkiMotor:
         return contexto[:5000] # Límite duro de 5000 caracteres
 
     def generar_copywriting(self, rubro: str, prospecto_nombre: str) -> list[dict]:
-        # 1. Buscar contexto relevante en el Cerebro (RAG)
         contexto_ia = self.obtener_contexto_relevante(rubro)
         
         if contexto_ia:
             print(f"🧠 Mini-RAG activado: Encontrados {len(contexto_ia)} caracteres relevantes para '{rubro}'.")
-            
-            # 2. Construir el Prompt Definitivo
+            # Construir el Prompt Definitivo
             messages = construir_prompt(rubro, prospecto_nombre, contexto_ia)
             
             # Imprimimos el System Prompt para ver la inyección del conocimiento
@@ -121,7 +119,7 @@ class AgenciaIkkiMotor:
         else:
             log.warning("⚠️ No se encontró contexto relevante.")
 
-        # 3. Generación (Mock Actual hasta Diciembre)
+        # Generación (Mock Actual hasta Diciembre)
         if USE_MOCK_LLM:
             log.info("Usando Mock de Copywriting ($0 costo)")
             copys = []
@@ -131,10 +129,6 @@ class AgenciaIkkiMotor:
                 cta = random.choice(CTAS)
                 copys.append({"titulo": gancho, "cuerpo": cuerpo, "cta": cta})
             return copys
-        
-        # Aquí en Diciembre conectaremos la API de Kimi:
-        # response = client.chat.completions.create(model="moonshot-v1-8k", messages=messages)
-        # return json.loads(response.choices[0].message.content)
         
         return []
 

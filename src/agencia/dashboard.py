@@ -20,7 +20,7 @@ if not SUPABASE_URL:
     except Exception:
         pass
 
-API_URL = "https://ikki-api-production.up.railway.app"
+API_URL = os.environ.get("IKKI_API_URL", "https://ikki-api-production.up.railway.app")
 
 st.set_page_config(page_title="Ikki Agency - Growth System", page_icon="🚀", layout="wide")
 st.title("🚀 Ikki Agency - Panel de Control")
