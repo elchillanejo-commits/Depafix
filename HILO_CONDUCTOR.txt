@@ -220,3 +220,10 @@ ESTILO DE TRABAJO:
 * Verifica todo con curl/SQL antes de declarar éxito
 
 ### ================================================================ FIN DEL HILO CONDUCTOR
+
+--- HITO FINAL 21-OCT (INTELIGENCIA DE MERCADO COMPLETA) ---
+[x] Reglas de Oro (presupuestos mínimos, palabras clave negativas) en Supabase.
+[x] Cotización de la competencia inyectada al PDF.
+[x] Briefing de Estrategia con Leads Esperados y Creatividades recomendadas.
+[x] El sistema ya no calcula "a ciegas": proyecta resultados con datos reales de Chile.
+[x] Próximo paso: Salir a vender con este PDF (ya no hay excusas).
