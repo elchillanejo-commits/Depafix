@@ -180,6 +180,33 @@ class AgenciaIkkiMotor:
             "cotizacion_competencia": cotizaciones
         }
 
+    def obtener_caso_exito(self, rubro: str) -> dict:
+        if not self.client:
+            return {}
+        try:
+            filas = (
+                self.client.table("casos_exito")
+                .select("*")
+                .ilike("industria", f"%{rubro}%")
+                .limit(1)
+                .execute()
+                .data
+            )
+            if not filas or not isinstance(filas[0], dict):
+                return {}
+            fila = filas[0]
+            return {
+                "descripcion": fila.get("descripcion"),
+                "cpl_promedio_clp": fila.get("cpl_promedio_clp"),
+                "creatividad_recomendada": fila.get("mejor_creatividad"),
+                "fuente": fila.get("fuente"),
+                "plataforma": fila.get("plataforma"),
+                "industria": fila.get("industria"),
+            }
+        except Exception as error:
+            log.warning(f"No se pudo consultar la tabla casos_exito: {error}")
+            return {}
+
     def obtener_contexto_relevante(self, rubro: str) -> str:
         """Mini-RAG: Busca los párrafos más relevantes en el cerebro de 347 KB."""
         brain_path = "data/contexto_maestro.txt"
@@ -330,6 +357,7 @@ class AgenciaIkkiMotor:
 
         recomendacion = "APROBAR: Campaña rentable." if fee["total_facturar_clp"] >= 200000 else "RECHAZAR: Ticket muy bajo."
         copys = self.generar_copywriting(rubro, prospecto.get('id', 'demo').replace('_', ' '))
+        caso_exito = self.obtener_caso_exito(rubro)
 
         return {
             "cliente_id": prospecto.get("id", "demo"),
@@ -345,6 +373,7 @@ class AgenciaIkkiMotor:
                 "benchmarks_mercado": benchmarks,
                 "proyecciones": proyecciones,
                 "recomendacion": recomendacion,
+                "caso_exito": caso_exito,
                 "copys_generados": copys
             }
         }

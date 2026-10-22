@@ -35,6 +35,7 @@ st.title("🚀 Ikki Agency - Panel de Control")
 def generar_html(data, cliente, rubro):
     fee = data["configuracion"]["fee_calculado"]
     copys = data["configuracion"]["copys_generados"]
+    caso_exito = data["configuracion"].get("caso_exito") or {}
     benchmarks = data["configuracion"].get("benchmarks_mercado", {})
     proyecciones = data["configuracion"].get("proyecciones", {})
     
@@ -70,6 +71,33 @@ def generar_html(data, cliente, rubro):
         if limpio.isdigit():
             return f"${int(limpio):,}".replace(",", ".")
         return texto
+
+    caso_html = ""
+    if isinstance(caso_exito, dict) and caso_exito:
+        descripcion = caso_exito.get("descripcion") or ""
+        creatividad = caso_exito.get("creatividad_recomendada") or caso_exito.get("mejor_creatividad") or "No informada"
+        fuente = caso_exito.get("fuente") or "No informada"
+        if descripcion or fuente != "No informada":
+            caso_html = (
+                "<h2>📈 Caso de Éxito Comprobado</h2>"
+                "<div style='border:1px solid #d6e4ff;border-left:5px solid #0066ff;"
+                "background:#f5f9ff;padding:20px 24px;border-radius:8px;margin-bottom:20px;'>"
+                f"<p style='margin:0 0 14px 0;color:#333;font-size:13px;'>{_escapar(descripcion)}</p>"
+                "<table style='width:100%;border-collapse:collapse;font-size:13px;'>"
+                "<tr>"
+                "<td style='padding:6px 0;color:#666;width:45%;'>CPL promedio</td>"
+                f"<td style='padding:6px 0;color:#000;font-weight:bold;'>{_escapar(_formato_clp(caso_exito.get('cpl_promedio_clp')))}</td>"
+                "</tr>"
+                "<tr>"
+                "<td style='padding:6px 0;color:#666;'>Creatividad recomendada</td>"
+                f"<td style='padding:6px 0;color:#000;font-weight:bold;'>{_escapar(creatividad)}</td>"
+                "</tr>"
+                "<tr>"
+                "<td style='padding:6px 0;color:#666;'>Fuente</td>"
+                f"<td style='padding:6px 0;color:#333;'>{_escapar(fuente)}</td>"
+                "</tr>"
+                "</table></div>"
+            )
 
     textos_reglas = []
     for regla in reglas_de_oro:
@@ -192,6 +220,8 @@ def generar_html(data, cliente, rubro):
         </div>
 
         {estrategia_html}
+
+        {caso_html}
 
         <h2>Propuestas de Anuncios</h2>
         {copys_html}
