@@ -9,6 +9,8 @@ import urllib.parse
 from supabase import create_client
 from dotenv import load_dotenv
 from xhtml2pdf import pisa
+from src.agencia.meta_ads_integrator import MetaAdsIntegrator
+from src.agencia.meta_ads_integrator import MetaAdsIntegrator
 
 load_dotenv()
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
@@ -221,6 +223,17 @@ with tab1:
             
             st.download_button("📥 Descargar PDF", pdf_data, file_name=f"Propuesta_{cliente_id}.pdf", mime="application/pdf", type="primary")
             st.download_button("📥 Descargar HTML (Respaldo)", html_data, file_name=f"prop_{cliente_id}.html", mime="text/html")
+            
+            # --- NUEVO BOTÓN PARA META ADS ---
+            st.divider()
+            if st.button("🚀 Crear en Meta Ads (Sandbox)", type="secondary"):
+                try:
+                    integrador = MetaAdsIntegrator()
+                    respuesta = integrador.crear_campana_sandbox(data)
+                    st.success(f"✅ Campaña creada en Meta. ID: {respuesta['campaign_id']} (Estado: {respuesta['status']})")
+                    st.info("Nota: Esta es una simulación. En producción, se creará en el Business Manager real.")
+                except Exception as e:
+                    st.error(f"Error al conectar con Meta: {e}")
 
 with tab2:
     st.header("Prospección Masiva (CSV)")
