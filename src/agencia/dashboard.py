@@ -1,19 +1,21 @@
 import streamlit as st
 import requests
 import pandas as pd
-import html as html_lib
 import io
 import zipfile
 import os
 import urllib.parse
+import sys
+from pathlib import Path
 from supabase import create_client
 from dotenv import load_dotenv
 from xhtml2pdf import pisa
-import sys
-from pathlib import Path
+
+# Parche de rutas para Streamlit Cloud
 _AGENCIA_DIR = Path(__file__).resolve().parent
 if str(_AGENCIA_DIR) not in sys.path:
     sys.path.insert(0, str(_AGENCIA_DIR))
+
 from meta_ads_integrator import MetaAdsIntegrator
 
 load_dotenv()
@@ -27,7 +29,7 @@ if not SUPABASE_URL:
     except Exception:
         pass
 
-API_URL = os.environ.get("IKKI_API_URL", "https://ikki-api-production.up.railway.app")
+API_URL = "https://ikki-api-production.up.railway.app"
 
 st.set_page_config(page_title="Ikki Agency - Growth System", page_icon="🚀", layout="wide")
 st.title("🚀 Ikki Agency - Panel de Control")
@@ -35,148 +37,31 @@ st.title("🚀 Ikki Agency - Panel de Control")
 def generar_html(data, cliente, rubro):
     fee = data["configuracion"]["fee_calculado"]
     copys = data["configuracion"]["copys_generados"]
-    caso_exito = data["configuracion"].get("caso_exito") or {}
     benchmarks = data["configuracion"].get("benchmarks_mercado", {})
     proyecciones = data["configuracion"].get("proyecciones", {})
+    caso_exito = data["configuracion"].get("caso_exito", {})
     
     plataforma = benchmarks.get("plataforma_recomendada", "Meta Ads")
     justificacion = benchmarks.get("justificacion", "Estrategia estándar.")
     impresiones = f"{proyecciones.get('impresiones_estimadas', 0):,}".replace(",", ".")
     clics = f"{proyecciones.get('clics_estimados', 0):,}".replace(",", ".")
 
-    reglas_de_oro = benchmarks.get("reglas_de_oro") or []
-    if not isinstance(reglas_de_oro, list):
-        reglas_de_oro = []
-
-    cotizaciones_raw = benchmarks.get("cotizacion_competencia") or []
-    if isinstance(cotizaciones_raw, dict):
-        cotizaciones_raw = (
-            cotizaciones_raw.get("comparativas")
-            if isinstance(cotizaciones_raw.get("comparativas"), list)
-            else [cotizaciones_raw]
-        )
-    if not isinstance(cotizaciones_raw, list):
-        cotizaciones_raw = []
-
-    def _escapar(valor):
-        return html_lib.escape(str(valor)) if valor is not None else ""
-
-    def _formato_clp(valor):
-        if isinstance(valor, (int, float)):
-            return f"${valor:,.0f}".replace(",", ".")
-        texto = str(valor).strip()
-        if not texto:
-            return "No informado"
-        limpio = texto.replace("$", "").replace(".", "").replace(",", "").strip()
-        if limpio.isdigit():
-            return f"${int(limpio):,}".replace(",", ".")
-        return texto
-
-    caso_html = ""
-    if isinstance(caso_exito, dict) and caso_exito:
-        descripcion = caso_exito.get("descripcion") or ""
-        creatividad = caso_exito.get("creatividad_recomendada") or caso_exito.get("mejor_creatividad") or "No informada"
-        fuente = caso_exito.get("fuente") or "No informada"
-        if descripcion or fuente != "No informada":
-            caso_html = (
-                "<h2>📈 Caso de Éxito Comprobado</h2>"
-                "<div style='border:1px solid #d6e4ff;border-left:5px solid #0066ff;"
-                "background:#f5f9ff;padding:20px 24px;border-radius:8px;margin-bottom:20px;'>"
-                f"<p style='margin:0 0 14px 0;color:#333;font-size:13px;'>{_escapar(descripcion)}</p>"
-                "<table style='width:100%;border-collapse:collapse;font-size:13px;'>"
-                "<tr>"
-                "<td style='padding:6px 0;color:#666;width:45%;'>CPL promedio</td>"
-                f"<td style='padding:6px 0;color:#000;font-weight:bold;'>{_escapar(_formato_clp(caso_exito.get('cpl_promedio_clp')))}</td>"
-                "</tr>"
-                "<tr>"
-                "<td style='padding:6px 0;color:#666;'>Creatividad recomendada</td>"
-                f"<td style='padding:6px 0;color:#000;font-weight:bold;'>{_escapar(creatividad)}</td>"
-                "</tr>"
-                "<tr>"
-                "<td style='padding:6px 0;color:#666;'>Fuente</td>"
-                f"<td style='padding:6px 0;color:#333;'>{_escapar(fuente)}</td>"
-                "</tr>"
-                "</table></div>"
-            )
-
-    textos_reglas = []
-    for regla in reglas_de_oro:
-        if isinstance(regla, dict):
-            texto = regla.get("regla") or regla.get("descripcion") or regla.get("contenido")
-        else:
-            texto = regla
-        if texto:
-            textos_reglas.append(str(texto).strip())
-
-    cotizaciones = []
-    for item in cotizaciones_raw:
-        if not isinstance(item, dict):
-            continue
-        tipo = item.get("tipo") or item.get("tipo_servicio") or item.get("servicio") or "Servicio"
-        minimo = item.get("min", item.get("precio_min", item.get("precio")))
-        maximo = item.get("max", item.get("precio_max", item.get("precio")))
-        if minimo is None and maximo is None:
-            continue
-        if minimo is None:
-            minimo = maximo
-        if maximo is None:
-            maximo = minimo
-        cotizaciones.append({"tipo": str(tipo), "min": minimo, "max": maximo})
-
-    estrategia_partes = []
-    if textos_reglas:
-        items = "".join(
-            f"<li style='margin-bottom:8px;color:#333;font-size:13px;'>{_escapar(texto)}</li>"
-            for texto in textos_reglas
-        )
-        estrategia_partes.append(
-            "<div style='background:#f8f9fa;border:1px solid #ddd;border-radius:8px;padding:18px 22px;margin-bottom:20px;'>"
-            "<h3 style='margin:0 0 12px 0;color:#0066ff;font-size:16px;'>Reglas de Oro de la Industria</h3>"
-            f"<ul style='margin:0;padding-left:20px;'>{items}</ul></div>"
-        )
-
-    if cotizaciones:
-        filas = "".join(
-            "<tr>"
-            f"<td style='padding:8px;border-bottom:1px solid #eee;color:#333;'>{_escapar(c['tipo'])}</td>"
-            f"<td style='padding:8px;border-bottom:1px solid #eee;text-align:right;color:#333;'>{_escapar(_formato_clp(c['min']))}</td>"
-            f"<td style='padding:8px;border-bottom:1px solid #eee;text-align:right;color:#333;'>{_escapar(_formato_clp(c['max']))}</td>"
-            "</tr>"
-            for c in cotizaciones
-        )
-        fee_fijo = fee.get("fee_fijo", 0)
-        fee_texto = _formato_clp(fee_fijo)
-        dentro_de_rango = False
-        for c in cotizaciones:
-            try:
-                if float(c["min"]) <= float(fee_fijo) <= float(c["max"]):
-                    dentro_de_rango = True
-                    break
-            except (TypeError, ValueError):
-                continue
-        comparacion = (
-            f"Nuestro Fee Fijo de <strong>{fee_texto}</strong> se mantiene dentro de los rangos de mercado."
-            if dentro_de_rango
-            else f"Compara nuestro Fee Fijo de <strong>{fee_texto}</strong> con los rangos de la competencia."
-        )
-        estrategia_partes.append(
-            "<h3 style='margin:0 0 10px 0;color:#0066ff;font-size:16px;'>Cotizaciones de Competencia</h3>"
-            "<table style='width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid #ddd;border-radius:8px;'>"
-            "<thead><tr style='background:#000;color:#fff;'>"
-            "<th style='padding:10px;text-align:left;'>Tipo de Servicio</th>"
-            "<th style='padding:10px;text-align:right;'>Mínimo</th>"
-            "<th style='padding:10px;text-align:right;'>Máximo</th>"
-            "</tr></thead>"
-            f"<tbody>{filas}</tbody></table>"
-            f"<p style='margin:12px 0 0 0;padding:12px 16px;background:#eef5ff;border-left:4px solid #0066ff;color:#333;font-size:13px;'>{comparacion}</p>"
-        )
-
-    estrategia_html = (
-        "<h2>Estrategia de Expertos</h2>" + "".join(estrategia_partes)
-        if estrategia_partes else ""
-    )
-
     copys_html = "".join([f"<div style='border:1px solid #eee;padding:20px;margin-bottom:20px;background:#fafafa;border-radius:8px;'><span style='background:#000;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px;'>Opción {i}</span><h3 style='margin-top:10px;font-size:18px;'>{c['titulo']}</h3><p style='color:#555;'>{c['cuerpo']}</p><button style='background:#0066ff;color:#fff;border:none;padding:10px 20px;border-radius:5px;font-weight:bold;'>{c['cta']}</button></div>" for i, c in enumerate(copys, 1)])
+
+    # Bloque de Caso de Éxito
+    caso_html = ""
+    if caso_exito:
+        caso_html = f"""
+        <h2>📈 Caso de Éxito Comprobado</h2>
+        <div style='border:1px solid #d6e4ff; border-left:5px solid #0066ff; background:#f5f9ff; padding:20px 24px; border-radius:8px; margin-bottom:20px;'>
+            <p style='margin:0 0 14px 0; color:#333; font-size:13px;'>{caso_exito.get('descripcion', '')}</p>
+            <table style='width:100%; border-collapse:collapse; font-size:13px;'>
+                <tr><td style='padding:6px 0; color:#666; width:45%;'>CPL promedio</td><td style='padding:6px 0; color:#000; font-weight:bold;'>${caso_exito.get('cpl_promedio_clp', 0):,} CLP</td></tr>
+                <tr><td style='padding:6px 0; color:#666;'>Creatividad recomendada</td><td style='padding:6px 0; color:#000; font-weight:bold;'>{caso_exito.get('mejor_creatividad', '')}</td></tr>
+                <tr><td style='padding:6px 0; color:#666;'>Fuente</td><td style='padding:6px 0; color:#333;'>{caso_exito.get('fuente', '')}</td></tr>
+            </table>
+        </div>
+        """
     
     return f"""<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
         body {{ font-family: Arial; background: #f4f7f6; padding: 40px; }}
@@ -219,8 +104,6 @@ def generar_html(data, cliente, rubro):
             </div>
         </div>
 
-        {estrategia_html}
-
         {caso_html}
 
         <h2>Propuestas de Anuncios</h2>
@@ -242,7 +125,7 @@ with tab1:
     with col_b: rubro = st.text_input("Rubro", "inmobiliaria")
     with col_c: presupuesto = st.number_input("Presupuesto Pauta (CLP)", min_value=50000, value=300000, step=50000)
     
-    if st.button("⚡ Generar Campaña", type="primary"):
+    if st.button("⚡ Generar Campaña", type="primary", key="btn_gen"):
         res = requests.post(f"{API_URL}/api/v1/simular", json={"cliente_id": cliente_id, "rubro": rubro, "presupuesto_pauta": int(presupuesto)})
         if res.status_code == 200:
             data = res.json()["campaña_generada"]
@@ -256,24 +139,14 @@ with tab1:
             pdf_data = generar_pdf(html_data)
             
             st.download_button("📥 Descargar PDF", pdf_data, file_name=f"Propuesta_{cliente_id}.pdf", mime="application/pdf", type="primary", key="btn_pdf")
-            st.download_button("📥 Descargar HTML (Respaldo)", html_data, file_name=f"prop_{cliente_id}.html", mime="text/html", key="btn_html")
-
-            if st.button("🚀 Crear en Meta Ads (Sandbox)", type="secondary", key="btn_meta"):
-                try:
-                    integrador = MetaAdsIntegrator()
-                    respuesta_meta = integrador.crear_campana_sandbox(data)
-                    st.success(f"¡Campaña creada en Meta Ads! ID: {respuesta_meta['campaign_id']}")
-                except Exception as e:
-                    st.error(f"No se pudo crear la campaña en Meta Ads: {e}")
+            st.download_button("📥 Descargar HTML", html_data, file_name=f"prop_{cliente_id}.html", mime="text/html", key="btn_html")
             
-            # --- NUEVO BOTÓN PARA META ADS ---
             st.divider()
             if st.button("🚀 Crear en Meta Ads (Sandbox)", type="secondary", key="btn_meta"):
                 try:
                     integrador = MetaAdsIntegrator()
                     respuesta = integrador.crear_campana_sandbox(data)
                     st.success(f"✅ Campaña creada en Meta. ID: {respuesta['campaign_id']} (Estado: {respuesta['status']})")
-                    st.info("Nota: Esta es una simulación. En producción, se creará en el Business Manager real.")
                 except Exception as e:
                     st.error(f"Error al conectar con Meta: {e}")
 
@@ -284,24 +157,20 @@ with tab2:
         df = pd.read_csv(uploaded_file)
         st.dataframe(df, width="stretch")
         
-        if st.button("⚡ Generar Reportes Masivos (PDFs)", type="primary"):
+        if st.button("⚡ Generar Reportes Masivos (PDFs)", type="primary", key="btn_masivo"):
             zip_buffer = io.BytesIO()
             progress_bar = st.progress(0)
-            
             with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
                 for idx, row in df.iterrows():
                     payload = {"cliente_id": str(row['cliente_id']), "rubro": str(row['rubro']), "presupuesto_pauta": int(row['presupuesto_pauta'])}
                     res = requests.post(f"{API_URL}/api/v1/simular", json=payload)
-                    
                     if res.status_code == 200:
                         html_content = generar_html(res.json()["campaña_generada"], payload['cliente_id'], payload['rubro'])
                         pdf_data = generar_pdf(html_content)
                         zip_file.writestr(f"propuesta_{payload['cliente_id']}.pdf", pdf_data)
-                        
                     progress_bar.progress((idx + 1) / len(df))
-                    
             st.success(f"¡{len(df)} reportes PDF generados!")
-            st.download_button("📥 Descargar ZIP con PDFs", zip_buffer.getvalue(), file_name="reportes_ikki_pdf.zip", mime="application/zip", type="primary")
+            st.download_button("📥 Descargar ZIP con PDFs", zip_buffer.getvalue(), file_name="reportes_ikki_pdf.zip", mime="application/zip", type="primary", key="btn_zip")
 
 with tab3:
     st.header("Gestión de Prospectos (CRM)")
@@ -310,19 +179,15 @@ with tab3:
         res = client.table("campanas_meta").select("id", "cliente_id", "presupuesto_total", "estado").execute()
         if res.data:
             df_crm = pd.DataFrame(res.data).rename(columns={"cliente_id": "Cliente", "presupuesto_total": "Pauta (CLP)", "estado": "Estado"})
-            
             def calcular_score(row):
                 base = 50
                 bonus_pauta = row["Pauta (CLP)"] / 10000
                 estado = row["Estado"]
                 bonus_estado = {"BORRADOR": 0, "ENVIADO": 10, "RESPONDIO": 25, "CERRADO": 40}.get(estado, 0)
                 return int(base + bonus_pauta + bonus_estado)
-                
             df_crm["Score"] = df_crm.apply(calcular_score, axis=1)
-            
             mensaje_base = "Hola! Te escribo de Agencia Ikki. Vi tu negocio y preparé un reporte gratuito con 3 opciones de anuncios para tu rubro. ¿Te gustaría que te lo envíe por aquí para que lo revises sin compromiso?"
             df_crm["Contactar"] = f"https://wa.me/?text={urllib.parse.quote(mensaje_base)}"
-            
             edited_df = st.data_editor(
                 df_crm,
                 column_config={
@@ -331,10 +196,9 @@ with tab3:
                 },
                 disabled=["id", "Cliente", "Pauta (CLP)", "Score", "Contactar"], hide_index=True, width="stretch"
             )
-            
             col_save, col_export = st.columns(2)
             with col_save:
-                if st.button("💾 Guardar Cambios", type="primary"):
+                if st.button("💾 Guardar Cambios", type="primary", key="btn_crm"):
                     cambios = 0
                     for index, row in edited_df.iterrows():
                         if row["Estado"] != df_crm.iloc[index]["Estado"]:
@@ -344,6 +208,6 @@ with tab3:
                     else: st.info("No hubo cambios.")
             with col_export:
                 csv = edited_df.to_csv(index=False).encode('utf-8')
-                st.download_button("📥 Exportar CRM a CSV", data=csv, file_name='ikki_crm_export.csv', mime='text/csv')
+                st.download_button("📥 Exportar CRM a CSV", data=csv, file_name='ikki_crm_export.csv', mime='text/csv', key="btn_csv")
         else: 
             st.info("Sin prospectos.")
