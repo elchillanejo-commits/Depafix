@@ -10,7 +10,6 @@ from supabase import create_client
 from dotenv import load_dotenv
 from xhtml2pdf import pisa
 from src.agencia.meta_ads_integrator import MetaAdsIntegrator
-from src.agencia.meta_ads_integrator import MetaAdsIntegrator
 
 load_dotenv()
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
@@ -223,6 +222,14 @@ with tab1:
             
             st.download_button("📥 Descargar PDF", pdf_data, file_name=f"Propuesta_{cliente_id}.pdf", mime="application/pdf", type="primary")
             st.download_button("📥 Descargar HTML (Respaldo)", html_data, file_name=f"prop_{cliente_id}.html", mime="text/html")
+
+            if st.button("🚀 Crear en Meta Ads (Sandbox)", type="secondary"):
+                try:
+                    integrador = MetaAdsIntegrator()
+                    respuesta_meta = integrador.crear_campana_sandbox(data)
+                    st.success(f"¡Campaña creada en Meta Ads! ID: {respuesta_meta['campaign_id']}")
+                except Exception as e:
+                    st.error(f"No se pudo crear la campaña en Meta Ads: {e}")
             
             # --- NUEVO BOTÓN PARA META ADS ---
             st.divider()
