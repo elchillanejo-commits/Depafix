@@ -9,6 +9,11 @@ import urllib.parse
 from supabase import create_client
 from dotenv import load_dotenv
 from xhtml2pdf import pisa
+import sys
+from pathlib import Path
+_AGENCIA_DIR = Path(__file__).resolve().parent
+if str(_AGENCIA_DIR) not in sys.path:
+    sys.path.insert(0, str(_AGENCIA_DIR))
 from meta_ads_integrator import MetaAdsIntegrator
 
 load_dotenv()
@@ -220,10 +225,10 @@ with tab1:
             html_data = generar_html(data, cliente_id, rubro)
             pdf_data = generar_pdf(html_data)
             
-            st.download_button("📥 Descargar PDF", pdf_data, file_name=f"Propuesta_{cliente_id}.pdf", mime="application/pdf", type="primary")
-            st.download_button("📥 Descargar HTML (Respaldo)", html_data, file_name=f"prop_{cliente_id}.html", mime="text/html")
+            st.download_button("📥 Descargar PDF", pdf_data, file_name=f"Propuesta_{cliente_id}.pdf", mime="application/pdf", type="primary", key="btn_pdf")
+            st.download_button("📥 Descargar HTML (Respaldo)", html_data, file_name=f"prop_{cliente_id}.html", mime="text/html", key="btn_html")
 
-            if st.button("🚀 Crear en Meta Ads (Sandbox)", type="secondary"):
+            if st.button("🚀 Crear en Meta Ads (Sandbox)", type="secondary", key="btn_meta"):
                 try:
                     integrador = MetaAdsIntegrator()
                     respuesta_meta = integrador.crear_campana_sandbox(data)
@@ -233,7 +238,7 @@ with tab1:
             
             # --- NUEVO BOTÓN PARA META ADS ---
             st.divider()
-            if st.button("🚀 Crear en Meta Ads (Sandbox)", type="secondary"):
+            if st.button("🚀 Crear en Meta Ads (Sandbox)", type="secondary", key="btn_meta"):
                 try:
                     integrador = MetaAdsIntegrator()
                     respuesta = integrador.crear_campana_sandbox(data)
