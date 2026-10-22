@@ -40,11 +40,19 @@ def generar_html(data, cliente, rubro):
     benchmarks = data["configuracion"].get("benchmarks_mercado", {})
     proyecciones = data["configuracion"].get("proyecciones", {})
     caso_exito = data["configuracion"].get("caso_exito", {})
+    plan_vuelo = data["configuracion"].get("plan_vuelo", [])
     
     plataforma = benchmarks.get("plataforma_recomendada", "Meta Ads")
     justificacion = benchmarks.get("justificacion", "Estrategia estándar.")
     impresiones = f"{proyecciones.get('impresiones_estimadas', 0):,}".replace(",", ".")
     clics = f"{proyecciones.get('clics_estimados', 0):,}".replace(",", ".")
+
+    plan_vuelo_html = ""
+    if plan_vuelo:
+        plan_vuelo_html = "<h2>🗓️ Plan de Vuelo (30 Días)</h2><table style='width:100%; border-collapse:collapse; font-size:13px; margin-bottom:20px;'>"
+        for paso in plan_vuelo:
+            plan_vuelo_html += f"<tr><td style='padding:8px; border-bottom:1px solid #eee; font-weight:bold; color:#0066ff;'>{paso['semana']}</td><td style='padding:8px; border-bottom:1px solid #eee;'>{paso['accion']}</td></tr>"
+        plan_vuelo_html += "</table>"
 
     copys_html = "".join([f"<div style='border:1px solid #eee;padding:20px;margin-bottom:20px;background:#fafafa;border-radius:8px;'><span style='background:#000;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px;'>Opción {i}</span><h3 style='margin-top:10px;font-size:18px;'>{c['titulo']}</h3><p style='color:#555;'>{c['cuerpo']}</p><button style='background:#0066ff;color:#fff;border:none;padding:10px 20px;border-radius:5px;font-weight:bold;'>{c['cta']}</button></div>" for i, c in enumerate(copys, 1)])
 
@@ -107,6 +115,7 @@ def generar_html(data, cliente, rubro):
         {caso_html}
 
         <h2>Propuestas de Anuncios</h2>
+        {plan_vuelo_html}
         {copys_html}
         <p style="text-align: center; margin-top: 40px; font-size: 12px; color: #888;">Ikki Agency.</p>
     </div></body></html>"""
