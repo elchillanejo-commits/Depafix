@@ -84,7 +84,13 @@ def generar_html(data, cliente, rubro):
         .justification {{ font-size: 13px; color: #666; margin-top: 10px; font-style: italic; }}
         h2 {{ border-bottom: 1px solid #eee; padding-bottom: 10px; }}
     </style></head><body><div class="container">
-        <div class="header"><h1>Propuesta de Campaña Digital</h1><p>Para: <strong>{cliente.replace('_', ' ').title()}</strong> ({rubro.title()})</p></div>
+        <div class="header" style="text-align:left;">
+            <h1 style="font-size:36px; margin-bottom:5px;">Propuesta de Marketing Digital</h1>
+            <p style="color:#666; font-size:14px; margin-bottom:30px;">Preparado exclusivamente para: <strong>{cliente.replace('_', ' ').title()}</strong> | Fecha: {data.get('fecha_inicio', '')}</p>
+            <hr style="border:1px solid #eee; margin-bottom:20px;">
+            <h3 style="color:#333;">Resumen Ejecutivo</h3>
+            <p style="color:#555; font-size:14px; line-height:1.5;">Esta propuesta detalla la estrategia de adquisición de clientes para el rubro <strong>{rubro}</strong>. Basado en nuestro análisis de mercado, recomendamos concentrar los esfuerzos en <strong>{plataforma}</strong> para maximizar el retorno de la inversión (ROI). El presupuesto de <strong>${fee['pauta_neta']:,} CLP</strong> generará una proyección de <strong>{impresiones} impresiones</strong> y <strong>{clics} clics</strong> en los próximos 30 días.</p>
+        </div>
         
         <div class="financials">
             <div><span>Pauta Meta Ads</span><strong>${fee['pauta_neta']:,}</strong></div>
