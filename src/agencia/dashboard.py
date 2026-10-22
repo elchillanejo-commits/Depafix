@@ -9,7 +9,7 @@ import urllib.parse
 from supabase import create_client
 from dotenv import load_dotenv
 from xhtml2pdf import pisa
-from src.agencia.meta_ads_integrator import MetaAdsIntegrator
+from meta_ads_integrator import MetaAdsIntegrator
 
 load_dotenv()
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
