@@ -143,6 +143,14 @@ def normalizar(fila: dict[str, Any], ruta: Path) -> dict[str, Any]:
     cliente = _cliente_desde_fuente(fila.get("fuente"))
     plataforma = fila.get("plataforma")
     creatividad = fila.get("mejor_creatividad")
+    cpl_declarado = fila.get("cpl_promedio_clp")
+    metricas = extraer_metricas(fila.get("descripcion"), cpl_declarado)
+    # Si la fuente trae inversión y leads, manda el CPL calculado (inversión / leads);
+    # el declarado se conserva en metricas para auditoría.
+    cpl = metricas.get("cpl_calculado_clp", cpl_declarado)
+    if cpl != cpl_declarado:
+        metricas["cpl_declarado_fuente_clp"] = cpl_declarado
+        metricas["cpl_promedio_clp"] = cpl
     return {
         "slug": _slug(cliente or "mercado", fila.get("industria"), plataforma, creatividad),
         "cliente": cliente,
@@ -154,12 +162,12 @@ def normalizar(fila: dict[str, Any], ruta: Path) -> dict[str, Any]:
             if plataforma and creatividad else POR_CONFIRMAR
         ),
         "resultados": fila.get("descripcion"),
-        "metricas": extraer_metricas(fila.get("descripcion"), fila.get("cpl_promedio_clp")),
+        "metricas": metricas,
         "fecha": POR_CONFIRMAR,  # La fuente solo indica el año (en el texto 'fuente').
         "fuente_archivo": str(ruta.relative_to(PROJECT_ROOT)),
         "tipo": "estimacion" if _es_estimacion(fila) else "real",
         # Compatibilidad con motor_ikki.py / dashboard.py
-        "cpl_promedio_clp": fila.get("cpl_promedio_clp"),
+        "cpl_promedio_clp": cpl,
         "mejor_creatividad": creatividad,
         "descripcion": fila.get("descripcion"),
         "fuente": fila.get("fuente"),
@@ -169,13 +177,11 @@ def normalizar(fila: dict[str, Any], ruta: Path) -> dict[str, Any]:
 def advertencias(caso: dict[str, Any]) -> list[str]:
     avisos = [f"{campo}: por confirmar" for campo in ("cliente", "problema", "fecha") if caso[campo] is None]
     m = caso["metricas"]
-    if m.get("cpl_calculado_clp") and m.get("cpl_promedio_clp"):
-        desvio = abs(m["cpl_calculado_clp"] - m["cpl_promedio_clp"]) / m["cpl_promedio_clp"]
-        if desvio > 0.05:
-            avisos.append(
-                f"CPL inconsistente: declarado {m['cpl_promedio_clp']} vs "
-                f"inversión/leads = {m['cpl_calculado_clp']} ({desvio:.0%})"
-            )
+    if m.get("cpl_declarado_fuente_clp") is not None:
+        avisos.append(
+            f"CPL corregido: fuente declara {m['cpl_declarado_fuente_clp']}, "
+            f"se usa inversión/leads = {caso['cpl_promedio_clp']}"
+        )
     return avisos
 
 

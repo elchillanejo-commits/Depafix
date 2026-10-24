@@ -232,3 +232,28 @@ def test_legacy_simular_caso_exito_falla_devuelve_vacio(monkeypatch):
     )
     assert response.status_code == 200, response.text
     assert response.json()["campaña_generada"]["configuracion"]["caso_exito"] == {}
+
+
+def test_obtener_caso_exito_solo_casos_reales():
+    from src.agencia.motor_ikki import AgenciaIkkiMotor
+
+    class FakeQuery:
+        def __init__(self):
+            self.llamadas = []
+
+        def __getattr__(self, nombre):
+            def registrar(*args, **kwargs):
+                self.llamadas.append((nombre, args))
+                return self
+            return registrar
+
+        def execute(self):
+            return type("Resp", (), {"data": [{"id": 1, "tipo": "real"}]})()
+
+    query = FakeQuery()
+    motor = AgenciaIkkiMotor.__new__(AgenciaIkkiMotor)
+    motor.client = type("Client", (), {"table": lambda self, nombre: query})()
+
+    assert motor.obtener_caso_exito("inmobiliaria") == {"id": 1, "tipo": "real"}
+    assert ("eq", ("tipo", "real")) in query.llamadas
+    assert ("order", ("id",)) in query.llamadas

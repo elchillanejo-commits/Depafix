@@ -98,7 +98,8 @@ class AgenciaIkkiMotor(MotorIkki):
     def obtener_caso_exito(self, rubro: str) -> dict:
         if not self.client: return {}
         try:
-            res = self.client.table("casos_exito").select("*").ilike("industria", f"%{rubro}%").limit(1).execute()
+            # Solo casos reales: las estimaciones de mercado nunca se muestran como caso de éxito.
+            res = self.client.table("casos_exito").select("*").ilike("industria", f"%{rubro}%").eq("tipo", "real").order("id").limit(1).execute()
             return res.data[0] if res.data else {}
         except Exception:
             return {}

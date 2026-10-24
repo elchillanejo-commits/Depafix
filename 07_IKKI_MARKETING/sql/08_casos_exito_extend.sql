@@ -53,3 +53,31 @@ BEGIN
     END IF;
 END;
 $$;
+
+
+-- ============================================================
+-- BACKFILL de filas existentes (cargadas por scripts/insert_caso_real.sql)
+-- Asigna el mismo slug que calcula importar_casos.py para que el upsert
+-- actualice estas filas en vez de duplicarlas. Idempotente (WHERE slug IS NULL).
+-- ============================================================
+UPDATE public.casos_exito
+   SET slug = 'cordillera-inmobiliaria-meta-video-testimonio',
+       cliente = 'Cordillera',
+       tipo = 'real'
+ WHERE slug IS NULL
+   AND fuente = 'Caso Cordillera - Chile 2026'
+   AND plataforma = 'Meta'
+   AND mejor_creatividad = 'Video Testimonio';
+
+UPDATE public.casos_exito
+   SET slug = 'mercado-inmobiliaria-google-busqueda-de-marca',
+       tipo = 'estimacion'
+ WHERE slug IS NULL
+   AND fuente = 'Estimación Mercado Chile'
+   AND plataforma = 'Google'
+   AND mejor_creatividad = 'Búsqueda de Marca';
+
+-- Verificación: debe devolver 0 filas.
+SELECT id, industria, plataforma, fuente
+  FROM public.casos_exito
+ WHERE slug IS NULL;
