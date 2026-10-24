@@ -1,0 +1,17 @@
+================================================================================
+📊 CARTA GANTT: AGENCIA IKKI (MARKETING AUTOMATIZADO)
+Esfuerzo Total: 6.0 Horas-Hombre | Ejecución: 12 días (30 min diarios)
+================================================================================
+[ ] Día 1  : Diseñar esquema SQL de telemetría (campañas, presupuestos, leads).
+[ ] Día 2  : Desplegar tablas en Supabase (campanas_ikki, leads_ikki).
+[ ] Día 3  : Configurar RLS y verificar conexión con Service Role.
+[ ] Día 4  : Crear endpoint base /agencia/ikki/simular (Estructura CDA).
+[ ] Día 5  : Programar motor financiero (Fee Fijo + % Pauta mensual).
+[ ] Día 6  : Conectar el cálculo financiero con la escritura a Supabase.
+[ ] Día 7  : Prueba unitaria local de la respuesta JSON.
+[ ] Día 8  : Script de extracción de transcripciones de YouTube.
+[ ] Día 9  : Procesamiento de Meta/Google Ads insights a archivo JSON.
+[ ] Día 10 : Inyección del JSON al System_Prompt de redacción de Ikki.
+[ ] Día 11 : Test de humo completo con curl simulando un cliente.
+[ ] Día 12 : Auditoría de logs en Supabase y cierre.
+================================================================================

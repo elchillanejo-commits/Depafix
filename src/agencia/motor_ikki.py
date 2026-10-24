@@ -1,19 +1,69 @@
-import json
 import os
 import logging
-import random
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
+from typing import Literal
+
 from dotenv import load_dotenv
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 from supabase import create_client
+
 from src.agencia.prompt_engineer import construir_prompt
 
 load_dotenv()
 log = logging.getLogger(__name__)
 USE_MOCK_LLM = os.environ.get("IKKI_USE_MOCK", "1") == "1"
 
-class AgenciaIkkiMotor:
+
+class FeeAgenciaRequest(BaseModel):
+    """Presupuesto base para el cálculo del fee de agencia."""
+
+    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+
+    presupuesto_base_clp: int = Field(
+        gt=0,
+        validation_alias=AliasChoices("presupuesto_base_clp", "presupuesto_base"),
+        description="Presupuesto base de pauta en CLP.",
+    )
+
+
+class FeeAgenciaResponse(BaseModel):
+    """Resultado del fee de agencia sobre el presupuesto base."""
+
+    status: Literal["success"] = "success"
+    presupuesto_base_clp: int
+    pct_fee_agencia: float
+    fee_agencia_clp: int
+    total_cliente_clp: int
+    moneda: Literal["CLP"] = "CLP"
+
+
+class MotorIkki:
+    """Cálculo puro del fee de agencia (sin dependencias de Supabase)."""
+
+    def __init__(self, pct_fee_agencia: float = 0.15):
+        if not 0 <= pct_fee_agencia <= 1:
+            raise ValueError("pct_fee_agencia debe estar entre 0 y 1.")
+        self.pct_fee_agencia = Decimal(str(pct_fee_agencia))
+
+    def calcular_fee_agencia(self, presupuesto_base_clp: int) -> FeeAgenciaResponse:
+        if presupuesto_base_clp <= 0:
+            raise ValueError("presupuesto_base_clp debe ser mayor que cero.")
+        base = Decimal(str(presupuesto_base_clp))
+        fee = (base * self.pct_fee_agencia).quantize(
+            Decimal("1"), rounding=ROUND_HALF_UP
+        )
+        return FeeAgenciaResponse(
+            presupuesto_base_clp=int(base),
+            pct_fee_agencia=float(self.pct_fee_agencia),
+            fee_agencia_clp=int(fee),
+            total_cliente_clp=int(base + fee),
+        )
+
+
+class AgenciaIkkiMotor(MotorIkki):
     def __init__(self, fee_fijo_clp: int = 150000, pct_pauta: float = 0.15):
+        super().__init__(pct_fee_agencia=pct_pauta)
         self.fee_fijo = Decimal(str(fee_fijo_clp))
         self.pct_pauta = Decimal(str(pct_pauta))
         url = os.environ.get("SUPABASE_URL")

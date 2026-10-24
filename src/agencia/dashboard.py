@@ -64,7 +64,7 @@ def generar_html(data, cliente, rubro):
         <div style='border:1px solid #d6e4ff; border-left:5px solid #0066ff; background:#f5f9ff; padding:20px 24px; border-radius:8px; margin-bottom:20px;'>
             <p style='margin:0 0 14px 0; color:#333; font-size:13px;'>{caso_exito.get('descripcion', '')}</p>
             <table style='width:100%; border-collapse:collapse; font-size:13px;'>
-                <tr><td style='padding:6px 0; color:#666; width:45%;'>CPL promedio</td><td style='padding:6px 0; color:#000; font-weight:bold;'>${caso_exito.get('cpl_promedio_clp', 0):,} CLP</td></tr>
+                <tr><td style='padding:6px 0; color:#666; width:45%;'>CPL promedio</td><td style='padding:6px 0; color:#000; font-weight:bold;'>${caso_exito.get('cpl_promedio_clp') or 0:,} CLP</td></tr>
                 <tr><td style='padding:6px 0; color:#666;'>Creatividad recomendada</td><td style='padding:6px 0; color:#000; font-weight:bold;'>{caso_exito.get('mejor_creatividad', '')}</td></tr>
                 <tr><td style='padding:6px 0; color:#666;'>Fuente</td><td style='padding:6px 0; color:#333;'>{caso_exito.get('fuente', '')}</td></tr>
             </table>
@@ -145,7 +145,7 @@ with tab1:
         if res.status_code == 200:
             data = res.json()["campaña_generada"]
             fee = data["configuracion"]["fee_calculado"]
-            st.success("¡Campaña generada y guardada!")
+            st.success("Campaña generada (no guardada en BD).")
             c1, c2 = st.columns(2)
             c1.metric("Pauta", f"${fee['pauta_neta']:,}")
             c2.metric("Total", f"${fee['total_facturar_clp']:,}")

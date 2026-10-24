@@ -1,0 +1,78 @@
+====================================================================
+ESTADO LOCAL DEL PROYECTO DEPAFIX / AGENCIA IKKI
+Fecha: vie 23 oct 2026 19:21:02 -03
+====================================================================
+
+1. ESTRUCTURA DE ARCHIVOS EN src/agencia/
+--------------------------------------------------------------------
+total 136K
+-rw-rw-r-- 1 ibar ibar 5,6K oct 23 15:14 api.py
+-rw-rw-r-- 1 ibar ibar 1,9K oct 20 17:02 auto_nutriente.py
+-rw-rw-r-- 1 ibar ibar 3,1K oct 23 15:12 benchmarks.py
+-rw-rw-r-- 1 ibar ibar 9,0K oct 23 15:12 cda.py
+-rw-rw-r-- 1 ibar ibar  14K oct 22 17:59 dashboard.py
+-rw-rw-r-- 1 ibar ibar 8,9K oct 23 15:13 esquemas.py
+-rw-rw-r-- 1 ibar ibar 3,7K oct 19 14:12 generar_masivo.py
+-rw-rw-r-- 1 ibar ibar 3,7K oct 19 10:26 generar_propuesta.py
+-rw-rw-r-- 1 ibar ibar 4,2K oct 19 13:43 generar_reporte.py
+-rw-rw-r-- 1 ibar ibar    0 oct 22 17:38 __init__.py
+-rw-rw-r-- 1 ibar ibar 1,3K oct 20 15:28 local_brain.py
+-rw-rw-r-- 1 ibar ibar 3,3K oct 22 17:11 meta_ads_integrator.py
+-rw-rw-r-- 1 ibar ibar  11K oct 23 15:14 motor_cda.py
+-rw-rw-r-- 1 ibar ibar 4,5K oct 22 17:57 motor_ikki.py
+-rw-rw-r-- 1 ibar ibar 2,5K oct 20 15:28 nutriente.py
+-rw-rw-r-- 1 ibar ibar 3,6K oct 18 00:19 procesar_conocimiento.py
+-rw-rw-r-- 1 ibar ibar 1,6K oct 20 18:49 prompt_engineer.py
+drwxrwxr-x 2 ibar ibar 4,0K oct 18 00:19 prompts
+drwxrwxr-x 2 ibar ibar 4,0K oct 23 15:15 __pycache__
+-rw-rw-r-- 1 ibar ibar 7,4K oct 23 15:13 repositorio_ikki.py
+-rw-rw-r-- 1 ibar ibar 1,1K oct 19 10:04 seed_knowledge.py
+-rw-rw-r-- 1 ibar ibar 2,0K oct 20 21:11 simulador_kimi.py
+
+2. ARCHIVOS EN data/ (El Cerebro Local)
+--------------------------------------------------------------------
+348K	data/contexto_maestro.txt
+Cantidad de videos JSON: 9
+
+3. ÚLTIMOS 10 CAMBIOS EN GIT (Historial)
+--------------------------------------------------------------------
+e107f95 Feat: Add Executive Summary and Cover to PDF
+b58f928 Feat: Add Flight Plan and Force Reload Case Study
+5b489d1 Fix: Robust dashboard with Real Case Study HTML
+dd00da2 Feat: Add Real Case Study (Cordillera) to Motor and PDF
+3e36a51 Fix: Real Case Study and Streamlit Key Error
+319ef48 Fix: StreamlitDuplicateElementId and robust imports
+78e0442 Fix: Direct import for meta_ads_integrator
+33e7c63 Fix: Final dashboard update and force deploy
+7a3aa5a Feat: Connect Meta Ads Integrator to Dashboard
+0d23168 Hito: Complete market intelligence and strategy briefing
+
+4. ESTADO ACTUAL DE GIT
+--------------------------------------------------------------------
+ M src/agencia/api.py
+?? 07_IKKI_MARKETING/
+?? ESTADO_LOCAL_IKKI.txt
+?? GANTT_IKKI_30MIN.txt
+?? src/agencia/benchmarks.py
+?? src/agencia/cda.py
+?? src/agencia/esquemas.py
+?? src/agencia/motor_cda.py
+?? src/agencia/repositorio_ikki.py
+?? tests/test_ikki_api.py
+
+5. TABLAS EN SUPABASE (Consultando API)
+--------------------------------------------------------------------
+Casos de Éxito: [{"count":0}]
+Playbook de Ventas: Error o tabla vacía
+
+6. VARIABLES DE ENTORNO CONFIGURADAS (Nombres solo)
+--------------------------------------------------------------------
+KRAKEN_API_KEY
+KRAKEN_SECRET_KEY
+SUPABASE_URL
+SUPABASE_KEY
+SUPABASE_SERVICE_ROLE_KEY
+KUTT_USER
+KUTT_PASS
+TELEGRAM_BOT_TOKEN
+TELEGRAM_CHAT_ID
