@@ -6,6 +6,12 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Modelo ONNX del RAG (multilingual-e5-small): revisión fijada + sha256 verificado.
+# Capa propia para que no se vuelva a bajar en cada cambio de código.
+COPY scripts/descargar_modelo_onnx.py scripts/
+RUN python scripts/descargar_modelo_onnx.py /app/models/multilingual-e5-small
+ENV IKKI_EMBED_MODEL_DIR=/app/models/multilingual-e5-small
+
 # Copiar el código y el Cerebro Local
 COPY . .
 

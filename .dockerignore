@@ -6,3 +6,10 @@ __pycache__/
 .git/
 .pytest_cache/
 *.log
+
+# Modelo ONNX del RAG (se descarga en el build, ver scripts/descargar_modelo_onnx.py)
+models/
+
+# No los usa la API (src/agencia/api.py): backup de 1,9 GB y app Next.js aparte
+01_SERVIU_backup/
+frontend/

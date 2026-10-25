@@ -6,3 +6,7 @@ anthropic>=0.21.0
 youtube-transcript-api>=1.0.0
 pydantic>=2.6.0
 xhtml2pdf
+# RAG: embeddings de consultas con multilingual-e5-small vía ONNX (sin torch)
+onnxruntime>=1.18.0
+tokenizers>=0.15.0
+numpy>=1.26.0

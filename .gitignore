@@ -101,3 +101,6 @@ ingeniero/state.json
 ingeniero/logs/*.log
 .depafix_secrets
 *_secrets
+
+# Modelo ONNX del RAG (se descarga en el build, ver scripts/descargar_modelo_onnx.py)
+models/
