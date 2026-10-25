@@ -1,87 +1,109 @@
-# HANDOFF — Conectar `motor_ikki.py` al RAG (pgvector)
+# HANDOFF — IKKI: RAG en producción + activar LLM
 
-Fecha: 2026-10-25 · Contexto previo: Handoff 006 (ingesta de videos de Meta/Google Ads)
+Fecha: 2026-10-25 · Repo: `/home/ibar/PROYECTOS/Proyectos/DepaFix` · Rama: `main` (sincronizada con `origin/main`)
 
-## Estado actual (hecho y verificado)
+---
 
-| Pieza | Dónde | Estado |
-|---|---|---|
-| Chunks padre (~700 palabras, 74 filas, `fuente='video_txt'`) | Supabase `knowledge_entries` | ✅ cargados |
-| Sub-fragmentos (~150 palabras, 442 filas) + embedding 384d | Supabase `knowledge_chunks` | ✅ cargados |
-| Búsqueda vectorial (mejor sub-fragmento por padre → devuelve padre) | Supabase RPC `match_knowledge(query_embedding, match_count, filtro_categoria)` | ✅ |
-| DDL de lo anterior | `07_IKKI_MARKETING/sql/09_pgvector_knowledge_chunks.sql` | ✅ aplicado |
-| Consulta RAG desde Python | `src/agencia/rag.py` → `buscar()`, `obtener_contexto_relevante()` | ✅ probado local y en Docker |
-| Embedding de la pregunta sin torch | `src/agencia/embeddings_onnx.py` (onnxruntime + tokenizers) | ✅ idéntico a sentence-transformers (coseno 1.000000) |
-| Modelo ONNX en la imagen | `scripts/descargar_modelo_onnx.py` (revisión fijada + sha256), paso en `Dockerfile` | ✅ |
-| Ingesta / re-ingesta | `src/agencia/ingestar_videos.py` (dry-run por defecto, `--apply` escribe) | ✅ local (usa sentence-transformers, NO va a producción) |
-| FAISS local (`data/conocimiento.faiss`) | respaldo local, ya no lo usa `rag.py` | ✅ |
+## 1. Estado del deploy de hoy (verificado)
 
-**Lo que NO está hecho:** el motor no usa el conocimiento. Hoy nada en la API llama a `rag.py`.
+- `git push` hecho: `main` == `origin/main` (último commit `e40807e Feat: Motor IKKI conectado a RAG con pgvector`).
+- API en Railway responde: `https://ikki-api-production.up.railway.app` → `/`, `/docs`, `/openapi.json` = 200.
+  Endpoints: `POST /agencia/ikki/simular`, `POST /agencia/ikki/leads`, `POST /api/v1/simular`.
+- `POST /agencia/ikki/simular` devuelve la simulación completa (fee, embudos, CDA, benchmarks,
+  proyecciones, plan_30_dias, creatividades, cumplimiento, resumen, supuestos). Probado con `persistir=false`.
+- Infra RAG lista:
+  - Supabase: `knowledge_entries` (74 chunks padre, `fuente='video_txt'`) + `knowledge_chunks`
+    (442 sub-fragmentos con `embedding vector(384)`) + RPC `match_knowledge(query_embedding, match_count, filtro_categoria)`.
+    DDL: `07_IKKI_MARKETING/sql/09_pgvector_knowledge_chunks.sql`.
+  - `src/agencia/rag.py` → `buscar()` / `obtener_contexto_relevante()` (pgvector, no FAISS).
+  - `src/agencia/embeddings_onnx.py` → embedding de la pregunta con ONNX (sin torch), vectores idénticos a
+    sentence-transformers. Modelo bajado en el build por `scripts/descargar_modelo_onnx.py` (revisión + sha256 fijos).
+  - Imagen Docker: 1,71 GB (se excluyen `01_SERVIU_backup/`, `frontend/`, `models/`).
 
-## Lo que falta: conectar el motor
+### ⚠️ Lo importante: la API todavía NO usa el RAG
+- Las simulaciones de la API las hace **`MotorCDA`** (`src/agencia/motor_cda.py`), no `AgenciaIkkiMotor`.
+- Las creatividades salen de **plantillas fijas** en `src/agencia/cda.py:141` → `creatividades(embudo)`.
+  Ojo: para `rubro="inmobiliaria"` hoy devuelve textos de tests genéticos ("¿Test genético, examen o consulta?").
+- La conexión RAG + LLM quedó hecha en `AgenciaIkkiMotor` (`src/agencia/motor_ikki.py`:
+  `obtener_contexto_relevante()`, `generar_copys()`, usado por `simular_campana_completa()`), pero **ningún
+  endpoint llama a `simular_campana_completa`**. La API solo usa `AgenciaIkkiMotor` para `obtener_caso_exito`.
+  Quien sí la usa: `simulador_kimi.py` (y `dashboard.py` / `generar_propuesta.py` leen `copys_generados` de un JSON).
 
-### Situación de partida
-- `src/agencia/motor_ikki.py` → `AgenciaIkkiMotor.simular_campana_completa()` devuelve
-  `configuracion.copys_generados` con **3 copys fijos (hardcodeados)**.
-- `motor_ikki.py` importa `construir_prompt` (de `src/agencia/prompt_engineer.py`) pero **nunca lo llama**.
-- `src/agencia/simulador_kimi.py:33` llama a `motor.obtener_contexto_relevante(rubro)`, que **no existe**
-  en el motor → ese script hoy revienta. Es el contrato esperado: implementarlo lo arregla.
-- `prompt_engineer.construir_prompt(rubro, cliente, contexto_rag)` ya arma el payload System+User y
-  espera un JSON `{"titulo", "cuerpo", "cta"}` del LLM.
+---
 
-### Pasos propuestos
-1. En `AgenciaIkkiMotor`, agregar:
-   ```python
-   def obtener_contexto_relevante(self, rubro: str, k: int = 3, categoria: str | None = None) -> str:
-       from src.agencia.rag import obtener_contexto_relevante
-       try:
-           return obtener_contexto_relevante(f"anuncios para el rubro {rubro}", k, categoria)
-       except Exception:
-           log.exception("RAG no disponible")
-           return ""   # el motor debe seguir funcionando sin RAG
-   ```
-   Import perezoso a propósito: no cargar onnxruntime/modelo al importar el motor.
-2. Correr `python -m src.agencia.simulador_kimi` para validar contexto + prompt (no llama a ningún LLM).
-3. Recién después: llamada real al LLM con `construir_prompt(...)` para reemplazar `copys_generados`,
-   con **fallback a los copys fijos** si el LLM falla o no devuelve JSON válido.
-4. Opcional: precargar el modelo al arrancar la API (`embeddings_onnx._cargar()` en el startup de
-   FastAPI) para evitar el arranque en frío.
+## 2. Activar el LLM en producción (Railway)
 
-### Restricciones (pedidas por el usuario)
-- `motor_ikki.py` y `src/agencia/api.py` están **en producción**: cambios mínimos, pedir OK antes.
-- **No tocar** la lógica de casos de éxito (`obtener_caso_exito`, solo `tipo='real'`).
-- El contrato de respuesta de la API (`simular_campana_completa`) no debe romperse: agregar, no quitar campos.
+`generar_copys()` usa Anthropic solo si `IKKI_USE_MOCK=0` **y** hay `ANTHROPIC_API_KEY`; si no, o si el LLM
+falla / no devuelve JSON, cae a copys fijos (`origen_copys="fijo"`). Modelo: `IKKI_LLM_MODEL` (default `claude-haiku-5-5`).
 
-## Cosas que hay que saber (gotchas)
-
-- **Prefijos e5:** pregunta = `"query: " + texto`; pasajes indexados = `"passage: " + texto`.
-  `embeddings_onnx.codificar_query()` ya pone `query: `. No mezclar.
-- **Pricing:** "¿Cuánto cobrar por Meta Ads?" sin filtro trae chunks de Meta, no de pricing (el término
-  "Meta Ads" pesa más). Usar `categoria="Pricing_Agencia"` o reformular ("honorarios", "cuánto cobrar al cliente").
-  Categorías: `Meta_Ads_Estructura`, `Google_Ads_CPC`, `Google_Ads_Estructura`, `Pricing_Agencia`, `Estrategia_General`.
-- **Arranque en frío:** la 1ª consulta tarda ~8 s (carga ONNX 470 MB); las siguientes ~300 ms.
-- **Modelo:** `IKKI_EMBED_MODEL_DIR` (en Docker `/app/models/multilingual-e5-small`). En local:
-  `python scripts/descargar_modelo_onnx.py` lo deja en `models/` (ignorado por git/docker/railway).
-- **Permisos:** `knowledge_chunks` tiene RLS sin políticas y `match_knowledge` solo es ejecutable por
-  `service_role` → hay que usar `SUPABASE_SERVICE_ROLE_KEY` (como ya hace el motor).
-- **Filas `youtube` viejas** en `knowledge_entries` (13, transcripciones completas, varias duplicadas de
-  los videos nuevos) **no** están en `knowledge_chunks` y no aparecen en la búsqueda. Así está bien.
-- Si se re-ingesta con otro modelo, hay que regenerar `knowledge_chunks` completa y actualizar
-  `embeddings_onnx.py` + `scripts/descargar_modelo_onnx.py` (revisión y sha256).
-
-## Probar
+Desde `/home/ibar/PROYECTOS/Proyectos/DepaFix` (proyecto **`ikki-api`**, NO `Depafix`):
 
 ```bash
-# Búsqueda contra Supabase (necesita .env y el modelo en models/)
-PYTHONPATH=. venv/bin/python -m src.agencia.rag "¿Cómo bajo el costo por clic en Google Ads?"
-# Esperado: ids 38, 48, 43 (similitud 0.911 / 0.904 / 0.901)
-
-# Re-ingesta (dry-run; agregar --apply para escribir)
-HF_HUB_OFFLINE=1 venv/bin/python src/agencia/ingestar_videos.py
+railway status                      # debe decir Project: ikki-api
+railway variables --service ikki-api --environment production \
+  --set "IKKI_USE_MOCK=0" \
+  --set "ANTHROPIC_API_KEY=sk-ant-..." \
+  --set "IKKI_LLM_MODEL=claude-haiku-5-5"
+railway variables --service ikki-api --environment production   # confirmar (no pegar la key en chats)
 ```
 
-## Deploy (Railway)
-- Proyecto `ikki-api`, servicio `ikki-api`, dominio `ikki-api-production.up.railway.app`.
-- Desde `/home/ibar/PROYECTOS/Proyectos/DepaFix`:
-  `railway up --service ikki-api --environment production`
-- **No** desplegar sobre el servicio/proyecto `Depafix` (es otro proyecto; pisarlo es destructivo).
+Setear variables redepliega el servicio. Si no: `railway redeploy --service ikki-api` o
+`railway up --service ikki-api --environment production`.
+Alternativa sin CLI: Railway → proyecto ikki-api → servicio ikki-api → *Variables*.
+
+**Esto por sí solo no cambia la respuesta de la API** (ver punto 3): primero hay que conectar `MotorCDA`.
+
+---
+
+## 3. Tarea pendiente: creatividades de la API con LLM + RAG
+
+Objetivo: que `POST /agencia/ikki/simular` devuelva creatividades generadas por el LLM con contexto de `rag.py`.
+
+1. Punto de enganche: `src/agencia/motor_cda.py:196`
+   `creatividades=creatividades(distribucion.embudo)` (plantillas de `cda.py`).
+2. Reutilizar lo ya hecho en `motor_ikki.py`: `AgenciaIkkiMotor.obtener_contexto_relevante(rubro)` y
+   `generar_copys(rubro, cliente, contexto)` → devuelve `([{"titulo","cuerpo","cta"}], origen)`.
+3. Adaptar al esquema `Creatividad` (`src/agencia/esquemas.py:181`), que además exige `formato`:
+   mantener el `formato` de la plantilla y reemplazar `titulo/cuerpo/cta`.
+4. **Fallback obligatorio** a las plantillas de `cda.py` si el RAG o el LLM fallan (la API no puede caerse).
+5. Arreglar de paso que las plantillas no dependan del rubro (texto genético para inmobiliaria).
+6. Una llamada al LLM por embudo (B2C/B2B), no por creatividad. Considerar caché por (rubro, embudo).
+7. Agregar tests con el LLM y el RAG mockeados (ver punto 4); nunca llamar al LLM real en tests.
+8. Cambios mínimos en `api.py` / `motor_ikki.py` (están en producción): pedir OK al usuario antes de tocar.
+   **No tocar** `obtener_caso_exito` (solo casos `tipo='real'`).
+
+Contrato: agregar campos está bien, no quitar ni renombrar los existentes de `SimulacionResponse`.
+
+---
+
+## 4. Advertencias técnicas
+
+- **Railway:** desplegar SOLO en proyecto/servicio `ikki-api`. `Depafix` es otro proyecto; pisarlo es destructivo.
+  `railway up` sube el directorio actual: correrlo desde la raíz del repo.
+- **venv:** usar `venv/` (no `.venv/`). No borrarlo. Ojo: hoy fue recreado a las 12:10 por otra sesión y quedó
+  **sin** `fastapi`, `onnxruntime`, etc. Reinstalar con `venv/bin/python -m pip install -r requirements.txt`
+  (`venv/bin/pip` tiene el shebang roto: usar siempre `python -m pip`). Para ingesta local además:
+  `sentence-transformers faiss-cpu`.
+- **Probar como en producción (lo más fiable):**
+  ```bash
+  docker build -t ikki-test .
+  docker run --rm --env-file .env --entrypoint python ikki-test -m src.agencia.rag "¿Cómo bajo el CPC en Google Ads?"
+  # esperado: ids 38, 48, 43
+  ```
+  El build tarda ~10 min (descarga el modelo ONNX de 470 MB).
+- **Tests:** `PYTHONPATH=. venv/bin/python -m pytest tests/test_ikki_api.py -q` (requiere el venv reinstalado).
+  Simulación en prod sin escribir en la BD: `POST /agencia/ikki/simular` con `"persistir": false`.
+- **Modelo RAG:** pregunta = `"query: "+texto`, pasajes = `"passage: "+texto` (ya lo hace `embeddings_onnx`).
+  1ª consulta ~8 s (carga del modelo), siguientes ~300 ms → precargar en el startup si molesta.
+- **Pricing:** "cuánto cobrar por Meta Ads" sin filtro no trae pricing; usar `categoria="Pricing_Agencia"`.
+  Categorías: `Meta_Ads_Estructura`, `Google_Ads_CPC`, `Google_Ads_Estructura`, `Pricing_Agencia`, `Estrategia_General`.
+- **Supabase:** `knowledge_chunks` tiene RLS sin políticas y `match_knowledge` solo es ejecutable por `service_role`.
+  `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` en `.env` (local) y en Railway.
+- **Re-ingesta:** `HF_HUB_OFFLINE=1 venv/bin/python src/agencia/ingestar_videos.py` (dry-run) → `--apply`.
+  Regenera FAISS local y `knowledge_chunks`. Si cambias de modelo hay que regenerar todo y actualizar
+  `embeddings_onnx.py` + `scripts/descargar_modelo_onnx.py`.
+- **Pendiente del usuario:** SQL de limpieza (si no se corrió):
+  `ALTER TABLE public.knowledge_entries DROP COLUMN IF EXISTS embedding;`
+  Después `src/agencia/poblar_embeddings.py` queda obsoleto.
+- Archivos sin seguimiento ajenos a este trabajo: `config/settings.yaml`, `structure.txt`, `data/nuevos_videos/`,
+  `src/trading/rag_helper.py` (de otra sesión). No commitear sin preguntar.
