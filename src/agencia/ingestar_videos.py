@@ -5,8 +5,10 @@ Lee las transcripciones .txt de data/nuevos_videos/, las divide en chunks de
 sub-fragmentos de ~150 palabras (van a data/conocimiento.faiss, apuntando a su
 padre por parent_id).
 
-El índice FAISS se reconstruye completo en cada --apply a partir de TODAS las
-filas fuente='video_txt' de Supabase, así queda siempre alineado con la nube.
+El índice FAISS y la tabla knowledge_chunks (pgvector, ver
+07_IKKI_MARKETING/sql/09_pgvector_knowledge_chunks.sql) se reconstruyen completos
+en cada --apply a partir de TODAS las filas fuente='video_txt' de Supabase, así
+quedan siempre alineados con la nube.
 
 Modelo: intfloat/multilingual-e5-small (384d, 512 tokens, multilingüe).
 Al consultar el índice hay que codificar la pregunta como "query: <texto>"
@@ -40,6 +42,7 @@ MODELO = "intfloat/multilingual-e5-small"
 PREFIJO_PASAJE = "passage: "
 PREFIJO_QUERY = "query: "
 FUENTE = "video_txt"
+TABLA_CHUNKS = "knowledge_chunks"
 
 PALABRAS_OBJETIVO = 700
 PALABRAS_MAX = 1000
@@ -224,9 +227,38 @@ def construir_indice(modelo, subs: list[dict]):
     import faiss
     emb = modelo.encode([PREFIJO_PASAJE + s["texto"] for s in subs],
                         normalize_embeddings=True, batch_size=32, show_progress_bar=False)
+    emb = emb.astype("float32")
     index = faiss.IndexFlatIP(emb.shape[1])  # vectores normalizados → producto interno = coseno
-    index.add(emb.astype("float32"))
-    return index
+    index.add(emb)
+    return index, emb
+
+
+def filas_pgvector(client) -> int | None:
+    """Filas actuales en knowledge_chunks, o None si la tabla aún no existe."""
+    try:
+        return client.table(TABLA_CHUNKS).select("id", count="exact").limit(1).execute().count
+    except Exception as e:
+        log.debug(f"{TABLA_CHUNKS} no disponible: {e}")
+        return None
+
+
+def sincronizar_pgvector(client, subs: list[dict], emb) -> None:
+    """Reemplaza los sub-fragmentos de los padres video_txt en knowledge_chunks."""
+    entry_ids = sorted({s["parent_id"] for s in subs})
+    for i in range(0, len(entry_ids), 100):
+        client.table(TABLA_CHUNKS).delete().in_("entry_id", entry_ids[i:i + 100]).execute()
+    filas = [{
+        "entry_id": s["parent_id"],
+        "sub_index": s["sub_index"],
+        "texto": s["texto"],
+        "categoria": s["categoria"],
+        "modelo": MODELO,
+        # pgvector acepta el literal '[x1,x2,...]'
+        "embedding": "[" + ",".join(f"{x:.7f}" for x in emb[j]) + "]",
+    } for j, s in enumerate(subs)]
+    for i in range(0, len(filas), 100):
+        client.table(TABLA_CHUNKS).insert(filas[i:i + 100]).execute()
+    log.info(f"✅ pgvector: {len(filas)} sub-fragmentos en {TABLA_CHUNKS}")
 
 
 def probar_busquedas(modelo, index, subs: list[dict]) -> None:
@@ -330,17 +362,26 @@ def main() -> None:
     print(f"Modelo: {MODELO} — dim {modelo.get_sentence_embedding_dimension()}, "
           f"máx tokens por sub-fragmento {tokens}/{modelo.max_seq_length}"
           f"{'  ⚠️ TRUNCA' if tokens > modelo.max_seq_length else ''}")
-    index = construir_indice(modelo, subs)
+    index, emb = construir_indice(modelo, subs)
 
     if os.path.exists(FAISS_PATH):
         import faiss
         viejo = faiss.read_index(FAISS_PATH)
         print(f"FAISS actual: {viejo.ntotal} vectores {viejo.d}d → se reemplaza por {index.ntotal} vectores {index.d}d")
 
+    n_pg = filas_pgvector(client)
+    if n_pg is None:
+        print(f"pgvector: tabla {TABLA_CHUNKS} no existe todavía → se omite "
+              "(correr 07_IKKI_MARKETING/sql/09_pgvector_knowledge_chunks.sql)")
+    else:
+        print(f"pgvector: {TABLA_CHUNKS} {n_pg} filas → {len(subs)}")
+
     probar_busquedas(modelo, index, subs)
 
     if args.apply:
         guardar_indice(index, subs)
+        if n_pg is not None:
+            sincronizar_pgvector(client, subs, emb)
     else:
         print("\n(dry-run: no se escribió nada. Usa --apply para insertar y reconstruir.)")
 
