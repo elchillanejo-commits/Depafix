@@ -1,4 +1,5 @@
 import os
+import json
 import logging
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
@@ -9,10 +10,12 @@ from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 from supabase import create_client
 
 from src.agencia.prompt_engineer import construir_prompt
+from src.agencia.rag import obtener_contexto_relevante as buscar_contexto_rag
 
 load_dotenv()
 log = logging.getLogger(__name__)
 USE_MOCK_LLM = os.environ.get("IKKI_USE_MOCK", "1") == "1"
+LLM_MODEL = os.environ.get("IKKI_LLM_MODEL", "claude-haiku-5-5")
 
 
 class FeeAgenciaRequest(BaseModel):
@@ -104,11 +107,53 @@ class AgenciaIkkiMotor(MotorIkki):
         except Exception:
             return {}
 
+    def obtener_contexto_relevante(self, rubro: str, k: int = 3, categoria: str | None = None) -> str:
+        """Conocimiento de Meta/Google Ads desde Supabase (pgvector). "" si el RAG no está disponible."""
+        try:
+            return buscar_contexto_rag(f"anuncios de alta conversión para el rubro {rubro}", k, categoria)
+        except Exception:
+            log.exception("RAG no disponible; se sigue sin contexto")
+            return ""
+
+    @staticmethod
+    def _copys_fijos(rubro: str) -> list[dict]:
+        return [
+            {"titulo": f"Transforma tu experiencia en {rubro}", "cuerpo": "Calidad garantizada y resultados reales.", "cta": "Contáctanos"},
+            {"titulo": f"Líderes en {rubro}", "cuerpo": "Miles de clientes ya confían en nosotros.", "cta": "Ver más"},
+            {"titulo": "Oferta Especial", "cuerpo": "No dejes pasar esta oportunidad única.", "cta": "Cotiza aquí"}
+        ]
+
+    def generar_copys(self, rubro: str, cliente: str, contexto_rag: str) -> tuple[list[dict], str]:
+        """Copys vía LLM con el contexto RAG. Devuelve (copys, origen); cae a copys fijos si no hay LLM."""
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if USE_MOCK_LLM or not api_key or not contexto_rag:
+            return self._copys_fijos(rubro), "fijo"
+        try:
+            import anthropic
+            mensajes = construir_prompt(rubro, cliente, contexto_rag, n_anuncios=3)
+            respuesta = anthropic.Anthropic(api_key=api_key).messages.create(
+                model=LLM_MODEL,
+                max_tokens=1024,
+                system=mensajes[0]["content"],
+                messages=[{"role": "user", "content": mensajes[1]["content"]}],
+            )
+            texto = "".join(b.text for b in respuesta.content if b.type == "text").strip()
+            copys = json.loads(texto[texto.find("["):texto.rfind("]") + 1])
+            copys = [{k: str(c[k]) for k in ("titulo", "cuerpo", "cta")} for c in copys if isinstance(c, dict)]
+            if not copys:
+                raise ValueError("El LLM no devolvió copys válidos")
+            return copys[:3], "llm"
+        except Exception:
+            log.exception("Fallo generando copys con LLM; se usan copys fijos")
+            return self._copys_fijos(rubro), "fijo"
+
     def simular_campana_completa(self, prospecto: dict, presupuesto_pauta: int) -> dict:
         rubro = prospecto.get('rubro', 'general')
         fee = self.calcular_fee_campana(presupuesto_pauta)
         benchmarks = self.obtener_benchmarks(rubro)
         caso_exito = self.obtener_caso_exito(rubro)
+        contexto_rag = self.obtener_contexto_relevante(rubro)
+        copys, origen_copys = self.generar_copys(rubro, prospecto.get("nombre", rubro), contexto_rag)
         
         proyecciones = {}
         if benchmarks.get("cpm_promedio_clp"):
@@ -135,10 +180,8 @@ class AgenciaIkkiMotor(MotorIkki):
                 "proyecciones": proyecciones,
                 "caso_exito": caso_exito,
                 "plan_vuelo": plan_vuelo,
-                "copys_generados": [
-                    {"titulo": f"Transforma tu experiencia en {rubro}", "cuerpo": "Calidad garantizada y resultados reales.", "cta": "Contáctanos"},
-                    {"titulo": f"Líderes en {rubro}", "cuerpo": "Miles de clientes ya confían en nosotros.", "cta": "Ver más"},
-                    {"titulo": "Oferta Especial", "cuerpo": "No dejes pasar esta oportunidad única.", "cta": "Cotiza aquí"}
-                ]
+                "copys_generados": copys,
+                "origen_copys": origen_copys,
+                "contexto_rag_usado": bool(contexto_rag),
             }
         }
