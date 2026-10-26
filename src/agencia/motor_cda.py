@@ -113,8 +113,15 @@ def _pedir_texto_moonshot(mensajes: list[dict]) -> str:
     import openai
     from openai import OpenAI
 
+    api_key = os.environ["MOONSHOT_API_KEY"]
+    log.warning(
+        "Moonshot config: base_url=%r api_key_prefix=%r api_key_len=%s",
+        MOONSHOT_BASE_URL,
+        api_key[:4],
+        len(api_key),
+    )
     cliente = OpenAI(
-        api_key=os.environ["MOONSHOT_API_KEY"],
+        api_key=api_key,
         base_url=MOONSHOT_BASE_URL,
         max_retries=0,
         timeout=60.0,
@@ -136,8 +143,20 @@ def _pedir_texto_moonshot(mensajes: list[dict]) -> str:
             except openai.APIConnectionError as exc:
                 ultimo_error = exc
                 motivo = "error de conexión"
+                log.warning(
+                    "Moonshot error de conexión: tipo=%s detalle=%s causa=%r",
+                    type(exc).__name__,
+                    exc,
+                    exc.__cause__,
+                )
             except openai.APIStatusError as exc:
                 if exc.status_code < 500:
+                    log.warning(
+                        "Moonshot error HTTP %s: tipo=%s detalle=%s",
+                        exc.status_code,
+                        type(exc).__name__,
+                        exc,
+                    )
                     raise
                 ultimo_error = exc
                 motivo = f"error {exc.status_code} del servidor"
