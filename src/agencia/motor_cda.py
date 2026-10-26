@@ -66,7 +66,10 @@ LLM_ESPERA_MAX_SEG = max(
     float(os.environ.get("IKKI_LLM_ESPERA_MAX", "20")),
 )
 LLM_PAUSA_ENTRE_EMBUDOS_SEG = max(
-    0.0, float(os.environ.get("IKKI_LLM_PAUSA_EMBUDOS", "3"))
+    0.0, float(os.environ.get("IKKI_LLM_PAUSA_EMBUDOS", "15"))
+)
+LLM_ESPERA_429_SEG = max(
+    20.0, float(os.environ.get("IKKI_LLM_ESPERA_429", "20"))
 )
 LLM_MAX_TOKENS = max(256, int(os.environ.get("IKKI_LLM_MAX_TOKENS", "4096")))
 LLM_MAX_TOKENS_TOPE = max(
@@ -196,6 +199,8 @@ def _pedir_texto_moonshot(mensajes: list[dict]) -> str:
             if intento >= LLM_MAX_INTENTOS:
                 break
             espera = _espera_reintento(ultimo_error, intento)
+            if isinstance(ultimo_error, openai.RateLimitError):
+                espera = max(espera, LLM_ESPERA_429_SEG)
             log.warning(
                 "Moonshot: %s (intento %s/%s); reintentando en %.1f s",
                 motivo,
