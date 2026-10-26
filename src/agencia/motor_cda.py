@@ -2,8 +2,8 @@
 motor_cda.py — Motor de simulación CDA para Ikki.
 
 El cálculo de economía, proyecciones y playbooks es determinístico. Las
-creatividades se generan con RAG + LLM cuando están habilitados; si fallan,
-se usan las plantillas fijas de cda.py para no romper la API.
+creatividades se generan con RAG + Moonshot (Kimi) cuando están habilitados;
+si fallan, se usan las plantillas fijas de cda.py para no romper la API.
 """
 from __future__ import annotations
 
@@ -49,29 +49,29 @@ VERSION_MODELO = "1.0.0"
 MODELO_CDA = "Contexto-Diagnóstico-Acción"
 
 USE_MOCK_LLM = os.environ.get("IKKI_USE_MOCK", "1") == "1"
-LLM_MODEL = os.environ.get("IKKI_LLM_MODEL", "claude-haiku-5-5")
+LLM_MODEL = os.environ.get("IKKI_LLM_MODEL", "kimi-k3.1-pro")
+MOONSHOT_BASE_URL = os.environ.get(
+    "MOONSHOT_BASE_URL", "https://api.moonshot.ai/v1"
+)
 
 
 def _copys_desde_llm(
     rubro: str, cliente: str, embudo: Embudo, contexto_rag: str
 ) -> list[dict]:
-    """Una llamada al LLM por embudo; devuelve copys con titulo/cuerpo/cta."""
-    import anthropic
+    """Una llamada a Moonshot por embudo; devuelve copys con titulo/cuerpo/cta."""
+    from openai import OpenAI
 
     mensajes = construir_prompt(
         f"{rubro} (embudo {embudo})", cliente, contexto_rag, n_anuncios=3
     )
-    respuesta = anthropic.Anthropic(
-        api_key=os.environ["ANTHROPIC_API_KEY"]
-    ).messages.create(
+    respuesta = OpenAI(
+        api_key=os.environ["MOONSHOT_API_KEY"], base_url=MOONSHOT_BASE_URL
+    ).chat.completions.create(
         model=LLM_MODEL,
         max_tokens=1024,
-        system=mensajes[0]["content"],
-        messages=[{"role": "user", "content": mensajes[1]["content"]}],
+        messages=mensajes,
     )
-    texto = "".join(
-        bloque.text for bloque in respuesta.content if bloque.type == "text"
-    ).strip()
+    texto = (respuesta.choices[0].message.content or "").strip()
     inicio, fin = texto.find("["), texto.rfind("]")
     if inicio == -1 or fin < inicio:
         raise ValueError("El LLM no devolvió un arreglo JSON")
@@ -99,7 +99,7 @@ def _creatividades_con_rag_y_llm(
     rubro: str, cliente: str, embudo: Embudo, plantillas: list[Creatividad]
 ) -> list[Creatividad]:
     """Reemplaza titulo/cuerpo/cta de las plantillas manteniendo su formato."""
-    if USE_MOCK_LLM or not os.environ.get("ANTHROPIC_API_KEY"):
+    if USE_MOCK_LLM or not os.environ.get("MOONSHOT_API_KEY"):
         return plantillas
 
     try:
@@ -122,7 +122,7 @@ def _creatividades_con_rag_y_llm(
         return generadas
     except Exception:
         log.exception(
-            "RAG/LLM fallaron para %s (%s); se usan plantillas fijas",
+            "RAG/Moonshot fallaron para %s (%s); se usan plantillas fijas",
             rubro,
             embudo,
         )
