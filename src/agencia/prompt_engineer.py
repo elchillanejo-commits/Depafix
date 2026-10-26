@@ -21,6 +21,7 @@ Tu único objetivo es escribir anuncios publicitarios de alta conversión basado
 1. Basándote ÚNICAMENTE en el contexto de conocimiento anterior, redacta {n_anuncios} anuncio(s) altamente persuasivo(s) para el rubro del cliente.
 2. Debes devolver {formato}, sin formato markdown (sin bloques ```json ... ```), sin explicaciones previas ni posteriores.
 3. Cada anuncio debe tener exactamente las siguientes llaves: "titulo", "cuerpo", "cta".
+4. Sé extremadamente conciso: máximo 15 palabras en "titulo", 40 en "cuerpo" y 6 en "cta". No incluyas razonamiento, comentarios ni texto fuera del JSON.
 """
 
     user_prompt = f"""DATOS DEL CLIENTE:

@@ -72,7 +72,9 @@ def _simular_con_texto(monkeypatch, texto):
     monkeypatch.setattr(motor_cda, "USE_MOCK_LLM", False)
     monkeypatch.setenv("MOONSHOT_API_KEY", "test-key")
     monkeypatch.setattr(
-        motor_cda, "obtener_contexto_relevante", lambda _consulta: "Contexto RAG"
+        motor_cda,
+        "obtener_contexto_relevante",
+        lambda _consulta, **_kwargs: "Contexto RAG",
     )
     monkeypatch.setattr(motor_cda.time, "sleep", lambda _segundos: None)
     FakeOpenAI, llamadas, _ = _fake_openai(texto)
@@ -96,9 +98,11 @@ def test_creatividades_usan_rag_y_moonshot(monkeypatch):
     monkeypatch.setenv("MOONSHOT_API_KEY", "test-key")
 
     consultas = []
+    fragmentos = []
 
-    def fake_rag(consulta: str) -> str:
+    def fake_rag(consulta: str, k: int = 3, **_kwargs) -> str:
         consultas.append(consulta)
+        fragmentos.append(k)
         return "Contexto RAG de prueba"
 
     monkeypatch.setattr(motor_cda, "obtener_contexto_relevante", fake_rag)
@@ -124,6 +128,7 @@ def test_creatividades_usan_rag_y_moonshot(monkeypatch):
         "anuncios de alta conversión para el rubro salud_genetica en el embudo B2C",
         "anuncios de alta conversión para el rubro salud_genetica en el embudo B2B",
     ]
+    assert fragmentos == [2, 2]
 
     for embudo in resultado.embudos:
         assert [item.titulo for item in embudo.creatividades] == [
@@ -136,6 +141,7 @@ def test_creatividades_usan_rag_y_moonshot(monkeypatch):
         ]
 
     assert llamadas[0]["model"] == motor_cda.LLM_MODEL
+    assert llamadas[0]["max_tokens"] == 4096
     assert "Contexto RAG de prueba" in llamadas[0]["messages"][0]["content"]
 
 
@@ -181,7 +187,7 @@ def test_fallback_si_rag_falla(monkeypatch):
     monkeypatch.setattr(motor_cda, "USE_MOCK_LLM", False)
     monkeypatch.setenv("MOONSHOT_API_KEY", "test-key")
 
-    def rag_fallido(_consulta: str) -> str:
+    def rag_fallido(_consulta: str, **_kwargs) -> str:
         raise RuntimeError("Supabase no disponible")
 
     monkeypatch.setattr(motor_cda, "obtener_contexto_relevante", rag_fallido)
@@ -201,7 +207,9 @@ def test_fallback_si_moonshot_falla(monkeypatch):
     monkeypatch.setattr(motor_cda, "USE_MOCK_LLM", False)
     monkeypatch.setenv("MOONSHOT_API_KEY", "test-key")
     monkeypatch.setattr(
-        motor_cda, "obtener_contexto_relevante", lambda _consulta: "Contexto RAG"
+        motor_cda,
+        "obtener_contexto_relevante",
+        lambda _consulta, **_kwargs: "Contexto RAG",
     )
 
     class MoonshotFallido:

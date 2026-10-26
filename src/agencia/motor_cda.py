@@ -65,7 +65,7 @@ LLM_ESPERA_MAX_SEG = max(
     LLM_ESPERA_BASE_SEG,
     float(os.environ.get("IKKI_LLM_ESPERA_MAX", "15")),
 )
-LLM_MAX_TOKENS = max(256, int(os.environ.get("IKKI_LLM_MAX_TOKENS", "1024")))
+LLM_MAX_TOKENS = max(256, int(os.environ.get("IKKI_LLM_MAX_TOKENS", "4096")))
 LLM_MAX_TOKENS_TOPE = max(
     LLM_MAX_TOKENS,
     int(os.environ.get("IKKI_LLM_MAX_TOKENS_TOPE", "4096")),
@@ -282,7 +282,8 @@ def _creatividades_con_rag_y_llm(
 
     try:
         contexto_rag = obtener_contexto_relevante(
-            f"anuncios de alta conversión para el rubro {rubro} en el embudo {embudo}"
+            f"anuncios de alta conversión para el rubro {rubro} en el embudo {embudo}",
+            k=2,
         )
         if not contexto_rag:
             return plantillas
