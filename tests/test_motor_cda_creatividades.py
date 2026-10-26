@@ -4,6 +4,7 @@ import json
 import logging
 from types import SimpleNamespace
 
+import httpx
 import openai
 
 from src.agencia import motor_cda
@@ -16,12 +17,20 @@ def _request() -> SimulacionRequest:
     return SimulacionRequest(presupuesto_pauta_mensual_clp=1_000_000, persistir=False)
 
 
-def _fake_openai(texto: str):
+def _fake_openai(texto):
     llamadas = []
     base_urls = []
+    respuestas = list(texto) if isinstance(texto, list) else [texto]
+    indice = 0
 
     class FakeOpenAI:
-        def __init__(self, api_key=None, base_url=None):
+        def __init__(
+            self,
+            api_key=None,
+            base_url=None,
+            max_retries=None,
+            timeout=None,
+        ):
             self.api_key = api_key
             base_urls.append(base_url)
             self.chat = SimpleNamespace(
@@ -29,22 +38,43 @@ def _fake_openai(texto: str):
             )
 
         def _create(self, **kwargs):
+            nonlocal indice
             llamadas.append(kwargs)
+            respuesta = respuestas[min(indice, len(respuestas) - 1)]
+            indice += 1
+            if isinstance(respuesta, Exception):
+                raise respuesta
             return SimpleNamespace(
                 choices=[
-                    SimpleNamespace(message=SimpleNamespace(content=texto))
+                    SimpleNamespace(
+                        message=SimpleNamespace(content=respuesta),
+                        finish_reason="stop",
+                    )
                 ]
             )
 
     return FakeOpenAI, llamadas, base_urls
 
 
-def _simular_con_texto(monkeypatch, texto: str):
+def _error_429() -> openai.RateLimitError:
+    peticion = httpx.Request(
+        "POST", "https://api.moonshot.ai/v1/chat/completions"
+    )
+    respuesta = httpx.Response(
+        429, request=peticion, headers={"retry-after": "0"}
+    )
+    return openai.RateLimitError(
+        "max organization concurrency: 1", response=respuesta, body=None
+    )
+
+
+def _simular_con_texto(monkeypatch, texto):
     monkeypatch.setattr(motor_cda, "USE_MOCK_LLM", False)
     monkeypatch.setenv("MOONSHOT_API_KEY", "test-key")
     monkeypatch.setattr(
         motor_cda, "obtener_contexto_relevante", lambda _consulta: "Contexto RAG"
     )
+    monkeypatch.setattr(motor_cda.time, "sleep", lambda _segundos: None)
     FakeOpenAI, llamadas, _ = _fake_openai(texto)
     monkeypatch.setattr(openai, "OpenAI", FakeOpenAI)
     return MotorCDA().simular(_request()), llamadas
@@ -175,12 +205,62 @@ def test_fallback_si_moonshot_falla(monkeypatch):
     )
 
     class MoonshotFallido:
-        def __init__(self, api_key=None, base_url=None):
+        def __init__(self, api_key=None, base_url=None, **kwargs):
             raise RuntimeError("Moonshot no disponible")
 
     monkeypatch.setattr(openai, "OpenAI", MoonshotFallido)
 
     resultado = MotorCDA().simular(_request())
 
+    for embudo in resultado.embudos:
+        assert embudo.creatividades == creatividades(embudo.embudo)
+
+
+def test_reintenta_429_y_luego_genera_copys(monkeypatch):
+    copys = _copys_llm()
+
+    resultado, llamadas = _simular_con_texto(
+        monkeypatch,
+        [_error_429(), json.dumps(copys), json.dumps(copys)],
+    )
+
+    assert len(llamadas) == 3
+    assert [
+        item.titulo for item in resultado.embudos[0].creatividades
+    ] == [copia["titulo"] for copia in copys]
+    assert [
+        item.titulo for item in resultado.embudos[1].creatividades
+    ] == [copia["titulo"] for copia in copys]
+
+
+def test_reintenta_respuesta_vacia(monkeypatch):
+    copys = _copys_llm()
+
+    resultado, llamadas = _simular_con_texto(
+        monkeypatch,
+        ["", json.dumps(copys), json.dumps(copys)],
+    )
+
+    assert len(llamadas) == 3
+    assert [
+        item.titulo for item in resultado.embudos[0].creatividades
+    ] == [copia["titulo"] for copia in copys]
+
+
+def test_fallback_si_respuestas_vacias_persisten(monkeypatch, caplog):
+    caplog.set_level(logging.WARNING)
+
+    resultado, llamadas = _simular_con_texto(monkeypatch, "")
+
+    assert len(llamadas) == motor_cda.LLM_MAX_INTENTOS * 2
+    assert "respuesta vacía" in caplog.text
+    for embudo in resultado.embudos:
+        assert embudo.creatividades == creatividades(embudo.embudo)
+
+
+def test_fallback_si_429_persiste(monkeypatch):
+    resultado, llamadas = _simular_con_texto(monkeypatch, [_error_429()])
+
+    assert len(llamadas) == motor_cda.LLM_MAX_INTENTOS * 2
     for embudo in resultado.embudos:
         assert embudo.creatividades == creatividades(embudo.embudo)

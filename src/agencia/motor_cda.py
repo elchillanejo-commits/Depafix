@@ -11,6 +11,8 @@ import json
 import logging
 import os
 import re
+import threading
+import time
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 from uuid import uuid4
@@ -55,38 +57,172 @@ MOONSHOT_BASE_URL = os.environ.get(
     "MOONSHOT_BASE_URL", "https://api.moonshot.ai/v1"
 )
 
+LLM_MAX_INTENTOS = max(1, int(os.environ.get("IKKI_LLM_MAX_INTENTOS", "4")))
+LLM_ESPERA_BASE_SEG = max(
+    0.0, float(os.environ.get("IKKI_LLM_ESPERA_BASE", "2"))
+)
+LLM_ESPERA_MAX_SEG = max(
+    LLM_ESPERA_BASE_SEG,
+    float(os.environ.get("IKKI_LLM_ESPERA_MAX", "15")),
+)
+LLM_MAX_TOKENS = max(256, int(os.environ.get("IKKI_LLM_MAX_TOKENS", "1024")))
+LLM_MAX_TOKENS_TOPE = max(
+    LLM_MAX_TOKENS,
+    int(os.environ.get("IKKI_LLM_MAX_TOKENS_TOPE", "4096")),
+)
+
+_MOONSHOT_LOCK = threading.Lock()
+
+
+def _espera_reintento(error: Exception | None, intento: int) -> float:
+    """Backoff exponencial, respetando Retry-After si Moonshot lo envía."""
+    espera = LLM_ESPERA_BASE_SEG * (2 ** (intento - 1))
+    if error is not None:
+        respuesta = getattr(error, "response", None)
+        if respuesta is not None:
+            try:
+                retry_after = float(respuesta.headers.get("retry-after", ""))
+            except (TypeError, ValueError):
+                retry_after = 0.0
+            espera = max(espera, retry_after)
+    return min(espera, LLM_ESPERA_MAX_SEG)
+
+
+def _texto_de_respuesta(respuesta) -> str:
+    """Extrae el texto aunque el proveedor devuelva content vacío o en partes."""
+    choices = getattr(respuesta, "choices", None) or []
+    if not choices:
+        return ""
+    mensaje = getattr(choices[0], "message", None)
+    contenido = getattr(mensaje, "content", None)
+    if isinstance(contenido, list):
+        partes = []
+        for parte in contenido:
+            if isinstance(parte, dict):
+                texto_parte = parte.get("text")
+            else:
+                texto_parte = getattr(parte, "text", None)
+            if texto_parte:
+                partes.append(str(texto_parte))
+        contenido = "".join(partes)
+    return str(contenido or "").strip().lstrip("\ufeff")
+
+
+def _pedir_texto_moonshot(mensajes: list[dict]) -> str:
+    """Llama a Moonshot con reintentos ante 429, 5xx y respuestas vacías."""
+    import openai
+    from openai import OpenAI
+
+    cliente = OpenAI(
+        api_key=os.environ["MOONSHOT_API_KEY"],
+        base_url=MOONSHOT_BASE_URL,
+        max_retries=0,
+        timeout=60.0,
+    )
+    max_tokens = LLM_MAX_TOKENS
+    ultimo_error: Exception | None = None
+
+    with _MOONSHOT_LOCK:
+        for intento in range(1, LLM_MAX_INTENTOS + 1):
+            try:
+                respuesta = cliente.chat.completions.create(
+                    model=LLM_MODEL,
+                    max_tokens=max_tokens,
+                    messages=mensajes,
+                )
+            except openai.RateLimitError as exc:
+                ultimo_error = exc
+                motivo = "límite de peticiones (429)"
+            except openai.APIConnectionError as exc:
+                ultimo_error = exc
+                motivo = "error de conexión"
+            except openai.APIStatusError as exc:
+                if exc.status_code < 500:
+                    raise
+                ultimo_error = exc
+                motivo = f"error {exc.status_code} del servidor"
+            else:
+                texto = _texto_de_respuesta(respuesta)
+                if texto:
+                    return texto
+                choices = getattr(respuesta, "choices", None) or []
+                finish_reason = (
+                    getattr(choices[0], "finish_reason", None) if choices else None
+                )
+                log.warning(
+                    "Moonshot devolvió una respuesta vacía "
+                    "(intento %s/%s, finish_reason=%s)",
+                    intento,
+                    LLM_MAX_INTENTOS,
+                    finish_reason,
+                )
+                if finish_reason == "length" and max_tokens < LLM_MAX_TOKENS_TOPE:
+                    max_tokens = min(max_tokens * 2, LLM_MAX_TOKENS_TOPE)
+                    log.warning(
+                        "Se amplía max_tokens a %s para el siguiente intento",
+                        max_tokens,
+                    )
+                ultimo_error = None
+                motivo = "respuesta vacía"
+
+            if intento >= LLM_MAX_INTENTOS:
+                break
+            espera = _espera_reintento(ultimo_error, intento)
+            log.warning(
+                "Moonshot: %s (intento %s/%s); reintentando en %.1f s",
+                motivo,
+                intento,
+                LLM_MAX_INTENTOS,
+                espera,
+            )
+            time.sleep(espera)
+
+    if ultimo_error is not None:
+        raise ultimo_error
+    raise ValueError("Moonshot devolvió respuestas vacías tras varios intentos")
+
 
 def _copys_desde_llm(
     rubro: str, cliente: str, embudo: Embudo, contexto_rag: str
 ) -> list[dict]:
     """Una llamada a Moonshot por embudo; devuelve copys con titulo/cuerpo/cta."""
-    from openai import OpenAI
-
     mensajes = construir_prompt(
         f"{rubro} (embudo {embudo})", cliente, contexto_rag, n_anuncios=3
     )
-    respuesta = OpenAI(
-        api_key=os.environ["MOONSHOT_API_KEY"], base_url=MOONSHOT_BASE_URL
-    ).chat.completions.create(
-        model=LLM_MODEL,
-        max_tokens=1024,
-        messages=mensajes,
-    )
-    texto = (respuesta.choices[0].message.content or "").strip().lstrip("\ufeff")
+    texto = _pedir_texto_moonshot(mensajes)
 
     def _copys_validos(valor):
+        if isinstance(valor, str):
+            try:
+                valor = json.loads(valor)
+            except (json.JSONDecodeError, TypeError):
+                return []
         if isinstance(valor, dict):
-            for clave in ("copys", "anuncios", "ads", "creatividades"):
+            for clave in (
+                "copys",
+                "anuncios",
+                "ads",
+                "creatividades",
+                "resultado",
+                "resultados",
+                "data",
+            ):
                 if isinstance(valor.get(clave), list):
-                    valor = valor[clave]
-                    break
-            else:
-                valor = [valor]
+                    return _copys_validos(valor[clave])
+            for anidado in valor.values():
+                if isinstance(anidado, (dict, list)):
+                    copys = _copys_validos(anidado)
+                    if copys:
+                        return copys
+            return _copys_validos([valor])
         if not isinstance(valor, list):
             return []
 
         limpios = []
         for copia in valor:
+            if isinstance(copia, list):
+                limpios.extend(_copys_validos(copia))
+                continue
             if not isinstance(copia, dict):
                 continue
             valores = {
@@ -107,10 +243,10 @@ def _copys_desde_llm(
     ]
     candidatos.append(texto)
 
-    decodificador = json.JSONDecoder()
+    decodificador = json.JSONDecoder(strict=False)
     for candidato in candidatos:
         try:
-            copys = _copys_validos(json.loads(candidato))
+            copys = _copys_validos(json.loads(candidato, strict=False))
         except (json.JSONDecodeError, TypeError):
             continue
         if copys:
