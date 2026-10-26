@@ -130,7 +130,7 @@ def _pedir_texto_moonshot(mensajes: list[dict]) -> str:
         api_key=api_key,
         base_url=MOONSHOT_BASE_URL,
         max_retries=0,
-        timeout=60.0,
+        timeout=180.0,
     )
     max_tokens = LLM_MAX_TOKENS
     ultimo_error: Exception | None = None
