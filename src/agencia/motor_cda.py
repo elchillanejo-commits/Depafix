@@ -143,6 +143,7 @@ def _pedir_texto_moonshot(mensajes: list[dict]) -> str:
                 motivo = f"error {exc.status_code} del servidor"
             else:
                 texto = _texto_de_respuesta(respuesta)
+                log.warning("Moonshot respuesta cruda: %s", texto)
                 if texto:
                     return texto
                 choices = getattr(respuesta, "choices", None) or []
@@ -266,7 +267,10 @@ def _copys_desde_llm(
     log.error(
         "No se pudo parsear el JSON de Moonshot. Respuesta exacta:\n%s", texto
     )
-    raise ValueError("El LLM no devolvió copys JSON válidos")
+    raise ValueError(
+        "El LLM no devolvió copys JSON válidos. "
+        f"Respuesta (primeros 200 caracteres): {texto[:200]}"
+    )
 
 
 def _creatividades_con_rag_y_llm(
