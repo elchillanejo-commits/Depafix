@@ -57,13 +57,16 @@ MOONSHOT_BASE_URL = os.environ.get(
     "MOONSHOT_BASE_URL", "https://api.moonshot.ai/v1"
 )
 
-LLM_MAX_INTENTOS = max(1, int(os.environ.get("IKKI_LLM_MAX_INTENTOS", "4")))
+LLM_MAX_INTENTOS = max(1, int(os.environ.get("IKKI_LLM_MAX_INTENTOS", "6")))
 LLM_ESPERA_BASE_SEG = max(
-    0.0, float(os.environ.get("IKKI_LLM_ESPERA_BASE", "2"))
+    0.0, float(os.environ.get("IKKI_LLM_ESPERA_BASE", "3"))
 )
 LLM_ESPERA_MAX_SEG = max(
     LLM_ESPERA_BASE_SEG,
-    float(os.environ.get("IKKI_LLM_ESPERA_MAX", "15")),
+    float(os.environ.get("IKKI_LLM_ESPERA_MAX", "20")),
+)
+LLM_PAUSA_ENTRE_EMBUDOS_SEG = max(
+    0.0, float(os.environ.get("IKKI_LLM_PAUSA_EMBUDOS", "3"))
 )
 LLM_MAX_TOKENS = max(256, int(os.environ.get("IKKI_LLM_MAX_TOKENS", "4096")))
 LLM_MAX_TOKENS_TOPE = max(
@@ -140,6 +143,11 @@ def _pedir_texto_moonshot(mensajes: list[dict]) -> str:
             except openai.RateLimitError as exc:
                 ultimo_error = exc
                 motivo = "límite de peticiones (429)"
+                log.warning(
+                    "Moonshot 429: tipo=%s detalle=%s",
+                    type(exc).__name__,
+                    exc,
+                )
             except openai.APIConnectionError as exc:
                 ultimo_error = exc
                 motivo = "error de conexión"
@@ -293,7 +301,11 @@ def _copys_desde_llm(
 
 
 def _creatividades_con_rag_y_llm(
-    rubro: str, cliente: str, embudo: Embudo, plantillas: list[Creatividad]
+    rubro: str,
+    cliente: str,
+    embudo: Embudo,
+    plantillas: list[Creatividad],
+    pausar_despues: bool = False,
 ) -> list[Creatividad]:
     """Reemplaza titulo/cuerpo/cta de las plantillas manteniendo su formato."""
     if USE_MOCK_LLM or not os.environ.get("MOONSHOT_API_KEY"):
@@ -317,6 +329,13 @@ def _creatividades_con_rag_y_llm(
             else:
                 generadas.append(plantilla)
         log.info("Creatividades %s generadas con RAG+LLM para %s", embudo, rubro)
+        if pausar_despues:
+            log.info(
+                "Pausa de %.1f s antes del siguiente embudo para liberar "
+                "la concurrencia de Moonshot",
+                LLM_PAUSA_ENTRE_EMBUDOS_SEG,
+            )
+            time.sleep(LLM_PAUSA_ENTRE_EMBUDOS_SEG)
         return generadas
     except Exception:
         log.exception(
@@ -424,9 +443,11 @@ class MotorCDA:
         fees_asignados = _repartir(request.fee_fijo_clp, participaciones)
 
         embudos: list[EmbudoResultado] = []
-        for distribucion, presupuesto, fee_asignado in zip(
-            request.embudos, presupuestos, fees_asignados
-        ):
+        for indice_embudo, (
+            distribucion,
+            presupuesto,
+            fee_asignado,
+        ) in enumerate(zip(request.embudos, presupuestos, fees_asignados)):
             benchmark = obtener_benchmark(distribucion.embudo)
             proyecciones, cpc = _proyectar(
                 distribucion.embudo,
@@ -441,6 +462,7 @@ class MotorCDA:
                 request.cliente_nombre,
                 distribucion.embudo,
                 creatividades(distribucion.embudo),
+                pausar_despues=indice_embudo < len(request.embudos) - 1,
             )
 
             embudos.append(

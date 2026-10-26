@@ -96,6 +96,7 @@ def _copys_llm() -> list[dict]:
 def test_creatividades_usan_rag_y_moonshot(monkeypatch):
     monkeypatch.setattr(motor_cda, "USE_MOCK_LLM", False)
     monkeypatch.setenv("MOONSHOT_API_KEY", "test-key")
+    monkeypatch.setattr(motor_cda.time, "sleep", lambda _segundos: None)
 
     consultas = []
     fragmentos = []
