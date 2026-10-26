@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from types import SimpleNamespace
 
 import openai
@@ -36,6 +37,28 @@ def _fake_openai(texto: str):
             )
 
     return FakeOpenAI, llamadas, base_urls
+
+
+def _simular_con_texto(monkeypatch, texto: str):
+    monkeypatch.setattr(motor_cda, "USE_MOCK_LLM", False)
+    monkeypatch.setenv("MOONSHOT_API_KEY", "test-key")
+    monkeypatch.setattr(
+        motor_cda, "obtener_contexto_relevante", lambda _consulta: "Contexto RAG"
+    )
+    FakeOpenAI, llamadas, _ = _fake_openai(texto)
+    monkeypatch.setattr(openai, "OpenAI", FakeOpenAI)
+    return MotorCDA().simular(_request()), llamadas
+
+
+def _copys_llm() -> list[dict]:
+    return [
+        {
+            "titulo": f"Titulo LLM {indice}",
+            "cuerpo": f"Cuerpo LLM {indice}",
+            "cta": f"CTA LLM {indice}",
+        }
+        for indice in range(1, 4)
+    ]
 
 
 def test_creatividades_usan_rag_y_moonshot(monkeypatch):
@@ -84,6 +107,44 @@ def test_creatividades_usan_rag_y_moonshot(monkeypatch):
 
     assert llamadas[0]["model"] == motor_cda.LLM_MODEL
     assert "Contexto RAG de prueba" in llamadas[0]["messages"][0]["content"]
+
+
+def test_parsea_json_con_markdown_y_texto_extra(monkeypatch):
+    copys = _copys_llm()
+    texto = (
+        "Aquí tienes [3 anuncios]:\n```json\n"
+        + json.dumps(copys, ensure_ascii=False)
+        + "\n```\nEspero que sirvan."
+    )
+
+    resultado, llamadas = _simular_con_texto(monkeypatch, texto)
+
+    assert len(llamadas) == 2
+    assert [
+        item.titulo for item in resultado.embudos[0].creatividades
+    ] == [copia["titulo"] for copia in copys]
+
+
+def test_parsea_json_objeto_con_lista(monkeypatch):
+    copys = _copys_llm()
+    texto = '{"anuncios": ' + json.dumps(copys, ensure_ascii=False) + "}"
+
+    resultado, _ = _simular_con_texto(monkeypatch, texto)
+
+    assert [
+        item.titulo for item in resultado.embudos[0].creatividades
+    ] == [copia["titulo"] for copia in copys]
+
+
+def test_loguea_respuesta_cruda_si_json_falla(monkeypatch, caplog):
+    caplog.set_level(logging.ERROR)
+    texto = "Lo siento, no puedo generar JSON en este momento."
+
+    resultado, _ = _simular_con_texto(monkeypatch, texto)
+
+    assert texto in caplog.text
+    for embudo in resultado.embudos:
+        assert embudo.creatividades == creatividades(embudo.embudo)
 
 
 def test_fallback_si_rag_falla(monkeypatch):

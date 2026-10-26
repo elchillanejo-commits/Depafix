@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 from uuid import uuid4
@@ -71,28 +72,65 @@ def _copys_desde_llm(
         max_tokens=1024,
         messages=mensajes,
     )
-    texto = (respuesta.choices[0].message.content or "").strip()
-    inicio, fin = texto.find("["), texto.rfind("]")
-    if inicio == -1 or fin < inicio:
-        raise ValueError("El LLM no devolvió un arreglo JSON")
+    texto = (respuesta.choices[0].message.content or "").strip().lstrip("\ufeff")
 
-    copys = json.loads(texto[inicio : fin + 1])
-    if not isinstance(copys, list):
-        raise ValueError("El LLM no devolvió una lista de copys")
+    def _copys_validos(valor):
+        if isinstance(valor, dict):
+            for clave in ("copys", "anuncios", "ads", "creatividades"):
+                if isinstance(valor.get(clave), list):
+                    valor = valor[clave]
+                    break
+            else:
+                valor = [valor]
+        if not isinstance(valor, list):
+            return []
 
-    limpios = []
-    for copia in copys:
-        if not isinstance(copia, dict):
+        limpios = []
+        for copia in valor:
+            if not isinstance(copia, dict):
+                continue
+            valores = {
+                clave: str(copia.get(clave, "")).strip()
+                for clave in ("titulo", "cuerpo", "cta")
+            }
+            if all(valores.values()):
+                limpios.append(valores)
+        return limpios
+
+    candidatos = [
+        bloque.strip()
+        for bloque in re.findall(
+            r"```(?:json)?\s*(.*?)```",
+            texto,
+            flags=re.DOTALL | re.IGNORECASE,
+        )
+    ]
+    candidatos.append(texto)
+
+    decodificador = json.JSONDecoder()
+    for candidato in candidatos:
+        try:
+            copys = _copys_validos(json.loads(candidato))
+        except (json.JSONDecodeError, TypeError):
             continue
-        valores = {
-            clave: str(copia.get(clave, "")).strip()
-            for clave in ("titulo", "cuerpo", "cta")
-        }
-        if all(valores.values()):
-            limpios.append(valores)
-    if not limpios:
-        raise ValueError("El LLM no devolvió copys válidos")
-    return limpios
+        if copys:
+            return copys
+
+    for indice, caracter in enumerate(texto):
+        if caracter not in "[{":
+            continue
+        try:
+            valor, _ = decodificador.raw_decode(texto, indice)
+        except json.JSONDecodeError:
+            continue
+        copys = _copys_validos(valor)
+        if copys:
+            return copys
+
+    log.error(
+        "No se pudo parsear el JSON de Moonshot. Respuesta exacta:\n%s", texto
+    )
+    raise ValueError("El LLM no devolvió copys JSON válidos")
 
 
 def _creatividades_con_rag_y_llm(
