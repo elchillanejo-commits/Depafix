@@ -6,7 +6,8 @@ from decimal import Decimal
 from ceo.workers.caja_probe import (
     UF_REF_2026_CLP,
     UMBRAL_CONCENTRACION,
-    UMBRAL_CUADRE_CLP,
+    UMBRAL_CUADRE_FAIL_CLP,
+    UMBRAL_CUADRE_WARN_CLP,
     UMBRAL_DESVIACION,
     _calcular_cuadre_diario,
     _detectar_concentracion,
@@ -16,7 +17,8 @@ from ceo.workers.caja_probe import (
 
 def test_constantes():
     assert float(UF_REF_2026_CLP) == 39779.29
-    assert UMBRAL_CUADRE_CLP == 100_000
+    assert UMBRAL_CUADRE_FAIL_CLP == 10_000_000
+    assert UMBRAL_CUADRE_WARN_CLP == 3_000_000
     assert UMBRAL_DESVIACION == 0.30
     assert UMBRAL_CONCENTRACION == 0.60
 
@@ -72,9 +74,9 @@ def test_desviaciones_vacio():
 
 
 def test_desviacion_detectada():
-    movs = [{"id": 1, "tipo": "egreso", "monto_clp": 300000,
+    movs = [{"id": 1, "tipo": "egreso", "monto_clp": 300000, "cantidad": 1,
              "codigo_serviu": "C-1", "concepto": "test"}]
     precios = {"C-1": Decimal("1.0")}  # 1 UF = ~$39.779
     r = _detectar_desviaciones_serviu(movs, precios)
     assert len(r) == 1
-    assert r[0]["pct"] > 100  # 300k vs 39k = 657% de desviación
+    assert r[0]["pct"] > 100  # 300k vs 39.8k = ~654% de sobrecosto
