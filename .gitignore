@@ -104,3 +104,19 @@ ingeniero/logs/*.log
 
 # Modelo ONNX del RAG (se descarga en el build, ver scripts/descargar_modelo_onnx.py)
 models/
+
+# Archivos temporales y backups
+*.bak_*
+data/nuevos_videos/
+data/transcripciones/
+data/conocimiento.faiss*
+en_analisis/
+.opencode/
+
+# Scripts temporales de la raíz
+hola.py
+resultado_final.json
+structure.txt
+test.py
+test_schema.py
+ingestar_txt.py

@@ -17,7 +17,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 from core.db_manager import DatabaseManager
-from src.trading.crypto_trader_agent import TradingLogic
+from src.trading.crypto_trader_agent_v2 import analizar
 from src.trading.data_pipeline import PipelineVelas
 from src.trading.position_sizer import get_position_size
 from src.trading.position_manager import (
@@ -34,7 +34,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ========== CONFIGURACIÓN ==========
-TRADE_AMOUNT_USDT = Decimal("10.00")
+MAX_POSICION_PCT_CAPITAL = 0.10
 MIN_ORDER_USDT = Decimal("6.49")
 
 def parse_args():
@@ -142,6 +142,18 @@ def ejecutar_ciclo(exchange, exchange_id, activos, limite, modo):
             puntuacion = resultado.get('score', 0)
             precio_actual = resultado.get('precio_actual', velas[-1]['close'])
 
+            # --- Filtro: TP mínimo para cubrir comisiones ---
+            tp_tasa = 0.0
+            if take_profit is not None and precio_actual > 0:
+                tp_tasa = (float(take_profit) - precio_actual) / precio_actual
+            
+            # Kraken cobra ~0.26% + spread. Exigimos 1.72% mínimo.
+            TP_MINIMO_TASA = 0.0172
+            
+            if tp_tasa < TP_MINIMO_TASA:
+                motivo = f"{motivo}; COMPRA descartada: TP proyectado {tp_tasa:.2%} < mínimo {TP_MINIMO_TASA:.2%}"
+                senal = "ESPERA"
+
             # Trailing stop: fuerza VENTA si rompe, actualiza stop si no
             if posicion and df_pm is not None:
                 try:
@@ -157,11 +169,42 @@ def ejecutar_ciclo(exchange, exchange_id, activos, limite, modo):
 
             logger.info(f"📊 {activo} -> {senal} | {motivo} | ${precio_actual:.2f}")
 
-            # Sizing por regimen (Kelly 1/10). Fail-open: nunca debe tumbar el ciclo.
+            # El sizer fija el riesgo en USD; el notional depende del stop y tiene un tope del 10%.
             regimen_temp = {"COMPRA": "TREND_UP", "VENTA": "TREND_DOWN", "ESPERA": "RANGE"}.get(senal, "RANGE")
             try:
                 capital = float(os.getenv("CAPITAL_USD", "89"))
-                posicion_usd = get_position_size(capital, regimen_temp, win_rate=0.55, ratio_ganancia=1.5)
+                riesgo_usd = get_position_size(capital, regimen_temp, win_rate=0.55, ratio_ganancia=1.5)
+                posicion_usd = riesgo_usd
+
+                if senal == "COMPRA" and riesgo_usd > 0:
+                    posicion_usd = 0.0
+                    stop_loss = resultado.get("stop_loss")
+                    if stop_loss is None or precio_actual <= 0:
+                        logger.warning(f"{activo}: precio o stop inválido para calcular la posición")
+                    else:
+                        distancia_stop = (precio_actual - float(stop_loss)) / precio_actual
+                        if distancia_stop <= 0:
+                            logger.warning(f"{activo}: stop de compra debe estar por debajo de la entrada")
+                        else:
+                            limite_notional = capital * MAX_POSICION_PCT_CAPITAL
+                            posicion_usd = min(riesgo_usd / distancia_stop, limite_notional)
+
+                texto_rag = " ".join(
+                    str(item)
+                    for item in (resultado.get("confluencia_detalle") or [])
+                    if str(item).startswith("RAG:")
+                ).casefold()
+                palabras_riesgo = (
+                    "cuidado", "trampa", "falso", "evitar", "peligro",
+                )
+                if posicion_usd > 0 and any(
+                    palabra in texto_rag for palabra in palabras_riesgo
+                ):
+                    posicion_usd *= 0.5
+                    logger.warning(
+                        f"RAG advierte riesgo en {activo}; "
+                        f"posicion_usd reducido a ${posicion_usd:.2f}"
+                    )
             except Exception as e:
                 logger.warning(f"⚠️ Sizer falló, degradando a 0.0: {e}")
                 posicion_usd = 0.0
@@ -182,10 +225,19 @@ def ejecutar_ciclo(exchange, exchange_id, activos, limite, modo):
                         continue
 
                     usdt_free = balance.get('USDT', {}).get('free', 0) or 0
-                    if usdt_free < float(TRADE_AMOUNT_USDT):
-                        logger.warning(f"Saldo insuficiente: {usdt_free:.2f} USDT < {TRADE_AMOUNT_USDT}")
+                    # Validamos contra el posicion_usd ya reducido por el RAG
+                    if posicion_usd <= 0:
+                        logger.warning(f"{activo}: compra omitida porque el sizing es 0.0 USD")
+                    elif posicion_usd < float(MIN_ORDER_USDT):
+                        logger.warning(
+                            f"{activo}: compra omitida; ${posicion_usd:.2f} es menor "
+                            f"que el mínimo de Kraken (${MIN_ORDER_USDT}).")
+                    elif usdt_free < posicion_usd:
+                        logger.warning(
+                            f"Saldo insuficiente: {usdt_free:.2f} USDT < {posicion_usd:.2f} USDT"
+                        )
                     else:
-                        quantity = float(TRADE_AMOUNT_USDT) / precio_actual
+                        quantity = posicion_usd / precio_actual
                         order = execute_order(exchange, activo, 'buy', quantity, precio_actual)
                         if order:
                             ejecutada = True

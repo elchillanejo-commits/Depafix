@@ -5,6 +5,8 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 
+from .rag_helper import consultar_conocimiento
+
 EMA_RAPIDA = 20
 EMA_LENTA = 50
 RSI_PERIOD = 14
@@ -181,6 +183,21 @@ def analizar(df):
         detalle = fa + fb
         stop_loss = None
         tp = None
+
+    if senal in ("COMPRA", "VENTA"):
+        if ta:
+            regimen = "TREND_UP"
+        elif tb:
+            regimen = "TREND_DOWN"
+        else:
+            regimen = "RANGE"
+
+        pregunta = (
+            f"Señal de {senal}. Régimen {regimen}. RSI en {rv:.1f}. "
+            "¿Qué dicen mis cursos sobre operar aquí?"
+        )
+        consejo_rag = consultar_conocimiento(pregunta)
+        detalle.append(f"RAG: {consejo_rag}")
 
     return Resultado(
         senal=senal, score_alcista=sa, score_bajista=sb,
