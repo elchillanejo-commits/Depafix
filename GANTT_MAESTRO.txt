@@ -1,0 +1,67 @@
+====================================================================
+🗺️ GANTT MAESTRO: AGENTE CEO INFORMÁTICO (LOS 5 ELEMENTOS)
+Proyecto: DepaFix Maestro / Business OS
+Fecha de Inicio: 28 de Octubre, 2026
+====================================================================
+
+🎯 OBJETIVO CENTRAL:
+Construir un Agente (El Filósofo) que domine 4 áreas de conocimiento 
+(Earth, Water, Air, Fire) para generar Cash Flow rápido (Dropshipping) 
+y Alto Ticket (SERVIU/Licitaciones), automatizando la prospección 
+con scraping de RRSS y Webs.
+
+--------------------------------------------------------------------
+📅 FASE 1: EL CEREBRO (Estructura y Etiquetado)
+--------------------------------------------------------------------
+[✅] 1.1 Crear estructura de carpetas de conocimiento:
+         - Tierra_SERVIU (Normativas, Mercado Público)
+         - Agua_Dropshipping (Ventas rápidas, Productos)
+         - Aire_Marketing (IKKI, Meta/Google Ads)
+         - Fuego_IA (Código, LangChain, Python)
+         - Trade_Cripto (Inversiones)
+[⏳] 1.2 Modificar `ingestar_transcripciones.py` para inyectar 
+         metadatos `{"elemento": "tierra"}` según la carpeta.
+[ ] 1.3 Ejecutar la ingesta y crear el Súper FAISS con filtros.
+
+--------------------------------------------------------------------
+📅 FASE 2: EL FILÓSOFO (El Agente CEO)
+--------------------------------------------------------------------
+[⏳] 2.1 Arreglar `agente_ceo.py` (Conexión Kimi/Moonshot sin error 401).
+[ ] 2.2 Implementar la función de búsqueda filtrada:
+         `vectorstore.similarity_search(query, filter={"elemento": "agua"})`
+[ ] 2.3 Probar al Filósofo: Preguntarle sobre Dropshipping y verificar 
+         que NO mezcle conceptos de Trade o SERVIU.
+
+--------------------------------------------------------------------
+📅 FASE 3: LAS MANOS (Herramientas de Scraping y Análisis)
+--------------------------------------------------------------------
+[ ] 3.1 Crear Tool de Scraping Web (Playwright/Requests) para que 
+         el Agente pueda leer URLs de competidores.
+[ ] 3.2 Crear Tool de Análisis de RRSS (Apify o Instaloader) para 
+         extraer bios y posts de Instagram.
+[ ] 3.3 Conectar estas Tools al Agente CEO (Fire element).
+
+--------------------------------------------------------------------
+📅 FASE 4: EJECUCIÓN DE NEGOCIO (Cash Flow y Alto Ticket)
+--------------------------------------------------------------------
+[ ] 4.1 DROPSHIPPING: 
+         - Elegir producto (Water).
+         - Crear guiones con IKKI (Air).
+         - Subir Reels a IG y validar orgánicamente.
+         - Escalar con Meta Ads si hay tracción.
+[ ] 4.2 SERVIU / MERCADO PÚBLICO:
+         - Usar al Agente para resumir bases de licitación (Earth).
+         - Calcular costos y precios (Earth + Fire).
+[ ] 4.3 IKKI (Agencia):
+         - Usar el agente para analizar webs de prospectos y 
+           generar propuestas en PDF automáticamente.
+
+--------------------------------------------------------------------
+⚠️ REGLAS DE ORO DEL PROYECTO
+--------------------------------------------------------------------
+1. SIEMPRE activar el venv: `source venv/bin/activate`
+2. Usar `nano` para editar código, NUNCA `cat >`.
+3. Si la IA se agota (DeepSeek), usar OpenCode con Gemini o Kimi.
+4. El Agente debe ser preciso: si pregunta de Dropshipping, 
+   responder con el elemento "Agua".
+====================================================================

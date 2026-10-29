@@ -1,0 +1,47 @@
+# Credenciales y configuración local
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Entornos virtuales
+.venv/
+venv/
+venv_dashboard/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Respaldos y archivos temporales
+*.bak
+*.bak_*
+*.save
+tmp/
+logs/
+
+# Datos, índices y prospectos locales
+data/
+datos/
+csv/
+json/
+en_analisis/
+instaloader/
+transcripciones_reales/
+*.xlsx
+prospecto.json
+prospectos*.csv
+prospectos*.jsonl
+prospectos*.tsv
+resultados_*.csv
+_chat.txt
+
+# Capturas PostScript generadas localmente
+/csv
+/json
+/instaloader
+/os
+/sys

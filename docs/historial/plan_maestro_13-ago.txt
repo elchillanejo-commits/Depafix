@@ -1,0 +1,194 @@
+
+
+
+
+Perfecto. Hagamos un **inventario completo** de lo construido y definamos las **pautas exactas** para que tu bot suba esos 3 peldaños sin tropezar.
+
+---
+
+## 📋 INVENTARIO — Lo que tenemos listo
+
+### 🗂️ Archivos generados en esta sesión
+
+| # | Archivo | Estado | Descargar |
+|---|---------|--------|-----------|
+| 1 | `insert_velas_prueba.sql` | ✅ 100 velas BTCUSDT 5m | [Descargar](sandbox:///mnt/agents/output/insert_velas_prueba.sql) |
+| 2 | `schema_bot_trading_v7.sql` | ✅ 4 tablas + índices + función + vista | [Descargar](sandbox:///mnt/agents/output/schema_bot_trading_v7.sql) |
+| 3 | `BOT_TRADING_CRIPTO_v7_workflow.json` | ✅ 11 nodos N8N, flujo completo | [Descargar](sandbox:///mnt/agents/output/BOT_TRADING_CRIPTO_v7_workflow.json) |
+| 4 | `README_BOT_TRADING_v7.md` | ✅ Guía paso a paso | [Descargar](sandbox:///mnt/agents/output/README_BOT_TRADING_v7.md) |
+
+---
+
+## 🪜 ESTADO DE CADA PELDAÑO
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  PELDAÑO 1: PIPELINE DE DATOS                                       │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━                                        │
+│  ✅ SQL de 100 velas de prueba (listo para ejecutar en Supabase)    │
+│  ✅ Schema con índices optimizados para queries rápidas             │
+│  ✅ Workflow N8N: Trigger → Kraken API → Transform → Insert → Get   │
+│  ⚠️  PENDIENTE: Ejecutar SQL en Supabase + Importar workflow N8N    │
+└─────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  PELDAÑO 2: CEREBRO DE INDICADORES                                  │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━                                  │
+│  ✅ Código JS embebido en N8N: RSI(14) + EMA(9/21) + ATR(14)        │
+│  ✅ Lógica de señal: COMPRA/VENTA/NEUTRO con fuerza (0-10)           │
+│  ✅ Filtro IF: solo pasa si hay señal real (no NEUTRO)               │
+│  ⚠️  PENDIENTE: Calibrar umbrales RSI según comportamiento de BTC   │
+└─────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  PELDAÑO 3: EJECUCIÓN + GESTIÓN DE RIESGO + ALERTAS                 │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━                 │
+│  ✅ SL/TP calculados con ATR × 1.5 y ratio R:R 1:2                  │
+│  ✅ Position sizing: 2% del capital ($1000 default)                 │
+│  ✅ Guarda señal en tabla `signals` con todos los metadatos         │
+│  ✅ Alerta Telegram con precio, indicadores, SL, TP, size           │
+│  ⚠️  PENDIENTE: Configurar credenciales Supabase + Telegram         │
+│  ⚠️  PENDIENTE: Tabla `trades` para paper trading con seguimiento   │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## ✅ CHECKLIST DE VERIFICACIÓN
+
+Marcá con ✅ cada paso que completes. Esto nos da visibilidad de dónde estás.
+
+### Fase A: Supabase (base de datos)
+- [ ] Ejecutar `schema_bot_trading_v7.sql` en SQL Editor
+- [ ] Ejecutar `insert_velas_prueba.sql` en SQL Editor
+- [ ] Verificar: `SELECT COUNT(*) FROM candles;` → debe dar **100**
+- [ ] Verificar: `SELECT * FROM bot_config;` → debe dar **11 filas**
+
+### Fase B: N8N (automatización)
+- [ ] Importar `BOT_TRADING_CRIPTO_v7_workflow.json`
+- [ ] Configurar credencial **Supabase** (URL + service_role key)
+- [ ] Actualizar el `credential_id` en los nodos de Supabase del workflow
+- [ ] Click en **"Execute workflow"** y verificar que fluye sin errores
+- [ ] Verificar que `Supabase_Get_Velas` devuelve **50 velas**
+- [ ] Verificar que `Calcular_Indicadores` devuelve RSI, EMA, ATR, señal
+
+### Fase C: Alertas y Paper Trading
+- [ ] (Opcional) Configurar credencial **Telegram**
+- [ ] Verificar que la tabla `signals` recibe filas cuando hay señal
+- [ ] Verificar la vista `bot_rendimiento` (cuando haya trades)
+
+---
+
+## 📐 PAUTAS PARA SEGUIR
+
+### 🎯 Prioridad 1: Validar el pipeline (hoy)
+Antes de que el bot "piense", necesitamos que **coma datos**. Tu tarea inmediata:
+
+> **Ejecutar los 2 SQL en Supabase y confirmar que `candles` tiene 100 filas.**
+
+Sin esto, todo lo demás falla. Es el cimiento.
+
+---
+
+### 🎯 Prioridad 2: Conectar N8N con datos reales (hoy)
+Una vez que `candles` tiene datos, importá el workflow y hacé una ejecución manual. Si falla en algún nodo, **copiá el mensaje de error exacto** y me lo pasás. Los errores más comunes:
+
+| Error | Causa probable | Solución |
+|-------|---------------|----------|
+| `No output data returned` | Tabla vacía o filtro mal | Verificar que `pair='XBTUSDT'` y `timeframe='5m'` |
+| `Could not find credential` | ID de credencial incorrecto | Actualizar el `credential_id` en el JSON del nodo |
+| `Kraken API error` | Rate limit o par incorrecto | Kraken usa `XBTUSDT`, no `BTCUSDT` |
+
+---
+
+### 🎯 Prioridad 3: Calibrar la estrategia (mañana)
+Una vez que el pipeline fluye, tenemos que ajustar los **umbrales** para que las señales sean significativas, no ruido. Esto depende de tu estilo:
+
+| Estilo de trading | Ajuste recomendado |
+|-------------------|-------------------|
+| **Conservador** (pocas señales, alta calidad) | RSI entre 45-55 + fuerza > 6 |
+| **Moderado** (balance) | RSI entre 40-60 + fuerza > 4 |
+| **Agresivo** (más señales, más ruido) | RSI entre 30-70 + fuerza > 2 |
+
+> **Pauta:** Empezá en **moderado**. Si en 24h tenés más de 20 señales, es demasiado. Si tenés 0-2, es muy conservador.
+
+---
+
+### 🎯 Prioridad 4: Paper Trading disciplinado (esta semana)
+El bot guarda señales en `signals` con estado `PAPER_TRADING`. La tabla `trades` está lista para que registres operaciones simuladas. La función `check_close_trades()` en PostgreSQL puede evaluar si un trade abierto debería cerrarse por SL o TP.
+
+> **Pauta:** No cambies `modo` a `REAL` hasta que tengas al menos **30 trades en paper** con win rate > 50% y R:R promedio > 1.5.
+
+---
+
+## 🔧 PAUTAS TÉCNICAS CON OPENCODE
+
+Usá OpenCode en tu terminal para acelerar estos pasos. Acá te paso los prompts exactos:
+
+### Para verificar Supabase desde terminal
+```bash
+opencode "Conéctate a la base de datos Supabase y verifica:
+1. Cuántas filas hay en la tabla candles
+2. Si existe la tabla signals
+3. Si la tabla bot_config tiene las 11 filas de configuración
+Dame el output exacto de cada query."
+```
+
+### Para revisar tu bot anterior
+```bash
+opencode "Lee el archivo 01_BOT_TRADING_KRAKEN.py y extrae:
+1. Qué exchange usa (Kraken, Binance, etc.)
+2. Qué indicadores calcula (nombres y períodos)
+3. Cómo decide la entrada (condiciones exactas)
+4. Cómo decide la salida (SL, TP, trailing stop?)
+5. Qué timeframe opera
+Ponlo en formato bullet points."
+```
+
+### Para comparar estrategias
+```bash
+opencode "Compara estas dos estrategias para BTC en 5m:
+Estrategia A (mi bot actual): [pega aquí lo que extrajiste del punto anterior]
+Estrategia B (nueva): RSI(14) + cruce EMA9/21 + ATR(14) para SL/TP con ratio 1:2
+¿Cuál tiene mejor expectativa matemática? Justifica con lógica, no con backtest."
+```
+
+---
+
+## ❓ PREGUNTAS QUE NECESITO QUE RESPONDAS
+
+Para desbloquear el siguiente nivel, necesito saber:
+
+| # | Pregunta | Por qué importa |
+|---|----------|-----------------|
+| 1 | **¿Ejecutaste ya los SQL en Supabase?** | Si no, todo lo demás no arranca |
+| 2 | **¿Tu bot anterior opera en Kraken real o paper?** | Para saber si migrar credenciales de exchange |
+| 3 | **¿Tenés Telegram para alertas o preferís otro canal?** | Discord, email, webhook a tu app |
+| 4 | **¿Qué capital manejás y qué % estás dispuesto a arriesgar por trade?** | Para calibrar position sizing realista |
+| 5 | **¿Operas solo BTC o querés multi-par desde el día 1?** | Para escalar el workflow o mantenerlo simple |
+
+---
+
+## 🗺️ MAPA DE RUTA VISUAL
+
+```
+HOY ──────────────────► MAÑANA ─────────────► ESTA SEMANA ─────────► MES 1
+  │                        │                      │                    │
+  ▼                        ▼                      ▼                    ▼
+SQL en Supabase      Calibrar umbrales      Paper trading        Evaluar métricas
+  │                        │                      │                    │
+  ▼                        ▼                      ▼                    ▼
+Importar workflow    Ajustar RSI/EMA        30+ trades en DB     Decidir: escalar
+  │                        │                      │         a REAL o seguir
+  ▼                        ▼                      ▼         optimizando
+Ejecutar manual      Primera señal          Vista rendimiento
+  │                        │                      │
+  ▼                        ▼                      ▼
+Activar trigger      Alerta Telegram        Backtest visual
+```
+
+---
+
+**¿Dónde estás parado en el checklist?** Pasame los checks que ya tenés ✅ y el primer ❌ que te trabó, así te doy la solución exacta. 🎯

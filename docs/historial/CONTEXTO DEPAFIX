@@ -1,0 +1,42 @@
+🌐 DEPAFIX – LOCAL vs NUBE (21/07/2026)
+
+📁 LOCAL (~/Proyectos/)
+├── 01_SERVIU/          # API, scripts, Decreto 49
+│   ├── api.py          # Endpoints
+│   └── venv_aquiles/   # Entorno
+├── 02_PROCURADOR/      # Legal, clientes, tokens
+├── 03_GESTALT/         # Dashboards (pendiente)
+├── 04_MERCADO_PUBLICO/ # Scrapers (pendiente)
+├── 05_TRADE_CRIPTO/    # Trading (bitácora)
+│   └── trader.py
+└── 06_AGENTES/         # Orquestación, Ikki, docs
+    ├── GEMINI_OUTPUT/  # Documentación generada
+    └── ikki/           # Afiches, campañas
+
+☁️ NUBE
+├── 🗄️ Supabase (project: gylyzcjkswltwpouktbi)
+│   ├── line_items       # Materiales + rubros (10 categorías)
+│   ├── decretos/ds49    # Decreto 49 (6 artículos oficiales)
+│   ├── operaciones      # Trading (bitácora)
+│   ├── clientes, tokens, compras, consultas, compliance_logs
+│   └── Storage/afiches   # Imágenes generadas (bucket público)
+├── 🌐 Railway API
+│   └── https://depafix-production.up.railway.app
+│       ├── ✅ GET  /api/clientes
+│       ├── ✅ GET  /api/tokens/saldo
+│       ├── ✅ POST /api/comprar_tokens
+│       ├── ✅ POST /api/consultar
+│       ├── ✅ GET  /api/rubros
+│       ├── ✅ GET  /api/decreto49
+│       ├── ✅ POST /api/generar_afiche
+│       └── ✅ POST /api/campana/crear
+
+🔄 Flujo de datos:
+04_MERCADO_PUBLICO → 01_SERVIU (precios)
+01_SERVIU → 03_GESTALT (pirámide de costos)
+02_PROCURADOR → 03_GESTALT (clientes/consultas)
+05_TRADE_CRIPTO → 03_GESTALT (estadísticas trading)
+06_AGENTES → todos (orquestación)
+
+✅ Módulos completados: 01_SERVIU, 02_PROCURADOR, 05_TRADE_CRIPTO
+⏳ Pendientes: 03_GESTALT, 04_MERCADO_PUBLICO
