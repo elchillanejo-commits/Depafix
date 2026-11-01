@@ -9,12 +9,41 @@ códigos de partida (ej. CER-PISO-01) resueltos contra un catálogo.
 
 import json
 import os
-from datetime import date
+from datetime import date, datetime
 from fpdf import FPDF
 
 CLAUSE_PATH = "docs/clausula_validez_blindada.md"
 CATALOG_PATH = "catalogo_precios.json"
 FONT_DIR = "/usr/share/fonts/truetype/dejavu"
+
+DIAS_ULTIMA_ACTUALIZACION = 30
+
+
+def _normalizar_fecha_precio(valor):
+    if isinstance(valor, datetime):
+        return valor.date()
+    if isinstance(valor, date):
+        return valor
+    if not valor:
+        return None
+    texto = str(valor).strip()[:10]
+    for formato in ("%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(texto, formato).date()
+        except ValueError:
+            continue
+    return None
+
+
+def validar_precio_material(mat):
+    fecha = _normalizar_fecha_precio(mat.get("fecha_precio"))
+    if not fecha:
+        return True
+    if (date.today() - fecha).days > DIAS_ULTIMA_ACTUALIZACION:
+        sku = mat.get("codigo") or mat.get("sku") or mat.get("nombre") or "S/N"
+        print(f"⚠️ ALERTA: El material {sku} tiene precio desactualizado (fecha: {fecha}). Actualiza antes de cotizar.")
+        return False
+    return True
 
 
 def cargar_clausula(ruta=CLAUSE_PATH):
@@ -111,6 +140,7 @@ def resolver_partida(codigo_partida, catalogo, cantidad=1.0):
         mat = materiales.get(d["codigo_material"])
         if not mat:
             continue
+        validar_precio_material(mat)
         qty = d["cantidad"] * cantidad
         precio_unit = mat["precio_base_clp"]
         subtotal = qty * precio_unit

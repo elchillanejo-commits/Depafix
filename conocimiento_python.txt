@@ -1,0 +1,5 @@
+1. Error 404 en OpenCode Go: La URL debe ser https://opencode.ai/inference/go/openai/v1. El modelo debe ser deepseek-v4-pro. Los headers x-opencode-session y User-Agent son obligatorios.
+2. Error de dimensiones en FAISS: Todos los índices (Tierra, Metal, Agua, Aire, Fuego) deben usar el mismo modelo de embeddings (intfloat/multilingual-e5-small).
+3. Error de venv: Siempre activar con source venv/bin/activate antes de ejecutar cualquier script.
+4. Error de Supabase: Las tablas deben existir en el proyecto de Supabase; si no, usar solo FAISS local.
+5. Error de scraping: Muchas webs bloquean con CAPTCHA; usar Wikipedia o blogs accesibles.

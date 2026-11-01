@@ -1,0 +1,93 @@
+name: Radar diario de PYMES
+
+on:
+  schedule:
+    - cron: "0 11 * * *"
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: radar-pymes
+  cancel-in-progress: false
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Verificar hora local de Chile
+        id: hora
+        shell: bash
+        run: |
+          hora="$(TZ=America/Santiago date +%H)"
+          if [ "$hora" = "08" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "ejecutar=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ejecutar=false" >> "$GITHUB_OUTPUT"
+            echo "Fuera de la ventana de las 08:00 en Chile (hora local: $hora)."
+          fi
+
+      - name: Descargar repositorio
+        if: steps.hora.outputs.ejecutar == 'true'
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        if: steps.hora.outputs.ejecutar == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Instalar dependencias del radar
+        if: steps.hora.outputs.ejecutar == 'true'
+        run: python -m pip install requests==2.34.2 beautifulsoup4==4.15.0
+
+      - name: Ejecutar radar
+        id: radar
+        if: steps.hora.outputs.ejecutar == 'true'
+        shell: bash
+        env:
+          RADAR_URLS: ${{ vars.RADAR_URLS }}
+        run: |
+          mkdir -p logs
+          log="logs/radar_$(date -u +%Y%m%d_%H%M%S).log"
+          echo "RADAR_LOG=$log" >> "$GITHUB_ENV"
+          echo "log=$log" >> "$GITHUB_OUTPUT"
+
+          if [ -z "${RADAR_URLS:-}" ]; then
+            printf '%s\n' \
+              "ERROR: configura la variable de repositorio RADAR_URLS con las URLs separadas por espacios." \
+              | tee "$log"
+            echo "exit_code=2" >> "$GITHUB_OUTPUT"
+            echo "RADAR_EXIT=2" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          read -r -a urls <<< "$RADAR_URLS"
+          set +e
+          python radar_pymes.py "${urls[@]}" > "$log" 2>&1
+          estado=$?
+          set -e
+          cat "$log"
+          echo "exit_code=$estado" >> "$GITHUB_OUTPUT"
+          echo "RADAR_EXIT=$estado" >> "$GITHUB_ENV"
+
+      - name: Enviar resumen por Telegram
+        if: always() && steps.hora.outputs.ejecutar == 'true'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python notificador_telegram.py \
+            --log "${RADAR_LOG:-logs/radar_sin_log.txt}" \
+            --estado "${RADAR_EXIT:-1}"
+
+      - name: Fallar si el radar terminó con error
+        if: always() && steps.hora.outputs.ejecutar == 'true' && steps.radar.outputs.exit_code != '0'
+        run: |
+          echo "El radar terminó con código ${RADAR_EXIT:-desconocido}." >&2
+          exit 1

@@ -1,0 +1,21 @@
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /app
+
+COPY requirements-radar_pymes.txt .
+RUN python -m pip install --upgrade pip \
+    && python -m pip install -r requirements-radar_pymes.txt
+
+COPY radar_pymes.py .
+
+RUN useradd --create-home --uid 10001 appuser \
+    && mkdir -p /app/logs/analisis_web \
+    && chown -R appuser:appuser /app/logs
+
+USER appuser
+
+ENTRYPOINT ["python", "-u", "radar_pymes.py"]

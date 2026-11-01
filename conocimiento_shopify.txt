@@ -1,0 +1,11 @@
+1. Configuración inicial: Crear tienda en Shopify, elegir tema (Dawn), configurar dominio y métodos de pago.
+
+2. Productos: Cómo importar productos desde AliExpress o proveedores locales usando apps como DSers o Oberlo.
+
+3. Logística: Configurar envíos, tiempos de entrega, dropshipping vs. inventario propio, y cómo manejar devoluciones.
+
+4. Marketing: Integración con Facebook Ads, Google Shopping, y estrategias de email marketing (Klaviyo).
+
+5. Optimización: SEO para Shopify, velocidad de carga, y optimización de la tasa de conversión (CRO).
+
+6. Legal: Políticas de privacidad, términos de servicio, y cumplimiento con normativas locales (Chile).

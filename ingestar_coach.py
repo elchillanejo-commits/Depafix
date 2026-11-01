@@ -37,6 +37,7 @@ CONFIG_TEMAS = {
     "metal":   {"carpeta": CONOCIMIENTO_DIR / "Metal_Procurador",    "tabla": "coach_metal"},
     "sence":   {"archivo": "conocimiento_sence.txt",    "tabla": "coach_sence"},
     "os10":    {"carpeta": CONOCIMIENTO_DIR / "OS10_SENCE", "tabla": "coach_sence"},
+    "ciber":   {"carpeta": CONOCIMIENTO_DIR / "Ciberseguridad", "tabla": "coach_ciber"},
 }
 
 

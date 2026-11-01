@@ -2,7 +2,7 @@
 
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_DIR="$BASE_DIR/logs"
-ARCHIVO_LOG="$LOG_DIR/modo_nocturno_$(date '+%Y-%m-%d_%H-%M-%S').log"
+ARCHIVO_LOG="$LOG_DIR/radar_$(date '+%Y-%m-%d_%H-%M-%S').log"
 
 mkdir -p "$LOG_DIR"
 
@@ -26,3 +26,4 @@ printf 'Proceso nocturno finalizado con estado %s.\n' "$ESTADO" >> "$ARCHIVO_LOG
 # sudo shutdown -h now
 
 exit "$ESTADO"
+

@@ -11,6 +11,7 @@ CARPETA_SALIDA = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "logs", "analisis_web"
 )
 TIMEOUT = 20
+MIN_CARACTERES = 500
 MAX_CARACTERES = 2000
 
 
@@ -27,8 +28,35 @@ def analizar_url(url):
                 )
             },
         )
-        respuesta.raise_for_status()
+    except requests.exceptions.Timeout:
+        print(f"FALLIDA: {url} | Tiempo de espera agotado tras {TIMEOUT}s.")
+        return False
+    except requests.exceptions.SSLError as error:
+        print(f"FALLIDA: {url} | Error de certificado SSL/TLS: {error}")
+        return False
+    except requests.exceptions.ConnectionError as error:
+        print(f"FALLIDA: {url} | Error de red o conexión: {error}")
+        return False
+    except requests.exceptions.RequestException as error:
+        print(f"FALLIDA: {url} | Petición no válida: {error}")
+        return False
 
+    try:
+        respuesta.raise_for_status()
+    except requests.exceptions.HTTPError as error:
+        estado = error.response.status_code if error.response is not None else "desconocido"
+        if estado == 403:
+            print(
+                f"FALLIDA: {url} | Acceso denegado (403). "
+                "La web bloquea el scraping o requiere autenticación."
+            )
+        elif estado == 429:
+            print(f"FALLIDA: {url} | Demasiadas peticiones (429).")
+        else:
+            print(f"FALLIDA: {url} | Error HTTP {estado}.")
+        return False
+
+    try:
         soup = BeautifulSoup(respuesta.text, "html.parser")
         titulo = soup.title.get_text(" ", strip=True) if soup.title else "Sin título"
 
@@ -43,7 +71,15 @@ def analizar_url(url):
             elemento.decompose()
 
         texto_visible = soup.get_text(" ", strip=True)
-        texto_visible = re.sub(r"\s+", " ", texto_visible)[:MAX_CARACTERES]
+        texto_visible = re.sub(r"\s+", " ", texto_visible)
+        caracteres_extraidos = len(texto_visible)
+        if caracteres_extraidos < MIN_CARACTERES:
+            print(
+                f"FALLIDA: {url} | Texto extraído insuficiente: "
+                f"{caracteres_extraidos} caracteres (mínimo {MIN_CARACTERES})."
+            )
+            return False
+        texto_visible = texto_visible[:MAX_CARACTERES]
 
         dominio = urlparse(url).netloc.lower()
         if not dominio:
@@ -62,9 +98,12 @@ def analizar_url(url):
         with open(ruta_salida, "w", encoding="utf-8") as archivo:
             archivo.write(contenido)
 
-        print(f"✅ Guardado: {ruta_salida}")
+        print(f"EXITOSA: {url} | Guardado: {ruta_salida}")
     except Exception as error:
-        print(f"⚠️ No se pudo analizar {url}: {error}")
+        print(f"FALLIDA: {url} | No se pudo procesar el contenido: {error}")
+        return False
+
+    return True
 
 
 def main():
@@ -74,9 +113,20 @@ def main():
     parser.add_argument("urls", nargs="+", help="Lista de URLs separadas por espacios")
     args = parser.parse_args()
 
+    fallidas = 0
     for url in args.urls:
-        analizar_url(url)
+        try:
+            if not analizar_url(url):
+                fallidas += 1
+        except Exception as error:
+            fallidas += 1
+            print(f"FALLIDA: {url} | Error inesperado: {error}")
+
+    if fallidas:
+        print(f"Resumen: {fallidas} de {len(args.urls)} URL(s) fallida(s).")
+        return 1 if fallidas == len(args.urls) else 0
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

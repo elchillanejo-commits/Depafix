@@ -18,13 +18,14 @@ carpeta = "/home/ibar/Documentos/Conocimiento/Metal_Procurador/"
 archivos_pdf = glob.glob(carpeta + "*.pdf")
 archivos_excel = glob.glob(carpeta + "*.xlsx") + glob.glob(carpeta + "*.xls") + glob.glob(carpeta + "*.csv")
 archivos_txt = glob.glob(carpeta + "*.txt")
+archivos_md = glob.glob(carpeta + "*.md")
 
-archivos = archivos_pdf + archivos_excel + archivos_txt
+archivos = archivos_pdf + archivos_excel + archivos_txt + archivos_md
 
 if not archivos:
     print("⚠️ No se encontraron archivos.")
 else:
-    print(f"📁 Encontrados {len(archivos_pdf)} PDFs, {len(archivos_excel)} Excels y {len(archivos_txt)} TXTs.")
+    print(f"📁 Encontrados {len(archivos_pdf)} PDFs, {len(archivos_excel)} Excels, {len(archivos_txt)} TXTs y {len(archivos_md)} MDs.")
     
     exitos = 0
     errores = 0
@@ -39,7 +40,7 @@ else:
                 with pdfplumber.open(archivo) as pdf:
                     for pagina in pdf.pages:
                         texto_completo += (pagina.extract_text() or "") + "\n"
-            elif archivo.endswith('.txt'):
+            elif archivo.endswith(('.txt', '.md')):
                 with open(archivo, "r", encoding="utf-8") as f:
                     texto_completo = f.read()
             else:

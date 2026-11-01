@@ -1,0 +1,11 @@
+1. Azure Fundamentals: Servicios en la nube, IaaS, PaaS, SaaS, suscripciones y grupos de recursos.
+
+2. Power BI: Conexión de datos, modelado, DAX, dashboards y publicación en el servicio.
+
+3. Microsoft 365: Gestión de usuarios, licencias, Exchange Online, SharePoint y Teams.
+
+4. Copilot para Microsoft 365: Integración de IA en Word, Excel, Outlook y Teams.
+
+5. Automatización con Power Automate: Flujos de trabajo, conectores, triggers y acciones.
+
+6. Seguridad en Azure: Microsoft Entra ID (antes Azure AD), roles, MFA y condiciones de acceso.

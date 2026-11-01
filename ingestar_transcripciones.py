@@ -12,6 +12,8 @@ CARPETA_SALIDA = "./data"
 MAPA_ELEMENTOS = {
     "Trade": "tierra",
     "Dropshipping": "agua",
+    "Dropshiphing": "agua",
+    "Agua_Dropshipping": "agua",
     "Ventas": "aire",
     "IA": "fuego",
     "Filosofia": "metal"
