@@ -30,6 +30,7 @@ ELEMENTOS = {
     "Tierra": ["coach_tierra"],
     "Metal": ["coach_metal"],
     "Sence": ["coach_sence"],
+    "Ciber": ["coach_ciber"],
 }
 
 ALIAS_ELEMENTOS = {
@@ -70,6 +71,11 @@ PALABRAS_CLAVE = {
         "os-10", "os 10", "os10", "d.s. 594", "d.s 594", "ds 594", "d.s. n° 594", "ds n° 594",
         "decreto 594", "decreto supremo 594", "ley 16.744", "ley 16744",
         "16.744", "16744", "curso sence", "sence",
+    ],
+    "Ciber": [
+        "ciberseguridad", "hacking", "firewall", "encriptación", "malware",
+        "phishing", "ransomware", "Ley 21.719", "protección de datos",
+        "seguridad informática", "delitos informáticos",
     ],
 }
 
@@ -172,16 +178,23 @@ def enrutar_pregunta(llm, pregunta):
     - Tierra: construcción, obras, cubicación, presupuestos, normativas OGUC/SERVIU.
     - Metal: legal, contratos, leyes, finanzas, inversión, contabilidad, SII, CBR.
     - Sence: seguridad y salud ocupacional, seguridad laboral, prevención de riesgos, OS-10, D.S. 594, Ley 16.744, cursos SENCE.
+    - Ciber: ciberseguridad, hacking, firewall, encriptación, malware, phishing, ransomware, protección de datos, seguridad informática, delitos informáticos, Ley 21.719.
 
     Si la pregunta trata sobre seguridad, OS-10, D.S. 594, Ley 16.744 o cursos SENCE,
     clasifícala como Sence aunque mencione leyes, normativas o aspectos legales.
 
-    Responde SOLO con el nombre del elemento principal (Agua, Aire, Fuego, Tierra, Metal o Sence).
+    Si la pregunta trata sobre ciberseguridad, hacking, firewall, encriptación, malware, phishing, ransomware, protección de datos, seguridad informática, delitos informáticos o Ley 21.719,
+    clasifícala como Ciber aunque mencione aspectos legales o de datos.
+
+    Responde SOLO con el nombre del elemento principal (Agua, Aire, Fuego, Tierra, Metal, Sence o Ciber).
     Si combina dominios, sepáralos por comas. No agregues explicaciones.
 
     Pregunta: {pregunta}
     """
     detectadas = detectar_por_palabras(pregunta)
+    if "Ciber" in detectadas:
+        # Ciberseguridad, hacking, firewall, malware, phishing, ransomware van a coach_ciber.
+        return ["Ciber"]
     if "Sence" in detectadas:
         # Seguridad laboral, OS10, SENCE, D.S. 594 y Ley 16.744 van a coach_sence.
         return ["Sence"]
