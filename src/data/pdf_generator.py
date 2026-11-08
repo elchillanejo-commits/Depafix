@@ -124,6 +124,6 @@ def generar_pdf(cotizacion: Dict[str, Any], salida: Union[str, Path]) -> Path:
 
     destino = Path(salida)
     destino.parent.mkdir(parents=True, exist_ok=True)
-    with open(str(destino, "w+b") as result_file:
-    pisa.CreatePDF(src=html, dest=result_file, encoding="utf-8"))
+    with open(str(destino), "w+b") as result_file:
+        pisa.CreatePDF(src=html, dest=result_file, encoding="utf-8")
     return destino
