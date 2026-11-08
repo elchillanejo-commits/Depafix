@@ -1,18 +1,11 @@
-FROM python:3.12-slim-bookworm
+FROM python:3.12-slim
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    gcc \
-    libjpeg-dev \
-    libopenjp2-7-dev \
-    libffi-dev \
-    libssl-dev \
-    zlib1g-dev \
-    fonts-liberation \
+    build-essential gcc libffi-dev libssl-dev libjpeg-dev zlib1g-dev libfreetype6-dev \
     && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel
-RUN pip install --no-cache-dir --only-binary=:all: -r requirements.txt
+RUN pip install --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir --prefer-binary -r requirements.txt
 COPY . /app
 ENV PYTHONPATH=/app
 ENV PORT=8080
