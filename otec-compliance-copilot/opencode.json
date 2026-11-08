@@ -1,0 +1,38 @@
+{
+  "name": "otec-compliance-copilot",
+  "version": "1.0.0",
+  "description": "Copiloto de cumplimiento normativo para OTEC/SENCE (Chile)",
+  "agents": [
+    {
+      "name": "compliance-supervisor",
+      "description": "Supervisor que orquesta verificaciones de plazos y auditoría de participantes OTEC",
+      "system_prompt_file": ".opencode/agents/compliance-supervisor.md",
+      "tools": ["read", "write", "bash"],
+      "permission": {
+        "edit": "deny",
+        "bash": "deny"
+      },
+      "tools": {
+        "task": true
+      }
+    },
+    {
+      "name": "plazo-checker",
+      "description": "Verifica cumplimiento de plazos legales y administrativos SENCE",
+      "system_prompt_file": ".opencode/agents/plazo-checker.md",
+      "tools": ["read", "write", "bash"],
+      "permission": {
+        "edit": "deny"
+      }
+    },
+    {
+      "name": "participant-auditor",
+      "description": "Audita registros de participantes, asistencia y certificaciones OTEC",
+      "system_prompt_file": ".opencode/agents/participant-auditor.md",
+      "tools": ["read", "write", "bash"],
+      "permission": {
+        "edit": "deny"
+      }
+    }
+  ]
+}

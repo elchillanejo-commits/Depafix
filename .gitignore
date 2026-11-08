@@ -25,6 +25,8 @@ logs/
 
 # Datos, índices y prospectos locales
 data/
+!data/transcripciones/
+!data/transcripciones/**
 datos/
 csv/
 json/
@@ -36,7 +38,7 @@ prospecto.json
 prospectos*.csv
 prospectos*.jsonl
 prospectos*.tsv
-resultados_*.csv
+resultados*.csv
 _chat.txt
 
 # Capturas PostScript generadas localmente
@@ -45,3 +47,5 @@ _chat.txt
 /instaloader
 /os
 /sys
+cookies.txt
+data_backup_*/

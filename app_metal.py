@@ -16,30 +16,42 @@ RPC_METAL = "match_metal_knowledge"
 CANTIDAD_RESULTADOS = 5
 
 TIPOS_DOCUMENTO = [
-    "Auditoría Legal Express",
+    "Informe de Gestión de Trámites",
     "Pitch de WhatsApp",
     "Carta Formal (SII / CBR)",
 ]
 
 INSTRUCCIONES_DOCUMENTO = {
-    "Auditoría Legal Express": (
-        "Redacta una auditoría breve y accionable: diagnóstico, riesgos identificados "
-        "en el contexto, próximos pasos y una propuesta de llamada de 15 minutos."
+    "Informe de Gestión de Trámites": (
+        "Actúa como Procurador Virtual para abogados y estudios jurídicos. Redacta un "
+        "informe de gestión de trámites accionable para la operación diaria del abogado: "
+        "Investigación y Gestión en SII (obtención de certificados, inicio de actividades, "
+        "revisión de situación tributaria), Trámites en Conservador de Bienes Raíces (CBR) "
+        "(inscripción de títulos, hipotecas, posesiones efectivas, obtención de copias), "
+        "Gestión en Archivo Judicial (búsqueda de causas, copias autorizadas, seguimiento "
+        "de expedientes) y Trámites en Registro Civil (certificados de nacimiento, matrimonio, "
+        "defunción y antecedentes), finalizando con una propuesta de sesión de trabajo de "
+        "15 minutos."
     ),
     "Pitch de WhatsApp": (
-        "Redacta un mensaje de WhatsApp de máximo 3 párrafos, directo, estratégico "
-        "y personalizado. Su objetivo es agendar una llamada de 15 minutos."
+        "Redacta un mensaje de WhatsApp de máximo 3 párrafos dirigido a un abogado o estudio "
+        "jurídico, presentando los servicios de Procurador Virtual para trámites (SII, "
+        "Conservador de Bienes Raíces, Archivo Judicial y Registro Civil: certificados, "
+        "inscripciones, copias y seguimiento de expedientes). "
+        "Su objetivo es agendar una llamada de 15 minutos."
     ),
     "Carta Formal (SII / CBR)": (
-        "Redacta una carta formal en español, con estructura profesional y solicitud "
-        "clara. Usa marcadores [Completar: dato] cuando falte información obligatoria."
+        "Como Procurador Virtual de apoyo a abogados, redacta un escrito o presentación formal "
+        "ante SII, Conservador de Bienes Raíces, Archivo Judicial o Registro Civil en español, "
+        "con estructura jurídica profesional y petitorio claro. Usa marcadores "
+        "[Completar: dato] cuando falte información."
     ),
 }
 
 load_dotenv(BASE_DIR / ".env")
 
 st.set_page_config(
-    page_title="Metal - Procurador Virtual",
+    page_title="Metal - Procurador Virtual de Trámites",
     page_icon="⚖️",
     layout="centered",
 )
@@ -134,7 +146,11 @@ def generar_documento(
     instruccion = INSTRUCCIONES_DOCUMENTO[tipo_documento]
 
     sistema = (
-        "Eres Metal, un procurador virtual experto en redacción legal y comercial. "
+        "Eres Metal, un Procurador Virtual para abogados y estudios jurídicos especializado "
+        "en gestión de trámites ante SII, Conservador de Bienes Raíces (CBR), Archivo Judicial "
+        "y Registro Civil: obtención de certificados, inicio de actividades, revisión de "
+        "situación tributaria, inscripción de títulos, hipotecas, posesiones efectivas, copias, "
+        "búsqueda de causas, seguimiento de expedientes y certificados de estado civil. "
         "Usa exclusivamente el contexto recuperado para hacer afirmaciones legales "
         "o citar normas. No inventes leyes, artículos, plazos, hechos ni credenciales. "
         "Si el contexto no sustenta una afirmación, omítela o señala el dato faltante. "
@@ -183,16 +199,22 @@ def mostrar_descarga(texto_final: str, nombre: str) -> None:
 
 
 def main() -> None:
-    st.title("⚖️ Metal - Procurador Virtual")
-    st.caption("Genera documentos con el contexto legal y las plantillas de Metal.")
+    st.title("⚖️ Metal - Procurador Virtual de Trámites")
+    st.caption(
+        "Genera documentos para la gestión de trámites en SII, CBR, Archivo Judicial "
+        "y Registro Civil con el contexto de Metal."
+    )
 
     nombre = st.text_input(
-        "Nombre del Prospecto",
-        placeholder="Ej: Constructora Andes",
+        "Nombre del Abogado o Estudio Jurídico",
+        placeholder="Ej: Estudio Jurídico Ríos & Asociados",
     )
     dolor = st.text_area(
         "Dolor / Necesidad",
-        placeholder="Ej: Perdió licitaciones por la GSO.",
+        placeholder=(
+            "Ej: Sobrecarga de trámites en SII, CBR, Archivo Judicial y Registro Civil; "
+            "demoras en obtención de certificados, copias y seguimiento de expedientes."
+        ),
         height=110,
     )
     tipo_documento = st.selectbox("Tipo de Documento", TIPOS_DOCUMENTO)
@@ -207,7 +229,8 @@ def main() -> None:
 
         try:
             consulta = (
-                f"{tipo_documento}. Plantilla o contexto legal para {nombre}. "
+                f"{tipo_documento}. Plantilla o contexto para trámites ante SII, CBR, "
+                f"Archivo Judicial y Registro Civil. Estudio: {nombre}. "
                 f"Dolor o necesidad: {dolor}"
             )
             with st.spinner("Buscando contexto en Metal mediante Supabase RPC..."):

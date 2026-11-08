@@ -1,0 +1,21 @@
+# Catálogo base de materiales de construcción — Sodimac Chile
+# Una URL por línea. El texto después de # se ignora.
+
+# ============================================================
+# Secciones principales
+# ============================================================
+# Obras Gruesas
+https://www.sodimac.cl/sodimac-cl/lista/CATG10753/Materiales-de-Obra-Gruesa
+# Materiales de Construcción
+https://www.sodimac.cl/sodimac-cl/lista/CATG10731/Materiales-de-Construccion
+# Terminaciones (subcategorías representativas)
+https://www.sodimac.cl/sodimac-cl/lista/CATG10741/Pisos-y-revestimientos
+https://www.sodimac.cl/sodimac-cl/lista/CATG10841/Pintura-para-interior
+
+# ============================================================
+# Subcategorías para garantizar cemento, yeso, fierro y madera
+# ============================================================
+https://www.sodimac.cl/sodimac-cl/lista/CATG10923/Cemento
+https://www.sodimac.cl/sodimac-cl/lista/CATG10925/Yeso
+https://www.sodimac.cl/sodimac-cl/lista/CATG10754/Fierro
+https://www.sodimac.cl/sodimac-cl/lista/CATG10732/maderas-y-tableros

@@ -16,6 +16,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from sentence_transformers import SentenceTransformer
 from supabase import create_client
+from sence_tools import calcular_saldo_franquicia
 
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
@@ -71,6 +72,7 @@ PALABRAS_CLAVE = {
         "os-10", "os 10", "os10", "d.s. 594", "d.s 594", "ds 594", "d.s. n° 594", "ds n° 594",
         "decreto 594", "decreto supremo 594", "ley 16.744", "ley 16744",
         "16.744", "16744", "curso sence", "sence",
+        "franquicia", "saldo", "imputable", "remuneracion", "trabajadores",
     ],
     "Ciber": [
         "ciberseguridad", "hacking", "firewall", "encriptación", "malware",
@@ -78,6 +80,64 @@ PALABRAS_CLAVE = {
         "seguridad informática", "delitos informáticos",
     ],
 }
+
+
+def es_consulta_franquicia(pregunta):
+    """Detecta preguntas sobre el saldo de franquicia SENCE.
+
+    Gatillos directos: "franquicia", "saldo", "cuanta", "remanente",
+    "capacidad de capacitacion". También dispara con "sence" + ("saldo" | "cuanta").
+    """
+    texto = normalizar(pregunta or "")
+    if any(g in texto for g in ("franquicia", "saldo", "cuanta", "remanente", "capacidad de capacitacion")):
+        return True
+    if "sence" in texto and any(g in texto for g in ("saldo", "cuanta")):
+        return True
+    return False
+
+def _parsear_remuneraciones(pregunta):
+    """Extrae montos CLP de la pregunta como remuneraciones (ej: 1.000.000)."""
+    sueldos = []
+    for token in re.findall(r"\d{1,3}(?:\.\d{3})+|\d{6,}", pregunta):
+        valor = float(re.sub(r"[^\d]", "", token) or 0)
+        if valor >= 100_000:
+            sueldos.append({"remuneracion": valor})
+    return sueldos
+
+
+def _fmt_clp(valor):
+    try:
+        return f"${float(valor or 0):,.0f}".replace(",", ".")
+    except (TypeError, ValueError):
+        return "$0"
+
+
+def responder_franquicia(pregunta):
+    """Respuesta natural de 'Mi saldo de franquicia es $X' (determinista, sin LLM)."""
+    rut = (os.getenv("EMPRESA_RUT") or "").strip()
+    if not rut:
+        return ("No tengo el RUT de tu empresa en el .env (EMPRESA_RUT). "
+                "Agrégalo y calculo tu saldo de franquicia SENCE.")
+
+    trabajadores = _parsear_remuneraciones(pregunta)
+    res = calcular_saldo_franquicia(rut, trabajadores)
+
+    if res.get("es_estimacion"):
+        if trabajadores:
+            return (f"No tengo registro de tu RUT, pero con tus trabajadores "
+                    f"(masa imponible de {_fmt_clp(res.get('masa_imponible'))}), "
+                    f"tu franquicia estimada es {_fmt_clp(res.get('franquicia_anual'))}. "
+                    f"Disponibles: {_fmt_clp(res.get('disponible'))} "
+                    f"(tope 4,5 UTM anuales por empresa).")
+        return (f"No tengo registro de tu RUT {rut} en franquicia_empresas y no me "
+                f"dijiste las remuneraciones. Tu franquicia estimada es "
+                f"{_fmt_clp(res.get('franquicia_anual'))}. "
+                f"Ej: 'cuánta franquicia me queda con sueldos 1.000.000 y 1.500.000'.")
+
+    return (f"Tu saldo de franquicia SENCE es {_fmt_clp(res.get('disponible'))} "
+            f"disponibles ({res.get('razon_social')}). "
+            f"Has usado {_fmt_clp(res.get('usado'))} de "
+            f"{_fmt_clp(res.get('franquicia_anual'))} anuales.")
 
 
 def crear_llm():
@@ -363,12 +423,18 @@ def main():
     parser.add_argument("pregunta", nargs="*", help="Pregunta a responder")
     args = parser.parse_args()
 
+    pregunta = " ".join(args.pregunta).strip()
+
+    # Atajo determinista: el saldo de franquicia SENCE no pasa por el LLM ni el RAG.
+    if pregunta and es_consulta_franquicia(pregunta):
+        print(responder_franquicia(pregunta))
+        return
+
     llm = crear_llm()
     cliente = crear_supabase()
     print("🧠 Cargando modelo de embeddings...")
     modelo_embeddings = SentenceTransformer(MODELO_EMBEDDINGS)
 
-    pregunta = " ".join(args.pregunta).strip()
     if pregunta:
         respuesta, _ = ejecutar(pregunta, llm, cliente, modelo_embeddings)
         print("\n" + "=" * 60)
@@ -383,6 +449,9 @@ def main():
             break
         if pregunta.lower() in ["salir", "exit", "quit"]:
             break
+        if es_consulta_franquicia(pregunta):
+            print(responder_franquicia(pregunta))
+            continue
         if not pregunta:
             continue
         respuesta, _ = ejecutar(pregunta, llm, cliente, modelo_embeddings)

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Presupuesto DepaFix</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; color: #1e293b; }
+        .header { border-bottom: 3px solid #1a2a4a; padding-bottom: 10px; margin-bottom: 20px; }
+        .header h1 { color: #1a2a4a; margin: 0; font-size: 24px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+        th { background: #1a2a4a; color: white; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; }
+        .right { text-align: right; }
+        .resumen { margin-top: 20px; text-align: right; font-size: 15px; }
+        .total { font-size: 18px; font-weight: bold; color: #0b5e2b; margin-top: 5px; }
+        .btn-descargar {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1a2a4a;
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 6px;
+            font-size: 15px;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+        .btn-descargar:hover { background: #2a4a7a; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>PRESUPUESTO DEPAFIX - REMODELACIÓN Y MANTENCIÓN</h1>
+    </div>
+    <p><strong>Cliente:</strong> TEST</p>
+    <p><strong>Proyecto:</strong> PRY-BLANCO-1313</p>
+    <p><strong>Fecha:</strong> 2026-11-10</p>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>SKU</th>
+                <th>Descripción</th>
+                <th>Cant.</th>
+                <th>P. Unitario</th>
+                <th class="right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+            <tr>
+                <td>CER-PI</td>
+                <td>SCOe-r0á1mica piso esmaltada primera calidad (</td>
+                <td>52.50</td>
+                <td>$16,200</td>
+                <td class="right">$850,500</td>
+            </tr>
+            
+            <tr>
+                <td>MANO-OMBaRnAo</td>
+                <td>dPeO Sobra colocación cerámica (m2)</td>
+                <td>50.00</td>
+                <td>$9,450</td>
+                <td class="right">$472,500</td>
+            </tr>
+            
+            <tr>
+                <td>TEST-003</td>
+                <td>Comisión Corredor (</td>
+                <td>10.00</td>
+                <td>$132,300</td>
+                <td class="right">$1,323,000</td>
+            </tr>
+            
+        </tbody>
+    </table>
+
+    <div class="resumen">
+        <p>Neto: $2,646,000</p>
+        <p>IVA (19%): $502,740</p>
+        <p class="total">TOTAL: $3,148,740</p>
+    </div>
+
+    <button class="btn-descargar" onclick="window.print()">📥 Descargar PDF</button>
+</body>
+</html>

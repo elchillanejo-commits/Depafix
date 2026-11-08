@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Presupuesto DepaFix</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; color: #333; line-height: 1.6; }
+        .header { border-bottom: 2px solid #2c3e50; padding-bottom: 10px; margin-bottom: 20px; }
+        .header h1 { margin: 0; color: #2c3e50; font-size: 24px; }
+        .meta { margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #2c3e50; color: white; }
+        .total { text-align: right; font-size: 18px; font-weight: bold; margin-top: 20px; }
+        .footer { margin-top: 40px; font-size: 12px; color: #771; text-align: center; border-top: 1px solid #ddd; padding-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>DEPAFIX SpA — Holding de Servicios</h1>
+        <p>Presupuesto Operativo / Mente 360</p>
+    </div>
+    
+    <div class="meta">
+        <p><strong>Comuna / Obra:</strong> {comuna}</p>
+        <p><strong>Partida Principal:</strong> {partida}</p>
+        <p><strong>Magnitud:</strong> {magnitud}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Ítem / Descripción</th>
+                <th>Unidad</th>
+                <th>Cant.</th>
+                <th>P. Unitario ($)</th>
+                <th>Total ($)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{partida} (Materiales y Mano de Obra)</td>
+                <td>Global</td>
+                <td>{magnitud}</td>
+                <td>{precio_unitario}</td>
+                <td>{total_neto}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="total">
+        <p>Total Neto: ${total_neto}</p>
+        <p>IVA (19%): ${iva}</p>
+        <p><strong>Total Presupuesto: ${total_final}</strong></p>
+    </div>
+
+    <div class="footer">
+        <p>Documento generado automáticamente por el motor local DepaFix Mente 360. Válido por 15 días.</p>
+    </div>
+</body>
+</html>

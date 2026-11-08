@@ -1,78 +1,414 @@
 #!/usr/bin/env python3
-import os
-import sys
-import hashlib
 import argparse
+import hashlib
+import html
+import os
+import re
 import subprocess
+import sys
+import unicodedata
+import zipfile
 from pathlib import Path
+
+import pandas as pd
 from dotenv import load_dotenv
 from supabase import create_client
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 
+try:
+    import fitz
+except ImportError:
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        fitz = None
+
+try:
+    import pdfplumber
+except ImportError:
+    pdfplumber = None
+
+try:
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+except ImportError:
+    RecursiveCharacterTextSplitter = None
+
 load_dotenv()
+
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-
-if not SUPABASE_URL or not SUPABASE_KEY:
-    print("[ERROR] Faltan credenciales de Supabase en el .env")
-    sys.exit(1)
-
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-CONOCIMIENTO_DIR = Path("/home/ibar/Documentos/Conocimiento")
-BASE_DIR = Path(__file__).parent
-DATA_DIR = BASE_DIR / "data" / "fusionados"
-EXTENSIONES = {
-    ".txt", ".md", ".pdf", ".csv",
-    ".xlsx", ".xls", ".xlsm", ".docx", ".doc",
-}
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
+MODELO_EMBEDDINGS = "intfloat/multilingual-e5-small"
 LOTE_INSERCION = 50
+LOTE_EMBEDDINGS = 32
 
-CONFIG_TEMAS = {
-    "shopify": {"archivo": "conocimiento_shopify.txt", "tabla": "coach_shopify"},
-    "rrss":    {"archivo": "conocimiento_rrss.txt",    "tabla": "coach_rrss"},
-    "fuego":   {"archivo": "conocimiento_fuego.txt",   "tabla": "coach_python"},
-    "tierra":  {"carpeta": CONOCIMIENTO_DIR / "Tierra_Construccion", "tabla": "coach_tierra"},
-    "metal":   {"carpeta": CONOCIMIENTO_DIR / "Metal_Procurador",    "tabla": "coach_metal"},
-    "sence":   {"archivo": "conocimiento_sence.txt",    "tabla": "coach_sence"},
-    "os10":    {"carpeta": CONOCIMIENTO_DIR / "OS10_SENCE", "tabla": "coach_sence"},
-    "ciber":   {"carpeta": CONOCIMIENTO_DIR / "Ciberseguridad", "tabla": "coach_ciber"},
+TABLAS = {
+    "tierra": "coach_tierra",
+    "metal": "coach_metal",
+    "sence": "coach_sence",
+    "otec": "coach_otec",
+    "agua": "coach_agua",
+    "aire": "coach_aire",
+    "fuego": "coach_fuego",
 }
+
+EXTENSIONES = {
+    ".pdf", ".xlsx", ".xls", ".xlsm", ".csv",
+    ".txt", ".md", ".json", ".docx", ".doc", ".pptx",
+    ".odt", ".ods",
+}
+
+CARPETAS_EXCLUIDAS = {
+    "1) adm no cursos",
+    "alumnos",
+    "docentes",
+    "logos",
+    "recursos tecnologicos",
+    "facturas",
+    "_otros",
+    "oc",
+}
+
+PATRON_EXCLUIR_ARCHIVO = re.compile(
+    r"(factura|balance|tributari|boleta|nota[_ -]?de[_ -]?credito|"
+    r"libro[_ -]?diario|remuneracion|nomina|curriculum|e-?rut|"
+    r"certificado[_ -]?bancario|carpeta[_ -]?tributaria|\biva\b)"
+)
+
+PATRONES_CURSO = tuple(
+    re.compile(patron)
+    for patron in (
+        r"\bcursos?\b",
+        r"\bcapacitacion(?:es)?\b",
+        r"\brelator(?:a|es)?\b",
+        r"\bfacilitador(?:a|es)?\b",
+        r"\bparticipantes?\b",
+        r"\balumnos?\b",
+        r"\bmodulos?\b",
+        r"\bsesion(?:es)?\b",
+        r"\bclases?\b",
+        r"\bhoras?\b",
+        r"\bpresencial\b",
+        r"\be-?learning\b",
+        r"\bsincronic[oa]\b",
+        r"\basincronic[oa]\b",
+        r"\bdiploma\b",
+        r"\bcertificados?\b",
+        r"\bevaluacion(?:es)?\b",
+        r"\bmaterial(?:es)? didactic[oa]s?\b",
+        r"\bapuntes?\b",
+        r"\bprecios?\b",
+        r"\barancel(?:es)?\b",
+        r"\bmatricula\b",
+        r"\binscripcion(?:es)?\b",
+        r"\buf\b",
+        r"\butm\b",
+        r"\$\s?\d",
+        r"\bcod(?:igo)?\.?\s*sence\b",
+        r"\bsence\b[^\n]{0,50}\b\d{6,12}\b",
+        r"\b\d{6,12}\b[^\n]{0,50}\bsence\b",
+    )
+)
+
+PATRONES_NORMATIVA = tuple(
+    re.compile(patron)
+    for patron in (
+        r"\bleyes?\b",
+        r"\bdecretos?\b",
+        r"\bd\.?\s*s\.?\s*n?[°º]?\s*\d+",
+        r"\bresolucion(?:es)?\b",
+        r"\bres\.?\s*ex(?:enta)?\.?\b",
+        r"\bcircular(?:es)?\b",
+        r"\breglamentos?\b",
+        r"\bestatutos?\b",
+        r"\barticulos?\b",
+        r"\bnormativas?\b",
+        r"\bcodigo del trabajo\b",
+        r"\bseguridad privada\b",
+        r"\bdirectemar\b",
+        r"\bos10\b",
+        r"\bministerio del trabajo\b",
+        r"\bsubsecretaria\b",
+        r"\brequisitos?\b",
+        r"\bobligacion(?:es)?\b",
+    )
+)
+
+PATRONES_TRAMITE = tuple(
+    re.compile(patron)
+    for patron in (
+        r"\bformularios?\b",
+        r"\binstructivos?\b",
+        r"\bsolicitud(?:es)?\b",
+        r"\bpostulacion(?:es)?\b",
+        r"\bpostular\b",
+        r"\btramites?\b",
+        r"\bpasos?\b",
+        r"\bpresentar\b",
+        r"\badjuntar\b",
+        r"\bdocumentos requeridos\b",
+        r"\bplazos?\b",
+        r"\bportal\b",
+        r"\bplataforma\b",
+        r"\bfranquicia\b",
+        r"\bactualizacion de costos\b",
+        r"\bacreditacion\b",
+        r"\bregistro\b",
+        r"\bconvocatoria\b",
+        r"\bcalendario\b",
+    )
+)
+
+PATRONES_OTEC = tuple(
+    re.compile(patron)
+    for patron in (
+        r"\botec\b",
+        r"\botic\b",
+        r"\bsence\b",
+    )
+)
+
+PATRONES_OTEC_TIPOS = {
+    "certificacion": (
+        re.compile(r"\bcertificados?\b"),
+        re.compile(r"\bcertificaciones?\b"),
+        re.compile(r"\bevaluaciones?\b"),
+        re.compile(r"\bcuestionarios?\b"),
+        re.compile(r"\bexamen(?:es)?\b"),
+        re.compile(r"\bcalificaci[oó]n\b"),
+        re.compile(r"\bconvalidaci[oó]n\b"),
+        re.compile(r"\baprobaci[oó]n\b"),
+    ),
+    "os10": (
+        re.compile(r"\bos\s*10\b"),
+        re.compile(r"\bos10\b"),
+        re.compile(r"\boperaci[oó]n\b"),
+        re.compile(r"\bseguridad privada\b"),
+        re.compile(r"\bclave ?única\b"),
+    ),
+    "legal": (
+        re.compile(r"\bleyes?\b"),
+        re.compile(r"\bdecretos?\b"),
+        re.compile(r"\bdecreto\s+supremo\b"),
+        re.compile(r"\bresoluci[oó]n(?:es)?\b"),
+        re.compile(r"\bcircular(?:es)?\b"),
+        re.compile(r"\breglamento(?:s)?\b"),
+        re.compile(r"\bestatuto(?:s)?\b"),
+        re.compile(r"\bnormativas?\b"),
+        re.compile(r"\bcodigo del trabajo\b"),
+        re.compile(r"\bministerio del trabajo\b"),
+        re.compile(r"\bsubsecretaria\b"),
+    ),
+    "proceso": (
+        re.compile(r"\bprocedimientos?\b"),
+        re.compile(r"\binstructivos?\b"),
+        re.compile(r"\bsolicitud(?:es)?\b"),
+        re.compile(r"\bpostulaci[oó]n(?:es)?\b"),
+        re.compile(r"\btramites?\b"),
+        re.compile(r"\bpasos?\b"),
+        re.compile(r"\bpresentar\b"),
+        re.compile(r"\badjuntar\b"),
+        re.compile(r"\bdocumentos requeridos\b"),
+        re.compile(r"\bplazos?\b"),
+        re.compile(r"\bchecklist\b"),
+        re.compile(r"\bconvocatoria\b"),
+    ),
+}
+
+TIPOS_OTEC = ("certificacion", "os10", "legal", "proceso")
+TIPOS_SENCE = ("curso", "normativa", "tramite", "general")
+
+
+def _normalizar(texto):
+    descompuesto = unicodedata.normalize("NFKD", str(texto or ""))
+    sin_acentos = "".join(c for c in descompuesto if not unicodedata.combining(c))
+    return re.sub(r"\s+", " ", sin_acentos).lower().strip()
+
+
+def _contar(texto, patrones):
+    total = sum(len(patron.findall(texto)) for patron in patrones)
+    return min(total, 6)
+
+
+def _ruta_excluida(ruta):
+    partes = {_normalizar(parte) for parte in ruta.parts}
+    if partes & CARPETAS_EXCLUIDAS:
+        return True
+    return bool(PATRON_EXCLUIR_ARCHIVO.search(_normalizar(ruta.name)))
+
+
+def clasificar_fragmento_sence(texto, ruta):
+    contenido = _normalizar(texto)
+    ruta_norm = _normalizar(str(ruta))
+    puntajes = {
+        "curso": _contar(contenido, PATRONES_CURSO) * 2,
+        "normativa": _contar(contenido, PATRONES_NORMATIVA) * 2,
+        "tramite": _contar(contenido, PATRONES_TRAMITE) * 2,
+    }
+    puntajes["normativa"] += min(_contar(contenido, PATRONES_OTEC), 1)
+
+    if "curso" in ruta_norm:
+        puntajes["curso"] += 3
+    if any(clave in ruta_norm for clave in ("formulario", "instructivo", "solicitud", "postulacion", "tramite")):
+        puntajes["tramite"] += 3
+    if any(clave in ruta_norm for clave in ("ley", "decreto", "resolucion", "circular", "normativa", "reglamento")):
+        puntajes["normativa"] += 3
+    if any(clave in ruta_norm for clave in ("os10", "seguridad privada", "directemar")):
+        puntajes["normativa"] += 2
+
+    maximo = max(puntajes.values())
+    if maximo <= 0:
+        if "curso" in ruta_norm:
+            return "curso"
+        if "docs sence" in ruta_norm:
+            return "tramite"
+        if any(clave in ruta_norm for clave in ("os10", "seguridad", "normativa")):
+            return "normativa"
+        return "general"
+
+    for tipo in ("tramite", "curso", "normativa"):
+        if puntajes[tipo] == maximo:
+            return tipo
+    return "general"
+
+
+def clasificar_fragmento_otec(texto, ruta):
+    contenido = _normalizar(texto)
+    ruta_norm = _normalizar(str(ruta))
+    puntajes = {
+        tipo: _contar(contenido, patrones)
+        for tipo, patrones in PATRONES_OTEC_TIPOS.items()
+    }
+    puntajes["legal"] += min(_contar(contenido, PATRONES_OTEC_TIPOS["legal"]), 1)
+
+    if "certificacion" in ruta_norm:
+        puntajes["certificacion"] += 3
+    if "os10" in ruta_norm:
+        puntajes["os10"] += 3
+    if any(clave in ruta_norm for clave in ("ley", "decreto", "resolucion", "circular", "normativa", "reglamento", "legal")):
+        puntajes["legal"] += 3
+    if any(clave in ruta_norm for clave in ("proceso", "checklist", "solicitud", "instructivo", "tramite", "procedimiento", "postulacion")):
+        puntajes["proceso"] += 3
+
+    maximo = max(puntajes.values())
+    if maximo <= 0:
+        if "certificacion" in ruta_norm:
+            return "certificacion"
+        if "os10" in ruta_norm:
+            return "os10"
+        if "legal" in ruta_norm:
+            return "legal"
+        if "proceso" in ruta_norm:
+            return "proceso"
+        return None
+
+    for tipo in TIPOS_OTEC:
+        if puntajes[tipo] == maximo:
+            return tipo
+    return None
+
+
+def clasificar_fragmento(texto, ruta, elemento):
+    if elemento == "otec":
+        return clasificar_fragmento_otec(texto, ruta)
+    return clasificar_fragmento_sence(texto, ruta)
+
+
+def extraer_texto(ruta):
+    sufijo = ruta.suffix.lower()
+    try:
+        if not sufijo:
+            return ruta.read_text(encoding="utf-8", errors="replace")
+
+        if sufijo == ".pdf":
+            if fitz is not None:
+                with fitz.open(str(ruta)) as documento:
+                    return "\n".join(pagina.get_text("text") for pagina in documento)
+            if pdfplumber is not None:
+                with pdfplumber.open(str(ruta)) as documento:
+                    return "\n".join(pagina.extract_text() or "" for pagina in documento.pages)
+            raise RuntimeError("Instala PyMuPDF o pdfplumber para leer PDFs.")
+
+        if sufijo in {".xlsx", ".xls", ".xlsm"}:
+            hojas = pd.read_excel(ruta, sheet_name=None, dtype=str)
+            return "\n\n".join(
+                f"### HOJA: {nombre}\n{tabla.fillna('').to_csv(index=False)}"
+                for nombre, tabla in hojas.items()
+            )
+
+        if sufijo == ".csv":
+            tabla = pd.read_csv(ruta, dtype=str)
+            return tabla.fillna("").to_csv(index=False)
+
+        if sufijo in {".txt", ".md", ".json"}:
+            return ruta.read_text(encoding="utf-8", errors="replace")
+
+        if sufijo == ".docx":
+            import docx
+
+            documento = docx.Document(ruta)
+            partes = [p.text for p in documento.paragraphs if p.text.strip()]
+            for tabla in documento.tables:
+                for fila in tabla.rows:
+                    partes.append(" | ".join(celda.text.strip() for celda in fila.cells))
+            return "\n".join(partes)
+
+        if sufijo == ".doc":
+            resultado = subprocess.run(
+                ["catdoc", "-w", str(ruta)],
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            return resultado.stdout if resultado.returncode == 0 else ""
+
+        if sufijo in {".odt", ".ods"}:
+            with zipfile.ZipFile(ruta) as archivo:
+                xml = archivo.read("content.xml").decode("utf-8", errors="replace")
+            texto = re.sub(r"<[^>]+>", " ", xml)
+            return re.sub(r"\s+", " ", html.unescape(texto))
+
+        if sufijo == ".pptx":
+            from pptx import Presentation
+
+            presentacion = Presentation(ruta)
+            partes = []
+            for diapositiva in presentacion.slides:
+                for forma in diapositiva.shapes:
+                    if hasattr(forma, "text") and forma.text.strip():
+                        partes.append(forma.text)
+            return "\n".join(partes)
+    except Exception as error:
+        print(f"    [ERROR] No se pudo leer {ruta.name}: {str(error)[:160]}")
+        return ""
+
+    return ""
+
+
+def dividir_texto(texto):
+    if RecursiveCharacterTextSplitter is None:
+        return [
+            texto[i:i + 1000]
+            for i in range(0, len(texto), 1000)
+            if texto[i:i + 1000].strip()
+        ]
+    divisor = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=150,
+        separators=["\n\n", "\n", ". ", " ", ""],
+    )
+    return divisor.split_text(texto)
 
 
 def generar_hash(texto):
     return hashlib.sha256(texto.encode("utf-8")).hexdigest()
 
 
-def _hash_existe_directo(tabla, hash_origen):
-    try:
-        respuesta = (
-            supabase.table(tabla)
-            .select("id")
-            .eq("hash_origen", hash_origen)
-            .limit(1)
-            .execute()
-        )
-        return len(respuesta.data) > 0
-    except Exception:
-        return False
-
-
-def limpiar_tabla(tabla):
-    try:
-        supabase.table(tabla).delete().neq("id", 0).execute()
-        print(f"  Tabla {tabla} limpiada antes de la ingesta.")
-    except Exception as e:
-        print(f"  [WARN] No se pudo limpiar la tabla {tabla}: {e}")
-
-
-def cargar_hashes(tabla):
+def cargar_hashes(cliente, tabla):
     hashes = set()
     inicio = 0
     while True:
         respuesta = (
-            supabase.table(tabla)
+            cliente.table(tabla)
             .select("hash_origen")
             .range(inicio, inicio + 999)
             .execute()
@@ -87,88 +423,14 @@ def cargar_hashes(tabla):
     return hashes
 
 
-def leer_archivo(ruta):
-    sufijo = ruta.suffix.lower()
-
-    if sufijo in {".txt", ".md"}:
-        return ruta.read_text(encoding="utf-8", errors="replace")
-
-    if sufijo == ".pdf":
-        try:
-            resultado = subprocess.run(
-                ["pdftotext", "-layout", "-enc", "UTF-8", str(ruta), "-"],
-                capture_output=True,
-                text=True,
-                timeout=120,
-            )
-            if resultado.returncode == 0:
-                return resultado.stdout
-        except Exception:
-            pass
-
-        import pdfplumber
-
-        with pdfplumber.open(ruta) as pdf:
-            return "\n".join((pagina.extract_text() or "") for pagina in pdf.pages)
-
-    if sufijo == ".csv":
-        import pandas as pd
-
-        return pd.read_csv(ruta).to_csv(index=False)
-
-    if sufijo == ".docx":
-        import docx
-
-        documento = docx.Document(ruta)
-        partes = [p.text for p in documento.paragraphs if p.text.strip()]
-        for tabla in documento.tables:
-            for fila in tabla.rows:
-                partes.append(" | ".join(celda.text.strip() for celda in fila.cells))
-        return "\n".join(partes)
-
-    if sufijo == ".doc":
-        resultado = subprocess.run(
-            ["catdoc", "-w", str(ruta)],
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        return resultado.stdout
-
-    if sufijo in {".xlsx", ".xls", ".xlsm"}:
-        import pandas as pd
-
-        hojas = pd.read_excel(ruta, sheet_name=None)
-        return "\n\n".join(
-            f"### HOJA: {nombre}\n{tabla.to_csv(index=False)}"
-            for nombre, tabla in hojas.items()
-        )
-
-    return ""
+def limpiar_tabla(cliente, tabla):
+    cliente.table(tabla).delete().neq("id", 0).execute()
+    print(f"  Tabla {tabla} limpiada antes de la ingesta.")
 
 
-def listar_archivos(config):
-    if "carpeta" in config:
-        carpeta = Path(config["carpeta"])
-        if not carpeta.is_dir():
-            print(f"[ERROR] No existe la carpeta: {carpeta}")
-            return []
-        return sorted(
-            ruta
-            for ruta in carpeta.rglob("*")
-            if ruta.is_file() and ruta.suffix.lower() in EXTENSIONES
-        )
-
-    ruta = DATA_DIR / config["archivo"]
-    if not ruta.exists():
-        print(f"[ERROR] No existe el archivo fusionado: {ruta}")
-        return []
-    return [ruta]
-
-
-def insertar_lote(tabla, lote):
+def insertar_lote(cliente, tabla, lote):
     try:
-        supabase.table(tabla).insert(lote).execute()
+        cliente.table(tabla).insert(lote).execute()
         return len(lote), 0
     except Exception as error:
         print(f"    [WARN] Falló lote de {len(lote)}; reintentando uno a uno: {str(error)[:120]}")
@@ -176,7 +438,7 @@ def insertar_lote(tabla, lote):
         errores = 0
         for fila in lote:
             try:
-                supabase.table(tabla).insert(fila).execute()
+                cliente.table(tabla).insert(fila).execute()
                 insertados += 1
             except Exception as error_fila:
                 errores += 1
@@ -184,184 +446,204 @@ def insertar_lote(tabla, lote):
         return insertados, errores
 
 
-def _hash_existe_directo(tabla, hash_origen):
+def _parece_texto(ruta):
     try:
-        respuesta = (
-            supabase.table(tabla)
-            .select("id")
-            .eq("hash_origen", hash_origen)
-            .limit(1)
-            .execute()
-        )
-        return len(respuesta.data) > 0
-    except Exception:
+        muestra = ruta.read_bytes()[:2048]
+        return b"\x00" not in muestra
+    except OSError:
         return False
 
 
-def ingestar_tema(tema, limpiar=False, dry_run=False):
-    if tema not in CONFIG_TEMAS:
-        print(f"[ERROR] Tema desconocido: {tema}")
-        return
-
-    config = CONFIG_TEMAS[tema]
-    tabla = config["tabla"]
-    archivos = listar_archivos(config)
-    if not archivos:
-        return
-
-    print(f"\n[{tema.upper()}] {len(archivos)} archivo(s) -> {tabla}")
-
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=150,
-        separators=["\n\n", "\n", ". ", " ", ""],
-    )
-
-    if dry_run:
-        total_chunks = 0
-        total_unicos = 0
-        hashes = set()
-        for ruta in archivos:
-            try:
-                texto = leer_archivo(ruta)
-            except Exception as error:
-                print(f"  [ERROR] {ruta.name}: {str(error)[:120]}")
+def listar_archivos(carpetas, max_archivos=None):
+    archivos = []
+    for carpeta in carpetas:
+        ruta_carpeta = Path(carpeta).expanduser()
+        if not ruta_carpeta.is_dir():
+            print(f"[WARN] No existe la carpeta: {ruta_carpeta}")
+            continue
+        for ruta in ruta_carpeta.rglob("*"):
+            if not ruta.is_file():
                 continue
-            chunks = splitter.split_text(texto)
-            hashes_archivo = [generar_hash(chunk) for chunk in chunks]
-            hashes.update(hashes_archivo)
-            total_chunks += len(chunks)
-            total_unicos += len(set(hashes_archivo))
-            print(f"  {ruta.name}: {len(chunks)} fragmentos")
+            sufijo = ruta.suffix.lower()
+            if sufijo not in EXTENSIONES and (sufijo or not _parece_texto(ruta)):
+                continue
+            if _ruta_excluida(ruta):
+                continue
+            archivos.append(ruta.resolve())
+
+    archivos = sorted(set(archivos))
+    if max_archivos is not None:
+        archivos = archivos[:max_archivos]
+    return archivos
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Ingesta unificada de coaches DepaFix (Mente 360).")
+    parser.add_argument(
+        "--elemento",
+        required=True,
+        choices=sorted(TABLAS),
+        help="Elemento del cerebro: tierra, metal, sence, otec, agua, aire o fuego.",
+    )
+    parser.add_argument(
+        "--carpeta",
+        nargs="+",
+        required=True,
+        help="Carpeta(s) a procesar.",
+    )
+    parser.add_argument(
+        "--tabla",
+        default=None,
+        help="Nombre de la tabla en Supabase. Por defecto se deriva de --elemento.",
+    )
+    parser.add_argument("--limpiar", action="store_true", help="Borrar la tabla antes de insertar.")
+    parser.add_argument("--dry-run", action="store_true", help="Simular sin escribir en Supabase.")
+    parser.add_argument("--max-archivos", type=int, default=None, help="Limitar cantidad de archivos.")
+    parser.add_argument("--lote-embeddings", type=int, default=LOTE_EMBEDDINGS, help="Tamaño de lote para embeddings.")
+    args = parser.parse_args()
+
+    tabla = args.tabla or TABLAS[args.elemento]
+    tipos = TIPOS_OTEC if args.elemento == "otec" else TIPOS_SENCE
+
+    archivos = listar_archivos(args.carpeta, args.max_archivos)
+    if not archivos:
+        print("[ERROR] No se encontraron archivos para procesar.")
+        return
+
+    print(f"📁 {len(archivos)} archivo(s) encontrado(s). -> {tabla} (elemento: {args.elemento})")
+
+    if args.dry_run:
+        stats = {tipo: 0 for tipo in tipos}
+        stats["omitidos"] = 0
+        stats["archivos"] = 0
+        for ruta in archivos:
+            texto = extraer_texto(ruta)
+            if not texto.strip():
+                stats["omitidos"] += 1
+                continue
+            stats["archivos"] += 1
+            for chunk in dividir_texto(texto):
+                if len(chunk.strip()) < 100:
+                    continue
+                tipo = clasificar_fragmento(chunk, ruta, args.elemento)
+                if tipo:
+                    stats[tipo] += 1
+                else:
+                    stats["omitidos"] += 1
+        detalle = " ".join(f"{tipo}={stats[tipo]}" for tipo in tipos)
         print(
-            f"  DRY-RUN: {total_chunks} fragmentos, {total_unicos} únicos por archivo, "
-            f"{len(hashes)} únicos globales. No se escribió nada."
+            f"  DRY-RUN [{args.elemento} -> {tabla}]: {detalle} "
+            f"omitidos={stats['omitidos']} archivos_con_texto={stats['archivos']}"
         )
         return
 
-    if limpiar:
-        limpiar_tabla(tabla)
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        print("[ERROR] Faltan SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY en el .env")
+        sys.exit(1)
 
-    hashes_existentes = cargar_hashes(tabla)
+    cliente = create_client(SUPABASE_URL, SUPABASE_KEY)
+    if args.limpiar:
+        limpiar_tabla(cliente, tabla)
+
+    hashes_existentes = cargar_hashes(cliente, tabla)
     print(f"  Hashes existentes en {tabla}: {len(hashes_existentes)}")
 
     print("  Cargando modelo de embeddings...")
-    modelo = SentenceTransformer("intfloat/multilingual-e5-small")
+    modelo = SentenceTransformer(MODELO_EMBEDDINGS)
 
-    total_insertados = 0
-    total_duplicados = 0
-    total_errores = 0
-    total_chunks = 0
-    archivos_ok = 0
+    stats = {
+        "insertados": 0,
+        "duplicados": 0,
+        "errores": 0,
+        "omitidos": 0,
+        "archivos": 0,
+    }
+    stats.update({tipo: 0 for tipo in tipos})
 
     for ruta in archivos:
         print(f"  Procesando: {ruta.name}")
-        try:
-            texto = leer_archivo(ruta)
-        except Exception as error:
-            print(f"    [ERROR] No se pudo leer: {str(error)[:120]}")
-            total_errores += 1
-            continue
-
+        texto = extraer_texto(ruta)
         if not texto.strip():
             print("    [WARN] Archivo vacío o sin texto extraíble.")
             continue
 
-        chunks = splitter.split_text(texto)
-        insertados_archivo = 0
-        duplicados_archivo = 0
-        errores_archivo = 0
-        lote = []
-
-        def volcar_lote():
-            nonlocal insertados_archivo, errores_archivo
-            if not lote:
-                return
-            insertados, errores = insertar_lote(tabla, lote)
-            insertados_archivo += insertados
-            errores_archivo += errores
-            lote.clear()
-
+        stats["archivos"] += 1
+        chunks = dividir_texto(texto)
         pendientes = []
+        ruta_norm = _normalizar(str(ruta))
+        fuente = "certificacion" if ("certificacion" in ruta_norm and args.elemento == "otec") else (
+            "zengin" if "zengin" in ruta_norm else "os10"
+        )
+
         for chunk in chunks:
             if len(chunk.strip()) < 100:
                 continue
             hash_txt = generar_hash(chunk)
             if hash_txt in hashes_existentes:
-                duplicados_archivo += 1
+                stats["duplicados"] += 1
                 continue
-
-            if _hash_existe_directo(tabla, hash_txt):
-                duplicados_archivo += 1
-                hashes_existentes.add(hash_txt)
+            tipo = clasificar_fragmento(chunk, ruta, args.elemento)
+            if not tipo:
+                stats["omitidos"] += 1
                 continue
-
             hashes_existentes.add(hash_txt)
-            pendientes.append((hash_txt, chunk))
+            pendientes.append((hash_txt, chunk, tipo))
 
-        for inicio in range(0, len(pendientes), 32):
-            grupo = pendientes[inicio:inicio + 32]
+        insertados_archivo = 0
+        errores_archivo = 0
+        for inicio in range(0, len(pendientes), args.lote_embeddings):
+            grupo = pendientes[inicio:inicio + args.lote_embeddings]
             vectores = modelo.encode(
-                [f"passage: {chunk}" for _, chunk in grupo],
-                batch_size=32,
+                [f"passage: {chunk}" for _, chunk, _ in grupo],
+                batch_size=args.lote_embeddings,
                 show_progress_bar=False,
             )
-            for (hash_txt, chunk), vector in zip(grupo, vectores):
+            lote = []
+            for (hash_txt, chunk, tipo), vector in zip(grupo, vectores):
+                metadata = {
+                    "tema": args.elemento,
+                    "tipo": tipo,
+                    "archivo": ruta.name,
+                    "ruta": str(ruta),
+                    "fuente": fuente,
+                }
                 lote.append(
                     {
                         "contenido": chunk,
-                        "metadata": {
-                            "tema": tema,
-                            "archivo": ruta.name,
-                            "ruta": str(ruta),
-                        },
+                        "metadata": metadata,
                         "embedding": vector.tolist(),
                         "hash_origen": hash_txt,
                     }
                 )
+                stats[tipo] += 1
                 if len(lote) >= LOTE_INSERCION:
-                    volcar_lote()
+                    insertados, errores = insertar_lote(cliente, tabla, lote)
+                    insertados_archivo += insertados
+                    errores_archivo += errores
+                    lote.clear()
+            if lote:
+                insertados, errores = insertar_lote(cliente, tabla, lote)
+                insertados_archivo += insertados
+                errores_archivo += errores
 
-        volcar_lote()
-
-        total_chunks += len(chunks)
-        total_insertados += insertados_archivo
-        total_duplicados += duplicados_archivo
-        total_errores += errores_archivo
-        if insertados_archivo or duplicados_archivo or errores_archivo:
-            archivos_ok += 1
+        stats["insertados"] += insertados_archivo
+        stats["errores"] += errores_archivo
         print(
             f"    {len(chunks)} fragmentos: {insertados_archivo} insertados, "
-            f"{duplicados_archivo} duplicados, {errores_archivo} errores."
+            f"{errores_archivo} errores."
         )
 
-    print(
-        f"  RESUMEN {tema.upper()}: {total_chunks} fragmentos, "
-        f"{total_insertados} insertados, {total_duplicados} duplicados, "
-        f"{total_errores} errores, {archivos_ok} archivos con contenido."
-    )
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Ingesta de Coaches DepaFix")
-    parser.add_argument("--tema", type=str, default="todos", help="Tema específico o 'todos'")
-    parser.add_argument("--limpiar", action="store_true", help="Borrar tabla antes de insertar")
-    parser.add_argument("--dry-run", action="store_true", help="Simular sin escribir en DB")
-    args = parser.parse_args()
-
-    if args.tema == "todos":
-        temas_a_procesar = list(CONFIG_TEMAS.keys())
-    elif args.tema in CONFIG_TEMAS:
-        temas_a_procesar = [args.tema]
-    else:
-        print(f"[ERROR] Tema no válido: {args.tema}. Opciones: {list(CONFIG_TEMAS.keys())} o 'todos'")
-        sys.exit(1)
-
-    for t in temas_a_procesar:
-        ingestar_tema(t, limpiar=args.limpiar, dry_run=args.dry_run)
-
-    if not args.dry_run:
-        print("\nProceso finalizado.")
+    print("\n" + "=" * 50)
+    print(f"📊 RESUMEN DE INGESTA {args.elemento.upper()} -> {tabla}")
+    print("=" * 50)
+    print(f"  Archivos con texto:       {stats['archivos']}")
+    print(f"  Insertados en {tabla}: {stats['insertados']}")
+    for tipo in tipos:
+        print(f"  {tipo.capitalize():<28}{stats[tipo]}")
+    print(f"  Duplicados omitidos:      {stats['duplicados']}")
+    print(f"  Fragmentos no clasificados: {stats['omitidos']}")
+    print(f"  Errores:                  {stats['errores']}")
+    print("=" * 50)
 
 
 if __name__ == "__main__":

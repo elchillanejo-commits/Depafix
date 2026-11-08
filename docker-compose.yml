@@ -1,0 +1,18 @@
+services:
+  mente-360:
+    image: depafix-mente360:latest
+    container_name: depafix-agente
+    working_dir: /app
+    command: ["python", "-u", "mente_360.py"]
+    env_file:
+      - /home/ibar/.depafix_secrets
+      - /home/ibar/DepaFix_Maestro/.env
+    volumes:
+      - ./mente_360.py:/app/mente_360.py
+      - ./scripts:/app/scripts
+      - ./data:/app/data
+      - ./coaches:/app/coaches
+      - /home/ibar/.cache/huggingface:/root/.cache/huggingface
+    stdin_open: true
+    tty: true
+    restart: unless-stopped

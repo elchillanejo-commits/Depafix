@@ -1,0 +1,47 @@
+{
+  "id_cotizacion": "COT-20261106231137-C351EB",
+  "parametros_globales": {
+    "sku": "110226378",
+    "sku_solicitado": "110226378",
+    "descripcion": "Pintura Efecto Cemento Gris Cemento 0.25 l",
+    "categoria": "Otros artículos de escritorio o papelería",
+    "superficie_m2": 50.0,
+    "rendimiento_m2_por_galon": 15.0,
+    "desperdicio_pct": 10.0,
+    "margen_pct": 30.0,
+    "iva_pct": 19.0,
+    "moneda": "CLP",
+    "precio_unitario_neto": 10076.0,
+    "precio_unitario_lista": 11990.0,
+    "precio_fuente_url": "https://www.sodimac.cl/sodimac-cl/product/6168809/pintura-efecto-cemento-gris-cemento-025-l/6168809/",
+    "precio_fecha_scrapeo": "2026-11-06T22:17:56.483689+00:00",
+    "fecha_cotizacion": "2026-11-06T23:11:37.609792+00:00"
+  },
+  "partidas": [
+    {
+      "item": 1,
+      "sku": "110226378",
+      "descripcion": "Pintura Efecto Cemento Gris Cemento 0.25 l",
+      "unidad": "galón",
+      "superficie_m2": 50.0,
+      "rendimiento_m2_por_galon": 15.0,
+      "galones_teoricos": 3.3333,
+      "galones_con_desperdicio": 3.6667,
+      "galones_a_comprar": 4,
+      "precio_unitario_neto": 10076.0,
+      "precio_unitario_lista": 11990.0,
+      "costo_directo_neto": 40304.0,
+      "precio_venta_neto": 57577.14,
+      "iva": 10939.66,
+      "precio_venta_con_iva": 68516.8
+    }
+  ],
+  "resumen_financiero": {
+    "costo_directo_neto_total": 40304.0,
+    "precio_venta_neto_total": 57577.14,
+    "iva_total": 10939.66,
+    "precio_venta_con_iva_total": 68516.8,
+    "utilidad_neta_total": 17273.14,
+    "margen_utilidad_pct": 30.0
+  }
+}

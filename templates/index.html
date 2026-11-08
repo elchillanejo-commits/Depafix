@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>DepaFix Test Drive</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
+        .container { max-width: 980px; margin: auto; background: white; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); padding: 30px; }
+        h1 { color: #1a2a4a; text-align: center; }
+        .tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
+        .tab { padding: 10px 20px; cursor: pointer; font-weight: bold; color: #666; }
+        .tab.active { color: #1a2a4a; border-bottom: 3px solid #1a2a4a; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="file"], input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { background: #1a2a4a; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #2a4a7a; }
+        button:disabled { background: #999; cursor: not-allowed; }
+        button.btn-comprado { background: #27ae60; }
+        button.btn-comprado:hover { background: #1e8449; }
+        button.btn-comprado:disabled { background: #999; }
+        .resultado { margin-top: 20px; padding: 15px; border-radius: 5px; display: none; white-space: pre-line; }
+        .resultado.error { background: #fdecec; border-left: 5px solid #c0392b; color: #c0392b; }
+        .resultado.success { background: #e9f7ef; border-left: 5px solid #27ae60; color: #1e8449; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
+        th { background: #1a2a4a; color: white; }
+        td.num { text-align: right; font-variant-numeric: tabular-nums; }
+        th.num { text-align: right; }
+        /* Barra de progreso */
+        #progress-container { margin-top: 15px; display: none; }
+        #progress-bar { width: 100%; height: 20px; background: #eee; border-radius: 10px; overflow: hidden; }
+        #progress-fill { width: 0%; height: 100%; background: #1a2a4a; transition: width 0.1s; }
+        #progress-text { text-align: center; margin-top: 5px; font-size: 14px; color: #666; }
+        .file-info { margin-top: 8px; font-size: 14px; color: #555; }
+        a.btn-presupuesto { display: inline-block; margin-top: 10px; color: #1a2a4a; text-decoration: none; font-weight: bold; }
+        a.btn-presupuesto:hover { text-decoration: underline; }
+        /* Dashboard de materiales */
+        .acciones-materiales { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+        .acciones-materiales .form-group { flex: 1; min-width: 240px; margin-bottom: 0; }
+        #resumen-materiales { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+        .kpi { flex: 1; min-width: 140px; background: #f4f6f9; border: 1px solid #e1e5eb; border-radius: 8px; padding: 12px; text-align: center; font-size: 13px; color: #555; }
+        .kpi span { display: block; font-size: 20px; font-weight: bold; color: #1a2a4a; margin-bottom: 4px; }
+        .select-estado { padding: 7px 8px; border: 1px solid #ccc; border-radius: 5px; background: #fff; cursor: pointer; font-size: 14px; }
+        #msg-estado { margin-top: 12px; padding: 10px 12px; border-radius: 5px; display: none; }
+        #msg-estado.ok { background: #e9f7ef; border-left: 4px solid #27ae60; color: #1e8449; }
+        #msg-estado.error { background: #fdecec; border-left: 4px solid #c0392b; color: #c0392b; }
+        .vacio { color: #777; font-style: italic; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🚀 DepaFix Test Drive</h1>
+
+    <div class="tabs">
+        <div class="tab active" onclick="showTab('hito1')">📄 Cotizador</div>
+        <div class="tab" onclick="showTab('hito2')">📦 Materiales</div>
+    </div>
+
+    <div id="hito1" class="tab-content active">
+        <h2>Procesar PDF de Contratista</h2>
+        <form id="form-pdf">
+            <div class="form-group">
+                <label>Selecciona el PDF del contratista (máx. 16 MB):</label>
+                <input type="file" name="pdf" id="input-pdf" accept=".pdf" required>
+                <div id="file-info" class="file-info"></div>
+            </div>
+            <div class="form-group">
+                <label>Código de Proyecto:</label>
+                <input type="text" name="proyecto" id="input-proyecto" value="PRY-BLANCO-1313" required>
+            </div>
+            <div id="progress-container">
+                <div id="progress-bar"><div id="progress-fill"></div></div>
+                <div id="progress-text">0%</div>
+            </div>
+            <button type="submit" id="btn-enviar">Procesar y Generar Presupuesto</button>
+        </form>
+        <div id="resultado-hito1" class="resultado"></div>
+    </div>
+
+    <div id="hito2" class="tab-content">
+        <h2>Dashboard de Compras</h2>
+
+        <div class="acciones-materiales">
+            <div class="form-group">
+                <label>Código de Proyecto:</label>
+                <input type="text" id="proyecto-buscar" value="PRY-BLANCO-1313">
+            </div>
+            <button onclick="cargarMateriales()">🔍 Buscar</button>
+            <button id="btn-marcar-comprado" class="btn-comprado" onclick="marcarComoComprado()" disabled>
+                🛒 Marcar como Comprado
+            </button>
+        </div>
+
+        <div id="resumen-materiales"></div>
+        <div id="msg-estado"></div>
+
+        <table id="tabla-materiales">
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Descripción</th>
+                    <th class="num">Cantidad</th>
+                    <th class="num">Precio Real</th>
+                    <th class="num">Precio Cliente</th>
+                    <th>Estado de Compra</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="6" class="vacio">Ingresa un proyecto y pulsa Buscar.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const ESTADOS_COMPRA = ['pendiente', 'comprado', 'recibido'];
+    let materialesCache = [];
+    let proyectoActual = '';
+
+    function showTab(id) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.target.classList.add('active');
+        if (id === 'hito2' && !materialesCache.length) {
+            cargarMateriales();
+        }
+    }
+
+    const inputPdf = document.getElementById('input-pdf');
+    const fileInfo = document.getElementById('file-info');
+    inputPdf.addEventListener('change', () => {
+        const file = inputPdf.files[0];
+        if (file) {
+            const mb = (file.size / (1024 * 1024)).toFixed(2);
+            fileInfo.textContent = `Archivo: ${file.name} (${mb} MB)`;
+            if (file.size > 16 * 1024 * 1024) {
+                fileInfo.textContent += ' ⚠️ Supera el límite de 16 MB';
+                fileInfo.style.color = '#c0392b';
+            } else {
+                fileInfo.style.color = '#555';
+            }
+        } else {
+            fileInfo.textContent = '';
+        }
+    });
+
+    function mostrarResultado(texto, esError, urlPresupuesto) {
+        const div = document.getElementById('resultado-hito1');
+        div.style.display = 'block';
+        div.className = 'resultado ' + (esError ? 'error' : 'success');
+        div.textContent = texto;
+        if (!esError && urlPresupuesto) {
+            window.location.href = urlPresupuesto;
+        }
+    }
+
+    document.getElementById('form-pdf').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const file = inputPdf.files[0];
+        if (!file) {
+            mostrarResultado('❌ Error: selecciona un archivo PDF.', true);
+            return;
+        }
+        if (file.size > 16 * 1024 * 1024) {
+            mostrarResultado('❌ Error: el archivo supera los 16 MB permitidos.', true);
+            return;
+        }
+
+        const proyecto = document.getElementById('input-proyecto').value.trim();
+        if (!proyecto || !/^[A-Za-z0-9_-]+$/.test(proyecto)) {
+            mostrarResultado('❌ Error: código de proyecto inválido (usa solo letras, números, guion y guion bajo).', true);
+            return;
+        }
+
+        const btn = document.getElementById('btn-enviar');
+        const progressContainer = document.getElementById('progress-container');
+        const progressFill = document.getElementById('progress-fill');
+        const progressText = document.getElementById('progress-text');
+        const resultado = document.getElementById('resultado-hito1');
+
+        btn.disabled = true;
+        btn.textContent = 'Procesando...';
+        resultado.style.display = 'none';
+        progressContainer.style.display = 'block';
+        progressFill.style.width = '0%';
+        progressText.textContent = '0%';
+
+        const formData = new FormData();
+        formData.append('pdf', file);
+        formData.append('proyecto', proyecto);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/procesar', true);
+
+        xhr.upload.addEventListener('progress', (event) => {
+            if (event.lengthComputable) {
+                const percent = Math.round((event.loaded / event.total) * 100);
+                progressFill.style.width = percent + '%';
+                progressText.textContent = percent + '%';
+            }
+        });
+
+        xhr.onload = () => {
+            btn.disabled = false;
+            btn.textContent = 'Procesar y Generar Presupuesto';
+            progressContainer.style.display = 'none';
+            let data;
+            try {
+                data = JSON.parse(xhr.responseText);
+            } catch {
+                mostrarResultado('❌ Error: respuesta inválida del servidor.', true);
+                return;
+            }
+            if (xhr.status >= 200 && xhr.status < 300 && data.success) {
+                mostrarResultado(
+                    `✅ Éxito: ${data.message}\nTotal Cliente: $${(data.data?.total_cliente ?? 0).toLocaleString()}`,
+                    false,
+                    `/ver_presupuesto/${encodeURIComponent(proyecto)}`
+                );
+            } else {
+                mostrarResultado(`❌ Error: ${data?.error || 'Error desconocido'}`, true);
+            }
+        };
+
+        xhr.onerror = () => {
+            btn.disabled = false;
+            btn.textContent = 'Procesar y Generar Presupuesto';
+            progressContainer.style.display = 'none';
+            mostrarResultado('❌ Error de conexión con el servidor.', true);
+        };
+
+        xhr.send(formData);
+    });
+
+    // ==================== DASHBOARD DE MATERIALES ====================
+
+    function capitalizar(texto) {
+        const t = String(texto || '').toLowerCase();
+        return t.charAt(0).toUpperCase() + t.slice(1);
+    }
+
+    function mensajeEstado(texto, esError) {
+        const div = document.getElementById('msg-estado');
+        div.style.display = 'block';
+        div.className = esError ? 'error' : 'ok';
+        div.textContent = texto;
+        if (!esError) {
+            setTimeout(() => { div.style.display = 'none'; }, 4000);
+        }
+    }
+
+    async function cargarMateriales() {
+        const proyecto = document.getElementById('proyecto-buscar').value.trim();
+        if (!/^[A-Za-z0-9_-]+$/.test(proyecto)) {
+            mensajeEstado('❌ Código de proyecto inválido.', true);
+            return;
+        }
+
+        const tbody = document.querySelector('#tabla-materiales tbody');
+        tbody.innerHTML = '<tr><td colspan="6">Cargando...</td></tr>';
+
+        try {
+            const res = await fetch(`/api/materiales/${encodeURIComponent(proyecto)}`);
+            const data = await res.json();
+            if (!data.success) {
+                throw new Error(data.error || 'Error al consultar materiales');
+            }
+            materialesCache = data.data || [];
+            proyectoActual = proyecto;
+            renderMateriales();
+            document.getElementById('btn-marcar-comprado').disabled = materialesCache.length === 0;
+        } catch (e) {
+            materialesCache = [];
+            proyectoActual = '';
+            document.getElementById('btn-marcar-comprado').disabled = true;
+            document.getElementById('resumen-materiales').innerHTML = '';
+            tbody.innerHTML = `<tr><td colspan="6">❌ ${escapeHtml(e.message)}</td></tr>`;
+        }
+    }
+
+    function renderMateriales() {
+        const tbody = document.querySelector('#tabla-materiales tbody');
+        tbody.innerHTML = '';
+
+        if (!materialesCache.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="vacio">Sin materiales para este proyecto.</td></tr>';
+            renderResumen();
+            return;
+        }
+
+        materialesCache.forEach(m => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${escapeHtml(m.material_sku)}</td>
+                <td>${escapeHtml(m.descripcion)}</td>
+                <td class="num">${escapeHtml(m.cantidad_aprobada)}</td>
+                <td class="num">$${Number(m.precio_unitario_real_clp || 0).toLocaleString()}</td>
+                <td class="num">$${Number(m.precio_unitario_cliente_clp || 0).toLocaleString()}</td>
+                <td>${selectorEstado(m)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        tbody.querySelectorAll('.select-estado').forEach(sel => {
+            sel.addEventListener('change', (e) => actualizarEstado(e.target.dataset.id, e.target.value));
+        });
+
+        renderResumen();
+    }
+
+    function selectorEstado(m) {
+        const actual = String(m.estado_compra || 'pendiente').toLowerCase();
+        const opciones = ESTADOS_COMPRA.includes(actual) ? ESTADOS_COMPRA : [actual, ...ESTADOS_COMPRA];
+        const opcionesHtml = opciones
+            .map(o => `<option value="${o}" ${o === actual ? 'selected' : ''}>${capitalizar(o)}</option>`)
+            .join('');
+        return `<select class="select-estado" data-id="${escapeHtml(m.id)}">${opcionesHtml}</select>`;
+    }
+
+    function renderResumen() {
+        const cont = document.getElementById('resumen-materiales');
+        const conteo = { pendiente: 0, comprado: 0, recibido: 0, otro: 0 };
+        let totalReal = 0;
+        let totalCliente = 0;
+
+        materialesCache.forEach(m => {
+            const estado = String(m.estado_compra || 'pendiente').toLowerCase();
+            if (estado in conteo) {
+                conteo[estado] += 1;
+            } else {
+                conteo.otro += 1;
+            }
+            const cantidad = Number(m.cantidad_aprobada || 0);
+            totalReal += cantidad * Number(m.precio_unitario_real_clp || 0);
+            totalCliente += cantidad * Number(m.precio_unitario_cliente_clp || 0);
+        });
+
+        cont.innerHTML = `
+            <div class="kpi"><span>${conteo.pendiente}</span>Pendiente</div>
+            <div class="kpi"><span>${conteo.comprado}</span>Comprado</div>
+            <div class="kpi"><span>${conteo.recibido}</span>Recibido</div>
+            <div class="kpi"><span>$${Math.round(totalReal).toLocaleString()}</span>Costo Real</div>
+            <div class="kpi"><span>$${Math.round(totalCliente).toLocaleString()}</span>Venta Cliente</div>
+        `;
+    }
+
+    async function enviarEstado(estado, ids) {
+        const res = await fetch('/api/materiales/estado', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                proyecto: proyectoActual,
+                estado: estado,
+                ...(ids ? { ids: ids } : {})
+            })
+        });
+        const data = await res.json();
+        if (!data.success) {
+            throw new Error(data.error || 'Error al actualizar el estado');
+        }
+        return data.data;
+    }
+
+    async function actualizarEstado(id, estado) {
+        try {
+            const resultado = await enviarEstado(estado, [Number(id)]);
+            const fila = materialesCache.find(m => String(m.id) === String(id));
+            if (fila) {
+                fila.estado_compra = estado;
+            }
+            renderResumen();
+            mensajeEstado(`✅ ${resultado.actualizados} partida(s) → ${capitalizar(estado)}.`, false);
+        } catch (e) {
+            mensajeEstado(`❌ ${e.message}`, true);
+            renderMateriales();
+        }
+    }
+
+    async function marcarComoComprado() {
+        if (!materialesCache.length || !proyectoActual) {
+            mensajeEstado('❌ Primero carga los materiales de un proyecto.', true);
+            return;
+        }
+        const confirmacion = confirm(
+            `¿Marcar ${materialesCache.length} partida(s) de ${proyectoActual} como Comprado?`
+        );
+        if (!confirmacion) return;
+
+        const btn = document.getElementById('btn-marcar-comprado');
+        btn.disabled = true;
+        try {
+            const resultado = await enviarEstado('comprado', null);
+            materialesCache.forEach(m => { m.estado_compra = 'comprado'; });
+            renderMateriales();
+            mensajeEstado(`✅ ${resultado.actualizados} partida(s) marcada(s) como Comprado.`, false);
+        } catch (e) {
+            mensajeEstado(`❌ ${e.message}`, true);
+        } finally {
+            btn.disabled = materialesCache.length === 0;
+        }
+    }
+
+    function escapeHtml(texto) {
+        if (texto == null) return '';
+        const div = document.createElement('div');
+        div.textContent = String(texto);
+        return div.innerHTML;
+    }
+</script>
+</body>
+</html>

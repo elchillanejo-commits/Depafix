@@ -1,0 +1,11 @@
+ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('ViewDefinition [CoordinationView]'),'2;1');
+FILE_NAME('','2026-11-06T18:55:34',(''),(''),'IfcOpenShell 0.9.0post1+b5e509b','IfcOpenShell 0.9.0post1+b5e509b','');
+FILE_SCHEMA(('IFC4'));
+ENDSEC;
+DATA;
+#1=IFCPROJECT('3miq7J7QD4QwxYuTA3QPJb',$,'DepaFix-Test',$,$,$,$,$,$);
+#2=IFCWALL('2tzscJb5z50wd2ozArbUp0',$,'Muro-Prueba-Tierra',$,$,$,$,$,$);
+ENDSEC;
+END-ISO-10303-21;

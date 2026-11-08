@@ -1,0 +1,1015 @@
+partidas:
+- codigo: CER-001
+  nombre: Instalación de Cerámica Muros y Pisos
+  unidad: m²
+  precio_unitario: 16500
+- codigo: TAB-002
+  nombre: Tabiquería Volcanita 10mm
+  unidad: m²
+  precio_unitario: 22000
+- codigo: 2MONTAN
+  nombre: PERFIL C METALCON ESTRUCTURAL METAL 62X20X0.85
+  unidad: un
+  precio_unitario: 15084398976982098
+- codigo: 2CMBA
+  nombre: CONTENEDOR ADAPTADO COMO BATERIA DE BAÑO (3 LAVAMANOS, 3 WC, 3 DUCHAS)
+  unidad: un
+  precio_unitario: 12787723785166240
+- codigo: 2CMOF1
+  nombre: Contenedor Oficina De 20´ Forrada Con Aire Acondicionado
+  unidad: un
+  precio_unitario: 11773657289002556
+- codigo: 2PLAHOJA
+  nombre: PLANCHA RECUBRIMIENTO ZINC ACANALADA 0.35MM 85.1X250 AZM80
+  unidad: un
+  precio_unitario: 9792441943734016
+- codigo: 2CMCO
+  nombre: Contenedor Oficina De 20´ Con Lavaplatos Y Sin Aire Acondicionado Para Comedor
+  unidad: un
+  precio_unitario: 8562659846547314
+- codigo: 2CMOF2
+  nombre: Contenedor Oficina De 20´ Forrada Sin Aire Acondicionado Para Vestidor Y/O
+    Comedor Auxiliar
+  unidad: un
+  precio_unitario: 7135549872122762
+- codigo: 2CMBO
+  nombre: Contenedor Bodega De 20´
+  unidad: un
+  precio_unitario: 6138107416879795
+- codigo: 2PLOSB9
+  nombre: PLANCHA OSB 9.5MM
+  unidad: un
+  precio_unitario: 35063405797101448
+- codigo: 2TERFENO
+  nombre: TERCIADO MOLDAJE 18MM FENÓLICO
+  unidad: un
+  precio_unitario: 3487160326086957
+- codigo: 2HOG10
+  nombre: HORMIGON H30 TX- BÁSICO 25 KGS
+  unidad: un
+  precio_unitario: 16080306905370844
+- codigo: 2PERMET
+  nombre: PERFIL CUADRADO 100X100X3MM
+  unidad: un
+  precio_unitario: 7227962489343564
+- codigo: 2CASEA1
+  nombre: Caseta De Guardias
+  unidad: un
+  precio_unitario: 5630406138107417
+- codigo: 2PIN2X3
+  nombre: PINO BRUTO 2X3"
+  unidad: un
+  precio_unitario: 5434782608695652
+- codigo: 2VAR
+  nombre: VARIOS PARA HABILITACIÓN
+  unidad: un
+  precio_unitario: 41326825563324808
+- codigo: 2ESMAL
+  nombre: ESMALTE AL AGUA SEMIBRILLO SIPA 4 GALONES
+  unidad: un
+  precio_unitario: 3496764705882353
+- codigo: 2FIEL
+  nombre: FIELTRO ASFALTICO LISO 10/40
+  unidad: un
+  precio_unitario: 29117647058823532
+- codigo: 2CHAP
+  nombre: CHAPAS PARA PUERTAS CERRADURA CON LLAVE
+  unidad: un
+  precio_unitario: 28608695652173916
+- codigo: 2DISC9
+  nombre: DISCO DE CORTE 9MM METAL
+  unidad: un
+  precio_unitario: 2672634271099744
+- codigo: 2PERCUA
+  nombre: PERFIL CUADRADO 50X50X2MM
+  unidad: un
+  precio_unitario: 2358397271952259
+- codigo: 2CEMSC
+  nombre: Saco Cemento 25 Kg
+  unidad: un
+  precio_unitario: 17647058823529412
+- codigo: 2DISMAD
+  nombre: CEMENTO ESPECIAL BIOBIO 25 KG
+  unidad: un
+  precio_unitario: 4900255754475703
+- codigo: SUB-TOTAL DE MATERIALES
+  nombre: nan
+  unidad: un
+  precio_unitario: 8377417030380035
+- codigo: 3CARP
+  nombre: Carpintero
+  unidad: un
+  precio_unitario: 6863938618925832
+- codigo: 3JORN
+  nombre: Jornalero
+  unidad: un
+  precio_unitario: 39948849104859336
+- codigo: 3MAEL
+  nombre: Maestro Electrico De Primera
+  unidad: un
+  precio_unitario: 3268542199488491
+- codigo: 3SOLD
+  nombre: Soldador Est.Metalica
+  unidad: un
+  precio_unitario: 10895140664961636
+- codigo: SUB-TOTAL DE MAQUINARIA Y EQUIPOS
+  nombre: nan
+  unidad: un
+  precio_unitario: 1521687979539642
+- codigo: 4TCOHR
+  nombre: CAMIÓN GRUA PLUMA
+  unidad: un
+  precio_unitario: 1947826086956522
+- codigo: 4TRAS.CONT1
+  nombre: TRASLADO CASETA DE GUARDIAS
+  unidad: un
+  precio_unitario: 1688
+- codigo: SUB-TOTAL DE FLETES Y TRANSPORTES
+  nombre: nan
+  unidad: un
+  precio_unitario: 36358260869565216
+- codigo: TOTAL COSTO DIRECTO
+  nombre: nan
+  unidad: un
+  precio_unitario: 10262687618615328
+- codigo: TOTAL DEL ITEM
+  nombre: nan
+  unidad: un
+  precio_unitario: 10262687618615328
+- codigo: 1CORPAV
+  nombre: Cortadora De Pavimento
+  unidad: un
+  precio_unitario: 5115089514066497
+- codigo: 2HORH30
+  nombre: Hormigón G25
+  unidad: un
+  precio_unitario: 1617
+- codigo: 2HERBE1
+  nombre: Herbicida bazooka 1 lt anasac
+  unidad: un
+  precio_unitario: 1559608695652174
+- codigo: 2ELASE1
+  nombre: Elastosello 111 300 ml gris sista
+  unidad: un
+  precio_unitario: 27468030690537084
+- codigo: 2TINEE1
+  nombre: Tineta 18 Lts Membrana De Curado Antisol
+  unidad: un
+  precio_unitario: 7947253922882026
+- codigo: 3MAPR
+  nombre: Maestro De Primera
+  unidad: un
+  precio_unitario: 30869565217391304
+- codigo: 3CONC
+  nombre: Concretero
+  unidad: un
+  precio_unitario: 4630434782608695
+- codigo: SUB-TOTAL DE MANO DE OBRA
+  nombre: nan
+  unidad: un
+  precio_unitario: 42491048593350384
+- codigo: 7BOMBEO
+  nombre: Servicio De Bombeo
+  unidad: un
+  precio_unitario: 245
+- codigo: SUB-TOTAL DE
+  nombre: nan
+  unidad: un
+  precio_unitario: 245
+- codigo: 1CAMTOLV
+  nombre: Camion Tolva
+  unidad: un
+  precio_unitario: 19335038363171356
+- codigo: 1MOTOE1
+  nombre: Motoniveladora 200 Hp
+  unidad: un
+  precio_unitario: 13803580562659844
+- codigo: 1RA10
+  nombre: Rodillo Compactador 10 Ton
+  unidad: un
+  precio_unitario: 4
+- codigo: 2BASE
+  nombre: Base Estabilizada
+  unidad: un
+  precio_unitario: 25895140664961636
+- codigo: 2PETRO
+  nombre: Petroleo Sin I/E
+  unidad: un
+  precio_unitario: 76726342710997440
+- codigo: 1MOPAV
+  nombre: Molde Pavimentación 15x18
+  unidad: un
+  precio_unitario: 38235294117647056
+- codigo: 2HORH35
+  nombre: Hormigón G35
+  unidad: un
+  precio_unitario: 3497
+- codigo: 2CEVI
+  nombre: Cercha Vibradora Bencinera 3,5mt
+  unidad: un
+  precio_unitario: 159846547314578
+- codigo: 2BESE
+  nombre: Bencina Sin I/E
+  unidad: un
+  precio_unitario: 38363171355498720
+- codigo: 3AYUD
+  nombre: Ayudante
+  unidad: un
+  precio_unitario: 6809462915601024
+- codigo: 1CN15
+  nombre: Camión Tolva 15 M3
+  unidad: un
+  precio_unitario: 17428236672524896
+- codigo: 1RLDT10
+  nombre: Rodillo Liso Doble Tambor De 10 Ton
+  unidad: un
+  precio_unitario: 23
+- codigo: 1RN27
+  nombre: Rodillo Neumático Dynapac Cp-27
+  unidad: un
+  precio_unitario: 2
+- codigo: 1CNA10
+  nombre: Camion Aljibe 10 M3
+  unidad: un
+  precio_unitario: 17574692442882248
+- codigo: 1FIN275
+  nombre: Finisher Asfáltica 50 Ton/Hora
+  unidad: un
+  precio_unitario: 9590792838874682
+- codigo: 2ASFALTO
+  nombre: Asfalto De Planta
+  unidad: un
+  precio_unitario: 23657289002557548
+- codigo: 2PETRL
+  nombre: Petroleo Con I/E
+  unidad: un
+  precio_unitario: 8899716377725537
+- codigo: 3SUP
+  nombre: Supervisor
+  unidad: un
+  precio_unitario: 34047314578005116
+- codigo: 2HORH15
+  nombre: Hormigón G15
+  unidad: un
+  precio_unitario: 17388
+- codigo: 2SOLEE2
+  nombre: Solera Tipo A
+  unidad: un
+  precio_unitario: 15216445012787724
+- codigo: 2SIKAE1
+  nombre: Sika Antisol Bidon 4,5 Litros
+  unidad: un
+  precio_unitario: 10787155441886902
+- codigo: 2SOLEH1
+  nombre: Solerilla Canto Redondo, Gris
+  unidad: un
+  precio_unitario: 11122506393861892
+- codigo: 2ARENA
+  nombre: Arena
+  unidad: un
+  precio_unitario: 5754475703324808
+- codigo: 2RIPIO
+  nombre: Ripio
+  unidad: un
+  precio_unitario: 3452685421994885
+- codigo: 3ALBA
+  nombre: Albañil
+  unidad: un
+  precio_unitario: 3631713554987212
+- codigo: 2CAMARE
+  nombre: Cama Arena E=10cm
+  unidad: un
+  precio_unitario: 61764705882352944
+- codigo: 2REJIE2
+  nombre: Rejilla Fierro fundido
+  unidad: un
+  precio_unitario: 46340153452685424
+- codigo: 1BETO
+  nombre: Betonera 11p 7,5hp Mes=208h
+  unidad: un
+  precio_unitario: 9665217391304348
+- codigo: 2GRAVE1
+  nombre: Grava c/flete 15km
+  unidad: un
+  precio_unitario: 2453132992327366
+- codigo: 2ADITE2
+  nombre: Aditivo ultra endurecedor bidon de 4,5lt del fraguado del cemento SIKA 2
+  unidad: un
+  precio_unitario: 1675319693094629
+- codigo: 2AGUA
+  nombre: Agua Industrial
+  unidad: un
+  precio_unitario: 12787723785166242
+- codigo: 2ACERO
+  nombre: Acero Para Armaduras
+  unidad: un
+  precio_unitario: 2282608695652174
+- codigo: 2AL003
+  nombre: 'Alambre #18'
+  unidad: un
+  precio_unitario: 5347239130434782
+- codigo: 3ENFI
+  nombre: Enfierrador
+  unidad: un
+  precio_unitario: 16140949133276504
+- codigo: 3MASE
+  nombre: Maestro De Segunda
+  unidad: un
+  precio_unitario: 10088093208297812
+- codigo: 22X2'E1
+  nombre: 2x2' X 3.2m Pino Dimensionado Verde
+  unidad: un
+  precio_unitario: 5179028132992328
+- codigo: 215MME1
+  nombre: 15MM 1.22X2.44M Terciado moldaje pino
+  unidad: un
+  precio_unitario: 3739687940165265
+- codigo: 2CLAV3.0
+  nombre: Clavo Corriente 3"
+  unidad: un
+  precio_unitario: 12854219948849104
+- codigo: 2MORTE1
+  nombre: Mortero 297,5 Kg/Cem/M3
+  unidad: un
+  precio_unitario: 3964194373401535
+- codigo: 2ADITE1
+  nombre: Aditivo Impermeabilizante Sika-1 200 Kg
+  unidad: un
+  precio_unitario: 3384552429667519
+- codigo: 3ESTU
+  nombre: Estucador
+  unidad: un
+  precio_unitario: 10168797953964194
+- codigo: 1MINICARG
+  nombre: Minicargador Marca Bobcat S-510
+  unidad: un
+  precio_unitario: 1939471440750213
+- codigo: 1RECH
+  nombre: Excavadora Pc200
+  unidad: un
+  precio_unitario: 18214285714285712
+- codigo: 2DEREE1
+  nombre: Derecho A Botadero
+  unidad: un
+  precio_unitario: 9667519181585678
+- codigo: 7TRANSP
+  nombre: Transporte
+  unidad: un
+  precio_unitario: 21319028132992328
+- codigo: 2BOMB5,5HP
+  nombre: Bomba Pedrollo F32/200a Hp 380v
+  unidad: un
+  precio_unitario: 14831567409572526
+- codigo: 2HIDRE3
+  nombre: Hidroneumático 750 Lts Rojo Varem O Similar
+  unidad: un
+  precio_unitario: 12198800747920652
+- codigo: 2VALVD10
+  nombre: Válvula De Corte 3"
+  unidad: un
+  precio_unitario: 7673411764705882
+- codigo: 2BOMBA1HP
+  nombre: Bomba Pedrollo Serie Top 4 1 Hp
+  unidad: un
+  precio_unitario: 25968900255754476
+- codigo: 2VALVF5
+  nombre: Valvula Solenoide Danfoss Ev220b
+  unidad: un
+  precio_unitario: 16241870661308004
+- codigo: 2JUDIF2
+  nombre: Junta De Dilatación 3"
+  unidad: un
+  precio_unitario: 11553554987212276
+- codigo: 2CAÑED10
+  nombre: Cañería Acero Galvanizado 8" X 6mts
+  unidad: un
+  precio_unitario: 108582
+- codigo: 2VALVF6
+  nombre: Valvula Flotador 2"
+  unidad: un
+  precio_unitario: 4727804165144319
+- codigo: 2TUBOD10
+  nombre: Tubería Ppr 63 Pn-16
+  unidad: un
+  precio_unitario: 3685605285592498
+- codigo: 2PRESD1
+  nombre: Presoestato Danfoss
+  unidad: un
+  precio_unitario: 27918072599883944
+- codigo: 2VALVD9
+  nombre: Valvula De Corte 50mm
+  unidad: un
+  precio_unitario: 13628489759074986
+- codigo: 2CAÑED6
+  nombre: Cañería Acero Galvanizado 4"
+  unidad: un
+  precio_unitario: 6947996589940324
+- codigo: 2CANASD1
+  nombre: Canastillo Succionador 3"
+  unidad: un
+  precio_unitario: 3004577790195362
+- codigo: 3GASF
+  nombre: Gasfiter Primera
+  unidad: un
+  precio_unitario: 6373657289002558
+- codigo: 4CAPL1
+  nombre: Camión Pluma
+  unidad: un
+  precio_unitario: 7365728900255754
+- codigo: 2PICAD1
+  nombre: Pintura De Calzada E=10cms
+  unidad: un
+  precio_unitario: 31416879795396424
+- codigo: 2PIESD1
+  nombre: Pintura De Estacionamientos Minusválidos
+  unidad: un
+  precio_unitario: 8769820971867007
+- codigo: 2SEÑAD5
+  nombre: Flecha
+  unidad: un
+  precio_unitario: 17902813299232736
+- codigo: 2SEÑAD3
+  nombre: Ceda El Paso
+  unidad: un
+  precio_unitario: 13427109974424552
+- codigo: 2SEÑAD4
+  nombre: Disco Pare
+  unidad: un
+  precio_unitario: 13427109974424552
+- codigo: 2SEÑAD2
+  nombre: Señaletica Horizontal Estacionamiento Discapacitado
+  unidad: un
+  precio_unitario: 13427109974424552
+- codigo: 2SEÑAD6
+  nombre: Paso De Cebra 140x30 Cm
+  unidad: un
+  precio_unitario: 4846547314578005
+- codigo: 2SOLEE3
+  nombre: Solera Tipo C
+  unidad: un
+  precio_unitario: 8951406649616368
+- codigo: 1PLCO2000
+  nombre: Placa Compactadora 55/65 Kg
+  unidad: un
+  precio_unitario: 49104859335038368
+- codigo: 3CUADOC
+  nombre: Cuadrilla Obras Civiles
+  unidad: un
+  precio_unitario: 4055754475703324
+- codigo: 2EXCAD5
+  nombre: Excavaciones Para Alcantarillado
+  unidad: un
+  precio_unitario: 10582097186700768
+- codigo: 6SCESC
+  nombre: S/C Extracción Escombros
+  unidad: un
+  precio_unitario: 4661125319693095
+- codigo: SUB-TOTAL DE SUBCONTRATOS
+  nombre: nan
+  unidad: un
+  precio_unitario: 4661125319693095
+- codigo: 1MDEM
+  nombre: Martillo Demoledor Bosch Mod 11305
+  unidad: un
+  precio_unitario: 14383631713554988
+- codigo: 1CO10
+  nombre: Compresor 5.5 Hp 9.7 Bar 10 Cfm
+  unidad: un
+  precio_unitario: 30447570332480816
+- codigo: 2HORG30
+  nombre: Hormigón Gre 30-90-25-10
+  unidad: un
+  precio_unitario: 33610768542199492
+- codigo: 2ELASC1
+  nombre: ELASTOSELLO 111 300ML GRIS SISTA
+  unidad: un
+  precio_unitario: 6867007672634271
+- codigo: 2PINO.SECO.1X8
+  nombre: Pino Dimensionado Seco 1x8" X 3.2m
+  unidad: un
+  precio_unitario: 30155051150895144
+- codigo: 2TUBED13
+  nombre: Tubería Colector 200
+  unidad: un
+  precio_unitario: 5016069906223359
+- codigo: 2HORH10
+  nombre: Hormigón G10
+  unidad: un
+  precio_unitario: 995
+- codigo: 2CAMAE2
+  nombre: Camara De Inspección Tipo B (1,30x1,00)
+  unidad: un
+  precio_unitario: 11111074168797954
+- codigo: 2LAFIS
+  nombre: Ladrillo Fiscal
+  unidad: un
+  precio_unitario: 10137468030690536
+- codigo: 2TAPAE1
+  nombre: Rejilla Cámara
+  unidad: un
+  precio_unitario: 5882352941176471
+- codigo: 2MARCE1
+  nombre: Marco Cámara
+  unidad: un
+  precio_unitario: 22421994884910488
+- codigo: 2VARIE1
+  nombre: Varios
+  unidad: un
+  precio_unitario: 767263427
+- codigo: 3ALCA
+  nombre: Alcantarillero
+  unidad: un
+  precio_unitario: 30506393861892588
+- codigo: 2TAPAD1
+  nombre: Tapa camara 60x60cm
+  unidad: un
+  precio_unitario: 29942455242966752
+- codigo: 2MARCD1
+  nombre: Marco camara 60x60 cm
+  unidad: un
+  precio_unitario: 23543094629156016
+- codigo: 2TUBEE6
+  nombre: Tubo Colector D=250 Mm
+  unidad: un
+  precio_unitario: 9631202046035806
+- codigo: 2TEED5
+  nombre: Tee PVC 110
+  unidad: un
+  precio_unitario: 4301790281329923
+- codigo: 2SETD1
+  nombre: Set canaleta con rejilla galvanizada a 15 largo 1m ancho 130mm alto 98mm
+  unidad: un
+  precio_unitario: 5307416879795397
+- codigo: 2CUBOE1
+  nombre: Cubodren 26 Ton 395x425mm
+  unidad: un
+  precio_unitario: 2448111253196931
+- codigo: 2GEO03
+  nombre: Geotextil Para Drenaje
+  unidad: un
+  precio_unitario: 3351406649616369
+- codigo: 2GRAVE2
+  nombre: Gravilla Tmáx 1,5"
+  unidad: un
+  precio_unitario: 3276214833759591
+- codigo: 2MOFU
+  nombre: Moldaje
+  unidad: un
+  precio_unitario: 25754271099744244
+- codigo: 2MORTE2
+  nombre: Mortero Impermeable Tipo Sika 20 Kgs
+  unidad: un
+  precio_unitario: 24014829461196244
+- codigo: 2ESCAF1
+  nombre: Escalin Galvanizado 300x200 Diametro Barra 3/4"
+  unidad: un
+  precio_unitario: 10012787723785166
+- codigo: 2TERFEN
+  nombre: Terciado Fenolico Moldaje Dilmm 1,22x2,44
+  unidad: un
+  precio_unitario: 5905859008908495
+- codigo: 2HORH05
+  nombre: Hormigón G05
+  unidad: un
+  precio_unitario: 368368
+- codigo: 2MALLF1
+  nombre: Malla Galvanizada Protección
+  unidad: un
+  precio_unitario: 23955184450127876
+- codigo: 2TAPAE2
+  nombre: Tapa cámara 60x60cm
+  unidad: un
+  precio_unitario: 22813299232736576
+- codigo: 2MOLLOS
+  nombre: Moldaje Losa (Tripode, Viga, Puntal)
+  unidad: un
+  precio_unitario: 15661681841432228
+- codigo: 2DESMOL
+  nombre: Desmoldante Tineta 16 L
+  unidad: un
+  precio_unitario: 11674124930946292
+- codigo: 2SEP1
+  nombre: Separadores
+  unidad: un
+  precio_unitario: 10874025575447572
+- codigo: 2REBLOS
+  nombre: Rebalse De Losa
+  unidad: un
+  precio_unitario: 10532992327365728
+- codigo: 2ALZAPRIMA
+  nombre: Alzaprimas
+  unidad: un
+  precio_unitario: 5371826086956522
+- codigo: 2TREPA
+  nombre: Plataforma De Trepado
+  unidad: un
+  precio_unitario: 3580588823987284
+- codigo: 2ADITIVOB1
+  nombre: Aditivo Ultra Endurecedor Bidon De 4,5 Lts Del Fraguado De Cemento Sika
+    2
+  unidad: un
+  precio_unitario: 3350639386189258
+- codigo: 2POMEL80
+  nombre: Pomel 1/2 X 80 Mm 2uni
+  unidad: un
+  precio_unitario: 24552429667519184
+- codigo: 2PORTE1
+  nombre: Porta candado 3"
+  unidad: un
+  precio_unitario: 22260869565217392
+- codigo: 2SEP2
+  nombre: Separadores Torre 15mm Sc 500 Unid
+  unidad: un
+  precio_unitario: 9727803580562660
+- codigo: 3CARPOG
+  nombre: Carpintero Obra Gruesa
+  unidad: un
+  precio_unitario: 28074987017673524
+- codigo: 3JOCA
+  nombre: Jornal Capachero
+  unidad: un
+  precio_unitario: 35177177109974424
+- codigo: 6MEC.SUELOS
+  nombre: Visita Mecánico De Suelos
+  unidad: un
+  precio_unitario: 5389870435806832
+- codigo: 2INTED37
+  nombre: Interruptor Diferencial 4x25a-30ma
+  unidad: un
+  precio_unitario: 2682026263190698
+- codigo: 2GABID5
+  nombre: Gabinete Metálico 1200x600x200mm
+  unidad: un
+  precio_unitario: 12915601023017904
+- codigo: 2INTED15
+  nombre: Interruptor Automatico 4x100/160a 36ka
+  unidad: un
+  precio_unitario: 6849577682735498
+- codigo: 2INTED35
+  nombre: Interruptor Automático 3x32a 10ka
+  unidad: un
+  precio_unitario: 4980227385071675
+- codigo: 2CONTD3
+  nombre: Contactor 32 A
+  unidad: un
+  precio_unitario: 4242515420490447
+- codigo: 2BALID1
+  nombre: Baliza
+  unidad: un
+  precio_unitario: 7713469019321284
+- codigo: 2INTED36
+  nombre: Interruptor Automático 3x16a 6ka
+  unidad: un
+  precio_unitario: 7388940230823787
+- codigo: 2INTED5
+  nombre: INTERRUPTOR DIFERENCIAL 2X25A 30MA
+  unidad: un
+  precio_unitario: 7302972339831073
+- codigo: 2INTED23
+  nombre: Interruptor Automatico 1x10a 10ka
+  unidad: un
+  precio_unitario: 5857852092243547
+- codigo: 2FUSID1
+  nombre: Fusible 3x2a
+  unidad: un
+  precio_unitario: 12521223323088826
+- codigo: 2LUCED1
+  nombre: Luces Piloto Rojas
+  unidad: un
+  precio_unitario: 8871886350448108
+- codigo: 1PC300
+  nombre: Retroexcavadora Pc 300
+  unidad: un
+  precio_unitario: 27
+- codigo: 1PIC
+  nombre: Picoton
+  unidad: un
+  precio_unitario: 13
+- codigo: 3CAPA
+  nombre: Capataz
+  unidad: un
+  precio_unitario: 7263427109974425
+- codigo: 3OPE
+  nombre: Operador
+  unidad: un
+  precio_unitario: 5447570332480819
+- codigo: 1GRUPB1
+  nombre: Arriendo Grupo Electrógeno 70 Kva
+  unidad: un
+  precio_unitario: 4475594232198774
+- codigo: 7BOMB1
+  nombre: Servicio De Bombeo Placer Estacionaria
+  unidad: un
+  precio_unitario: 5468616702467877
+- codigo: 1REDEM
+  nombre: Retroexcavadora Con Acc. Demolición
+  unidad: un
+  precio_unitario: 5115089514066496
+- codigo: 2IMPRF1
+  nombre: Imprimante Asfaltico Igol 16lt
+  unidad: un
+  precio_unitario: 984526854219949
+- codigo: 2ROESP12
+  nombre: Rodillo Esponja 12cm
+  unidad: un
+  precio_unitario: 12787723785166240
+- codigo: 2BROCH5
+  nombre: Brocha 4"
+  unidad: un
+  precio_unitario: 33401534526854216
+- codigo: 1ARMOT
+  nombre: Arriendo Motosierra 2t 4,7hp Stihl
+  unidad: un
+  precio_unitario: 6417391304347826
+- codigo: 1CNPL
+  nombre: Camión Rampla
+  unidad: un
+  precio_unitario: 2486501847115658
+- codigo: 2DESIF1
+  nombre: DESINFECCIÓN
+  unidad: un
+  precio_unitario: 731457800511509
+- codigo: 2DESRF1
+  nombre: DESRATIZACIÓN
+  unidad: un
+  precio_unitario: 4757033248081841
+- codigo: 6SCRBAS
+  nombre: Residuos Basura
+  unidad: un
+  precio_unitario: 3272838874680307
+- codigo: 6EMPALME.ELEC
+  nombre: Empalme Y Red Por Concesionaria Eléctrica
+  unidad: un
+  precio_unitario: 10989176
+- codigo: 1PAC.CIERRAC
+  nombre: Sierra Circular
+  unidad: un
+  precio_unitario: 15030487196064760
+- codigo: 1PAC.TALA
+  nombre: Taladros
+  unidad: un
+  precio_unitario: 107360622829034
+- codigo: 2PINO.CUAR.3X3
+  nombre: Pino Cuartón 3x3 3.2 Mts
+  unidad: un
+  precio_unitario: 11021104736514488
+- codigo: 2PINO.CUAR.4X4
+  nombre: Pino Cuartón 4x4 3.2 Mts
+  unidad: un
+  precio_unitario: 29408961926745268
+- codigo: 2MALLA.ACMA.C92
+  nombre: Malla C-92 2,6x5 Ml
+  unidad: un
+  precio_unitario: 4434168797953964
+- codigo: 2PINO.CUAR.2X4
+  nombre: Pino Bruto 2x4 3,2 Ml
+  unidad: un
+  precio_unitario: 319693094629156
+- codigo: 2MAICH1
+  nombre: Maicillo
+  unidad: un
+  precio_unitario: 14578005115089516
+- codigo: 2MEDID1
+  nombre: Medidor Agua Tm 13mm 1/2" Rds/Uniones
+  unidad: un
+  precio_unitario: 7274936061381074
+- codigo: 2LLAVD2
+  nombre: Llave de paso compacta 1/2" SO bronce
+  unidad: un
+  precio_unitario: 4760613810741688
+- codigo: 2CAÑED3
+  nombre: Cañeria cobre tipo m 1/2" x 6m
+  unidad: un
+  precio_unitario: 5368797953964194
+- codigo: 2CODOD8
+  nombre: Codo cobre 1/2"
+  unidad: un
+  precio_unitario: 14833759590792838
+- codigo: 2TEFLD2
+  nombre: Teflon 1" x 10m stretto
+  unidad: un
+  precio_unitario: 9552429667519182
+- codigo: 2SOLDD1
+  nombre: Soldadura 50% estaño
+  unidad: un
+  precio_unitario: 25575447570
+- codigo: 2TUBEH2
+  nombre: Tuberia Pvc 25 Mm 6 Mts
+  unidad: un
+  precio_unitario: 7399795396419437
+- codigo: 2ARRIF1
+  nombre: ARRIENDO MOLDAJE METALICO
+  unidad: un
+  precio_unitario: 4750117647058823
+- codigo: 2LLAVD5
+  nombre: Llave jardin 1/2" c/union manguera
+  unidad: un
+  precio_unitario: 12417391304347824
+- codigo: 2TAPAH1
+  nombre: Tapa metalica espesor 2mm camara de regadio
+  unidad: un
+  precio_unitario: 1108695652173913
+- codigo: 2CAMAREH1
+  nombre: Cama Arena E=10cm
+  unidad: un
+  precio_unitario: 10942787723785168
+- codigo: 2LIMET60
+  nombre: Lija Para Metal 60 Granos 9" X 11"
+  unidad: un
+  precio_unitario: 6629156010230179
+- codigo: 2TEFLH1
+  nombre: Teflón klunter 3/4" 10m
+  unidad: un
+  precio_unitario: 57314578005115096
+- codigo: 2ARENAH1
+  nombre: Arena Estuco C/Flete 15 Km
+  unidad: un
+  precio_unitario: 27570332480818412
+- codigo: 220MMH1
+  nombre: 20mm Cementar Codo Pvc Presión
+  unidad: un
+  precio_unitario: 27007672634271096
+- codigo: 2TEEH1
+  nombre: TEE PVC hidraulico soldable 20mm
+  unidad: un
+  precio_unitario: 1687979539641944
+- codigo: 2MANGH1
+  nombre: Manguera Malla 3/4 50m
+  unidad: un
+  precio_unitario: 29652429667519184
+- codigo: 2PITÓH1
+  nombre: Pitón regulable 3/4" Anka
+  unidad: un
+  precio_unitario: 7730946291560102
+- codigo: 2CONEH1
+  nombre: Conector H/I 32mm 1" polipropileno Sab
+  unidad: un
+  precio_unitario: 7089514066496164
+- codigo: 2ESCAH1
+  nombre: Escaño Hormigón Inclusivo
+  unidad: un
+  precio_unitario: 8567877237851663
+- codigo: 2INSTH4
+  nombre: Instalación escaño
+  unidad: un
+  precio_unitario: 5907928388746803
+- codigo: 2BASUH1
+  nombre: Basurero Plástico 50 L Con Pedestal Triple
+  unidad: un
+  precio_unitario: 5140664961636829
+- codigo: 2INSTH1
+  nombre: Instalación basurero capsular
+  unidad: un
+  precio_unitario: 3452685421994885
+- codigo: 2JUEGH2
+  nombre: Juego Modular Si-3001
+  unidad: un
+  precio_unitario: 4253708439897698
+- codigo: 6SCJUEINF
+  nombre: Subcontrato De Juegos Infantiles
+  unidad: un
+  precio_unitario: 26854219948849104
+- codigo: 2CALISTENIA
+  nombre: Circuito De Calistenia
+  unidad: un
+  precio_unitario: 9207161125319692
+- codigo: 2INSTH3
+  nombre: Instalacion De Maquinas De Ejercicios
+  unidad: un
+  precio_unitario: 33248081841432224
+- codigo: 2TIERH1
+  nombre: Tierra Vegetal Bolsa 5 Kilos
+  unidad: un
+  precio_unitario: 24040920716112536
+- codigo: 2HERBH1
+  nombre: Herbicida bazooka 1 litro anasac
+  unidad: un
+  precio_unitario: 4726086956521739
+- codigo: 3JARD
+  nombre: Jardinero
+  unidad: un
+  precio_unitario: 9987212276214836
+- codigo: 2JACARANDA
+  nombre: Jacarandá 1,6 Mts
+  unidad: un
+  precio_unitario: 7672634271099744
+- codigo: 2ARBOH1
+  nombre: Arbol (Quillay, Jacarandá, Crespon Y Árbol De Judea) 2m
+  unidad: un
+  precio_unitario: 5910485933503836
+- codigo: 2TUTOH1
+  nombre: Tutor Plantación Arboles
+  unidad: un
+  precio_unitario: 4117647058823529
+- codigo: 2NARANJO
+  nombre: Naranjo
+  unidad: un
+  precio_unitario: 37825872036794256
+- codigo: 2TIERH2
+  nombre: Tierra Vegetal
+  unidad: un
+  precio_unitario: 3173401534526854
+- codigo: 2PEUMO
+  nombre: Peumo 1,6 Mts
+  unidad: un
+  precio_unitario: 1227621483375959
+- codigo: 2SEMIH1
+  nombre: Semilla alfombra verde premium 1kg best garden
+  unidad: un
+  precio_unitario: 15388746803069054
+- codigo: 2ABONH1
+  nombre: Abono 1 kg ANASAC
+  unidad: un
+  precio_unitario: 12787723785166240
+- codigo: 1DOBLA1
+  nombre: Arriendo Dobladora De Fierro
+  unidad: un
+  precio_unitario: 20080961752227236
+- codigo: 2POSTD1
+  nombre: Poste Acero Galvanizado Iso 5"
+  unidad: un
+  precio_unitario: 4599067248382729
+- codigo: 2LUMID1
+  nombre: Luminaria Alumbrado Público Led 80w
+  unidad: un
+  precio_unitario: 663751215263599
+- codigo: 2BARRD3
+  nombre: Barra de toma a tierra 3%4" acero 1,5m Prolam
+  unidad: un
+  precio_unitario: 23833759590792840
+- codigo: 2HORH25
+  nombre: Hormigón G20
+  unidad: un
+  precio_unitario: 2016
+- codigo: 2PERNC2
+  nombre: Perno Anclaje 1/4x2 1/4 1 Unidades
+  unidad: un
+  precio_unitario: 7304347826086957
+- codigo: 2BICIH1
+  nombre: Bicicletero Arco
+  unidad: un
+  precio_unitario: 13510485933503836
+- codigo: 2EXCAH1
+  nombre: EXCAVACION
+  unidad: un
+  precio_unitario: 3058058823529412
+- codigo: 2APTENIA
+  nombre: Aptenia 5 Unidades
+  unidad: un
+  precio_unitario: 3836317135549872
+- codigo: 2AGAPANTO
+  nombre: Agapantos
+  unidad: un
+  precio_unitario: 26854219948849104
+- codigo: 2RHUS
+  nombre: Rhus
+  unidad: un
+  precio_unitario: 46035805626598464
+- codigo: 1DOBLA
+  nombre: Dobladora
+  unidad: un
+  precio_unitario: 30374640819872304
+- codigo: 2PERFC7
+  nombre: PERFILERIA (CANALES, COSTANERAS, ANGULOS, ETC)
+  unidad: un
+  precio_unitario: 149309462915601
+- codigo: 2PINTC2
+  nombre: PINTURA ESMALTE SINTETICO 2 MANOS S/EMP
+  unidad: un
+  precio_unitario: 1258312020460358
+- codigo: 2ELECT
+  nombre: Electrodo 6011 1/8 5 Kg Indura
+  unidad: un
+  precio_unitario: 8357033248081841
+- codigo: 2ANTER
+  nombre: Anticorrosivo Estructural Rojo
+  unidad: un
+  precio_unitario: 4468610973801285
+- codigo: 2PLACC1
+  nombre: PLACA PANDERETA 2.0X0.6 MT.
+  unidad: un
+  precio_unitario: 15537084398976984
+- codigo: 2POSTC1
+  nombre: POSTE DE HORMIGON VIBRADO
+  unidad: un
+  precio_unitario: 6910485933503836
+- codigo: 0IMIV
+  nombre: Imiv
+  unidad: un
+  precio_unitario: 2097378277153558
+- codigo: 2PACKD1
+  nombre: Wc Andes Blanco
+  unidad: un
+  precio_unitario: 14851406649616368
+- codigo: 2KITD3
+  nombre: Kit Instalación Wc Fanalosa C/Adaptador
+  unidad: un
+  precio_unitario: 1591304347826087
+- codigo: 2SILID3
+  nombre: Silicona Baño/Cocina Blanca 300 Ml
+  unidad: un
+  precio_unitario: 3736572890025575
+- codigo: 2SELLD1
+  nombre: Sello Antifugas Con Antihongos Tigre
+  unidad: un
+  precio_unitario: 3641943734015345

@@ -5,9 +5,9 @@ Usa el Profesor de Tierra para separar NORMATIVA (metal) de CALCULO (tierra).
 """
 import os
 import sys
-import glob
 import json
 import hashlib
+import argparse
 from pathlib import Path
 from dotenv import load_dotenv
 from supabase import create_client
@@ -29,7 +29,6 @@ if not all([SUPABASE_URL, SUPABASE_KEY, OPENAI_API_KEY]):
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-CARPETA = "/home/ibar/Documentos/Conocimiento/Tierra_Construccion/"
 PROMPT_FILE = Path("profesores/tierra.md")
 
 # Leer el System Prompt
@@ -45,6 +44,19 @@ modelo = SentenceTransformer("intfloat/multilingual-e5-small")
 # === FUNCIONES AUXILIARES ===
 def generar_hash(texto):
     return hashlib.sha256(texto.encode('utf-8')).hexdigest()
+
+def _hash_existe_directo(tabla, hash_origen):
+    try:
+        respuesta = (
+            supabase.table(tabla)
+            .select("id")
+            .eq("hash_origen", hash_origen)
+            .limit(1)
+            .execute()
+        )
+        return len(respuesta.data) > 0
+    except Exception:
+        return False
 
 def clasificar_lote(fragmentos):
     """Envía un lote de fragmentos al Profesor de Tierra."""
@@ -66,19 +78,26 @@ def clasificar_lote(fragmentos):
         print(f"  ⚠️ Error al clasificar lote: {e}")
         return [{"clasificacion": "BASURA"} for _ in fragmentos]
 
-def insertar_fragmento(texto, tabla, tema):
-    """Genera embedding e inserta en Supabase con idempotencia."""
+def insertar_fragmento(texto, tabla, tema, tipo=None):
+    """Genera embedding e inserta/actualiza en Supabase con idempotencia."""
     hash_txt = generar_hash(texto)
-    
-    try:
-        existe = supabase.table(tabla).select("id").eq("hash_origen", hash_txt).execute()
-        if existe.data:
+    metadata = {"tema": tema, "origen": "serviu"}
+    if tipo:
+        metadata["tipo"] = tipo
+
+    if _hash_existe_directo(tabla, hash_txt):
+        try:
+            supabase.table(tabla).update({"metadata": metadata}).eq("hash_origen", hash_txt).execute()
+            return "actualizado"
+        except Exception as e:
+            print(f"    ⚠️ Error actualizando metadata: {e}")
             return "duplicado"
-        
+
+    try:
         vector = modelo.encode(f"passage: {texto}").tolist()
         supabase.table(tabla).insert({
             "contenido": texto,
-            "metadata": {"tema": tema, "origen": "serviu"},
+            "metadata": metadata,
             "embedding": vector,
             "hash_origen": hash_txt
         }).execute()
@@ -108,9 +127,22 @@ def extraer_texto(archivo):
 
 # === MAIN ===
 def main():
-    archivos = glob.glob(CARPETA + "*.pdf") + glob.glob(CARPETA + "*.xlsx") + \
-               glob.glob(CARPETA + "*.xls") + glob.glob(CARPETA + "*.txt") + \
-               glob.glob(CARPETA + "*.md")
+    parser = argparse.ArgumentParser(description="Ingesta SERVIU con clasificación inteligente.")
+    parser.add_argument("--carpeta", type=str, default="/home/ibar/Documentos/Conocimiento/Tierra_Construccion/", help="Carpeta a procesar")
+    args = parser.parse_args()
+    carpeta_path = Path(args.carpeta)
+
+    if not carpeta_path.exists():
+        print(f"[ERROR] No existe la carpeta: {carpeta_path}")
+        return
+
+    archivos = (
+        list(carpeta_path.rglob("*.pdf"))
+        + list(carpeta_path.rglob("*.xlsx"))
+        + list(carpeta_path.rglob("*.xls"))
+        + list(carpeta_path.rglob("*.txt"))
+        + list(carpeta_path.rglob("*.md"))
+    )
     
     if not archivos:
         print("⚠️ No hay archivos en la carpeta.")
@@ -118,13 +150,13 @@ def main():
     
     print(f"📁 Encontrados {len(archivos)} archivos.")
     
-    stats = {"metal": 0, "tierra": 0, "basura": 0, "duplicados": 0, "errores": 0}
+    stats = {"metal": 0, "tierra": 0, "basura": 0, "duplicados": 0, "errores": 0, "cotizaciones": 0}
     
     for archivo in archivos:
         nombre = os.path.basename(archivo)
         print(f"\n📄 Procesando: {nombre}")
         
-        texto = extraer_texto(archivo)
+        texto = extraer_texto(str(archivo))
         if not texto.strip():
             print(f"  ⚠️ Archivo vacío o sin texto: {nombre}")
             stats["basura"] += 1
@@ -145,11 +177,14 @@ def main():
                 cat = clasificaciones[idx].get("clasificacion", "BASURA")
                 
                 if cat == "NORMATIVA":
-                    resultado = insertar_fragmento(chunk, "coach_metal", "metal")
+                    resultado = insertar_fragmento(chunk, "coach_metal", "metal", tipo="normativa")
                     stats["metal"] += 1
                 elif cat == "CALCULO":
-                    resultado = insertar_fragmento(chunk, "coach_tierra", "tierra")
+                    resultado = insertar_fragmento(chunk, "coach_tierra", "tierra", tipo="calculo")
                     stats["tierra"] += 1
+                elif cat == "EJEMPLOS DE COTIZACIÓN":
+                    resultado = insertar_fragmento(chunk, "coach_tierra", "tierra", tipo="cotizacion")
+                    stats["cotizaciones"] += 1
                 else:
                     resultado = "descartado"
                     stats["basura"] += 1
@@ -164,6 +199,7 @@ def main():
     print("=" * 50)
     print(f"  ✅ Insertados en METAL (Normativa):  {stats['metal']}")
     print(f"  ✅ Insertados en TIERRA (Cálculos):  {stats['tierra']}")
+    print(f"  ✅ Insertados en TIERRA (Ejemplos de Cotización):  {stats['cotizaciones']}")
     print(f"  🗑️  Descartados como BASURA:          {stats['basura']}")
     print(f"  🔄 Duplicados omitidos:              {stats['duplicados']}")
     print(f"  ❌ Errores:                          {stats['errores']}")
