@@ -4,7 +4,5 @@ pydantic>=2.5,<3
 supabase
 python-dotenv
 httpx
-pandas
-numpy
-xhtml2pdf==0.2.11
+xhtml2pdf==0.2.16
 jinja2
