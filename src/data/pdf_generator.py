@@ -7,7 +7,7 @@ from html import escape
 from pathlib import Path
 from typing import Any, Dict, Union
 
-from weasyprint import HTML
+from xhtml2pdf import pisa
 
 
 def _clp(valor: Any) -> str:
@@ -124,5 +124,6 @@ def generar_pdf(cotizacion: Dict[str, Any], salida: Union[str, Path]) -> Path:
 
     destino = Path(salida)
     destino.parent.mkdir(parents=True, exist_ok=True)
-    HTML(string=html).write_pdf(str(destino))
+    with open(str(destino, "w+b") as result_file:
+    pisa.CreatePDF(src=html, dest=result_file, encoding="utf-8"))
     return destino
