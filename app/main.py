@@ -7,7 +7,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Incluir SOLO nuestros routers (o los que necesitemos)
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Autenticación"])
 app.include_router(cotizaciones.router, prefix="/api/v1/cotizaciones", tags=["Cotizaciones"])
 
