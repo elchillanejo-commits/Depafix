@@ -2,11 +2,20 @@ import os
 import sys
 import subprocess
 from pathlib import Path
+
+from dotenv import load_dotenv
 from supabase import create_client, Client
+
+load_dotenv()
 
 # Configuración de Supabase
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+# Solo se procesan transcripciones de texto; se ignora basura (.DS_Store, imágenes, etc.)
+EXTENSIONES_PERMITIDAS = {".txt", ".md", ".json"}
+
+SCRIPT_INGESTA = Path(__file__).resolve().parent / "ingest_transcripts.py"
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     print("Error: Faltan variables de entorno SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY")
@@ -30,7 +39,11 @@ def main():
         print(f"Error: El directorio {directorio_base} no existe.")
         sys.exit(1)
 
-    resumen = {"procesados": 0, "omitidos": 0, "errores": 0, "chunks_insertados": 0, "archivos_con_error": []}
+    if not SCRIPT_INGESTA.is_file():
+        print(f"Error: no se encuentra el script de ingesta en {SCRIPT_INGESTA}")
+        sys.exit(1)
+
+    resumen = {"procesados": 0, "omitidos": 0, "ignorados": 0, "errores": 0, "chunks_insertados": 0, "archivos_con_error": []}
     print(f"Iniciando escaneo en: {directorio_base}...\n")
 
     for subcarpeta in directorio_base.iterdir():
@@ -39,9 +52,13 @@ def main():
         domain = subcarpeta.name
         print(f"Explorando domain: [{domain}]")
         
-        for archivo in subcarpeta.glob("*.*"):
+        for archivo in sorted(subcarpeta.iterdir()):
             if not archivo.is_file(): continue
-            nombre_archivo = archivo.name
+            if archivo.suffix.lower() not in EXTENSIONES_PERMITIDAS:
+                print(f"  [IGNORADO] '{archivo.name}' (extensión {archivo.suffix or 'sin extensión'})")
+                resumen["ignorados"] += 1
+                continue
+            nombre_archivo = archivo.relative_to(directorio_base).as_posix()  # ej. ia_tech/test_ejemplo.txt
             
             try:
                 if chequear_duplicado(nombre_archivo):
@@ -56,15 +73,15 @@ def main():
 
             print(f"  [PROCESANDO] '{nombre_archivo}' -> Domain: {domain}...")
             try:
-                # Ajusta si tu script requiere otra ruta (ej. "ingest/knowledge/ingest_transcripts.py")
+                # ingest_transcripts.py calcula el source_file relativo a la raíz 'transcripciones'
                 subprocess.run(
-                    [sys.executable, "ingest_transcripts.py", "--file", str(archivo), "--domain", domain],
+                    [sys.executable, str(SCRIPT_INGESTA), "--file", str(archivo), "--domain", domain],
                     capture_output=True, text=True, check=True
                 )
                 chunks_creados = contar_chunks(nombre_archivo)
                 resumen["chunks_insertados"] += chunks_creados
                 resumen["procesados"] += 1
-                print(f"    -> OK: {chunks_creados} chunks registrados.")
+                print(f"    -> OK: {chunks_creados} chunks registrados (source_file: {nombre_archivo}).")
             except subprocess.CalledProcessError as e:
                 print(f"  [ERROR INGESTA] Falló '{nombre_archivo}'.")
                 print(f"    Detalle stderr: {e.stderr.strip()}")
@@ -77,6 +94,7 @@ def main():
     print(f" Archivos procesados con éxito : {resumen['procesados']}")
     print(f" Total de chunks insertados    : {resumen['chunks_insertados']}")
     print(f" Archivos omitidos (duplicados): {resumen['omitidos']}")
+    print(f" Archivos ignorados (extensión): {resumen['ignorados']}")
     print(f" Errores de procesamiento      : {resumen['errores']}")
     if resumen["errores"] > 0:
         print("\n Archivos con error:")
