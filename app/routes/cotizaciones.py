@@ -1,5 +1,6 @@
 import os
 import uuid
+import traceback
 from fastapi import APIRouter, HTTPException
 from supabase import create_client, Client
 from app.models import CotizacionCreate, CotizacionResponse
@@ -53,4 +54,4 @@ async def generar_cotizacion(payload: CotizacionCreate):
     except Exception as e:
         if 'ruta_pdf_tmp' in locals() and os.path.exists(ruta_pdf_tmp):
             os.remove(ruta_pdf_tmp)
-        raise HTTPException(status_code=500, detail=f"Fallo en el motor: {str(e)}")
+        raise HTTPException(status_code=500, detail=traceback.format_exc())
