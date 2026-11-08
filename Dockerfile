@@ -1,16 +1,10 @@
 FROM python:3.12-slim
-
 WORKDIR /app
-
-# Instalar dependencias del sistema para FAISS
-RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 && rm -rf /var/lib/apt/lists/*
-
-# Copiar e instalar dependencias de Python
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copiar el resto del código
-COPY . .
-
-# Comando por defecto (el chat interactivo)
-CMD ["python", "mente_360.py"]
+RUN apt-get update && apt-get install -y \
+    libpango-1.0-0 libpangoft2-1.0-0 libjpeg-dev libopenjp2-7-dev libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir fastapi uvicorn supabase weasyprint jinja2 pandas pydantic
+COPY . /app
+ENV PORT=8080
+EXPOSE 8080
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT}
