@@ -1,0 +1,109 @@
+import sys
+import json
+from datetime import datetime
+from pathlib import Path
+
+# CORRECCIÓN CRÍTICA: Importar usando la ruta absoluta del paquete
+from src.data.cotizador import generar_cotizacion
+from src.data.pdf_generator import generar_pdf
+
+# Definir la carpeta output en la raíz del proyecto
+OUTPUT_DIR = Path(__file__).resolve().parent.parent.parent / "output"
+
+def procesar_presupuesto(id_cotizacion: str, datos_proyecto: dict, ruta_salida: str) -> dict:
+    """
+    Función principal consumida por FastAPI.
+    Recibe las partidas, calcula los totales y genera el PDF.
+    """
+    partidas_input = datos_proyecto.get("partidas", [])
+    cliente = datos_proyecto.get("cliente_final", "Cliente Genérico")
+    
+    todas_partidas = []
+    suma_costo = 0.0
+    suma_venta_neto = 0.0
+
+    for p in partidas_input:
+        sku = p.get("sku")
+        cantidad = p.get("cantidad", 0)
+        
+        try:
+            # Llamada al motor de cálculo
+            # NOTA: Ajusta "superficie_m2=cantidad" si tu cotizador usa otra firma (ej. generar_cotizacion(sku, cantidad))
+            resultado = generar_cotizacion(superficie_m2=cantidad, sku=sku)
+            
+            if "error" in resultado:
+                print(f"⚠️ SKU {sku} omitido: {resultado['error']}")
+                continue
+
+            # Extraer la partida calculada
+            if "partidas" in resultado and len(resultado["partidas"]) > 0:
+                partida_data = resultado["partidas"][0]
+            else:
+                partida_data = resultado
+
+            if "calculos_operativos" in partida_data:
+                todas_partidas.append(partida_data)
+                suma_costo += partida_data["calculos_operativos"].get("costo_directo_neto", 0)
+                suma_venta_neto += partida_data["calculos_venta"].get("precio_venta_neto", 0)
+                
+        except Exception as e:
+            print(f"❌ Error procesando SKU {sku}: {e}")
+
+    # Cálculos globales
+    suma_iva = suma_venta_neto * 0.19
+    suma_venta_iva = suma_venta_neto + suma_iva
+    suma_utilidad = suma_venta_neto - suma_costo
+
+    resumen_financiero = {
+        "costo_directo_neto_total": round(suma_costo, 2),
+        "precio_venta_neto_total": round(suma_venta_neto, 2),
+        "iva_total": round(suma_iva, 2),
+        "precio_venta_con_iva_total": round(suma_venta_iva, 2),
+        "utilidad_neta_total": round(suma_utilidad, 2),
+        "margen_utilidad_pct": 0.30 * 100,
+    }
+
+    cotizacion_final = {
+        "id_cotizacion": id_cotizacion,
+        "cliente_final": cliente,
+        "parametros_globales": {"fecha": datetime.now().isoformat(), "tasa_iva": 0.19},
+        "partidas": todas_partidas,
+        "resumen_financiero": resumen_financiero,
+    }
+
+    # Generar PDF en la ruta solicitada
+    ruta = Path(ruta_salida)
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    generar_pdf(cotizacion_final, str(ruta))
+
+    return resumen_financiero
+
+def main():
+    """Función para mantener el uso por consola"""
+    if len(sys.argv) < 3:
+        print("Uso: python crear_presupuesto.py <cantidad> <sku>")
+        return 1
+        
+    cantidad = float(sys.argv[1])
+    sku = sys.argv[2]
+    
+    # Simulamos el JSON que recibiría la API
+    datos = {
+        "cliente_final": "Cliente CLI",
+        "partidas": [{"sku": sku, "cantidad": cantidad}]
+    }
+    
+    marca = datetime.now().strftime("%Y%m%d_%H%M%S")
+    salida = OUTPUT_DIR / f"presupuesto_{sku}_{marca}.pdf"
+    
+    try:
+        resumen = procesar_presupuesto("CLI-" + marca, datos, str(salida))
+        print(f"PDF generado en: {salida}")
+        print(f"TOTAL a cobrar: ${resumen['precio_venta_con_iva_total']:,.0f}".replace(",", "."))
+        return 0
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
+if __name__ == "__main__":
+    sys.exit(main())
