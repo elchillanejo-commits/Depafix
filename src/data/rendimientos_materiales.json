@@ -1,0 +1,37 @@
+[
+  {
+    "material": "Cemento",
+    "unidad_compra": "Saco 42.5kg",
+    "rendimiento_m2_o_ml": 1.66,
+    "desperdicio_sugerido_pct": 0.05,
+    "notas": "Rendimiento estimado para radier de 10 cm de espesor (aprox. 6 sacos por m3)."
+  },
+  {
+    "material": "Yeso-cartón",
+    "unidad_compra": "Plancha 1.2 x 2.4m",
+    "rendimiento_m2_o_ml": 2.88,
+    "desperdicio_sugerido_pct": 0.1,
+    "notas": "Rendimiento estándar por plancha comercial para tabique o cielo."
+  },
+  {
+    "material": "Cerámica",
+    "unidad_compra": "Caja estándar",
+    "rendimiento_m2_o_ml": 1.5,
+    "desperdicio_sugerido_pct": 0.07,
+    "notas": "El rendimiento exacto por caja varía según formato, promedio 1.5 a 1.7 m2."
+  },
+  {
+    "material": "Fierro de construcción",
+    "unidad_compra": "Barra 6m",
+    "rendimiento_m2_o_ml": 6.0,
+    "desperdicio_sugerido_pct": 0.1,
+    "notas": "Rendimiento lineal en ml. Contempla margen para traslapes y despuntes."
+  },
+  {
+    "material": "Pintura Látex",
+    "unidad_compra": "Galón",
+    "rendimiento_m2_o_ml": 15.0,
+    "desperdicio_sugerido_pct": 0.1,
+    "notas": "Rendimiento en m2 de superficie terminada considerando 2 manos aplicadas."
+  }
+]

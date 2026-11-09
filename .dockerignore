@@ -18,6 +18,8 @@ docs
 *.xlsx
 *.csv
 *.json
+!src/**/*.json
+!app/**/*.json
 *.jsonl
 *.tsv
 _chat.txt

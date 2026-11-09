@@ -27,6 +27,8 @@ logs/
 data/
 !data/transcripciones/
 !data/transcripciones/**
+!src/data/
+!src/data/**
 datos/
 csv/
 json/
