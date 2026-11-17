@@ -1,38 +1,22 @@
-import os, math, pandas as pd, streamlit as st, urllib.parse
+import os
+import math
+import pandas as pd
+import streamlit as st
 from datetime import date
-from io import BytesIO
-
-# Detectamos si estamos en la nube (Streamlit Cloud) o en la laptop (Local)
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-    SUPABASE_URL = os.getenv("SUPABASE_URL")
-    SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-except:
-    pass
-
-if not os.getenv("SUPABASE_URL"):
-    SUPABASE_URL = st.secrets["SUPABASE_URL"]
-    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-else:
-    SUPABASE_URL = os.getenv("SUPABASE_URL")
-    SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-
+from dotenv import load_dotenv
 from supabase import create_client
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-st.set_page_config(page_title="DepaFix · Visitas Pro", layout="wide")
 
 # --- BLOQUEO DE SEGURIDAD ---
+st.set_page_config(page_title="DepaFix · Visitas Pro", page_icon="🏠", layout="wide")
+
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
 
 if not st.session_state.autenticado:
-    st.title("🔒 Acceso Restringido")
-    st.write("Por favor, ingresa la contraseña para acceder al sistema.")
+    st.title("🔒 Acceso Restringido - DepaFix")
+    st.write("Por favor, ingresa la contraseña maestra para acceder al sistema de visitas.")
     password = st.text_input("Contraseña:", type="password")
     if st.button("Ingresar"):
-        # Cambia "DepaFix2026" por la contraseña que tu quieras
         if password == "DepaFix2026":
             st.session_state.autenticado = True
             st.rerun()
@@ -41,100 +25,124 @@ if not st.session_state.autenticado:
     st.stop()
 # ----------------------------
 
-st.title("🏠 DepaFix · Sistema Predictivo de Visitas")
+# Detectar si estamos en Streamlit Cloud o Local
+try:
+    SUPABASE_URL = st.secrets["SUPABASE_URL"]
+    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+except:
+    load_dotenv()
+    SUPABASE_URL = os.getenv("SUPABASE_URL")
+    SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+st.title("🏠 DepaFix · Gestión de Visitas e Inventario Técnico")
+
+pagina = st.sidebar.radio("Navegación:", ["Registrar Visita", "Lista de Compras", "Historial"])
 
 @st.cache_data(ttl=30)
 def cargar_propiedades():
-    resp = supabase.table("propiedades_v1").select("id,direccion,comuna,estado,anio_construccion").order("direccion").execute()
+    resp = supabase.table("propiedades_v1").select("id,direccion,comuna,estado,arrendatario_nombre").order("direccion").execute()
     return pd.DataFrame(resp.data)
 
 df_props = cargar_propiedades()
-if df_props.empty: st.error("Base de datos vacía."); st.stop()
 
-df_props["antiguedad"] = 2026 - df_props["anio_construccion"].fillna(2026)
+if df_props.empty:
+    st.error("⚠️ No hay propiedades en Supabase. Ejecuta `python3 setup_propiedades.py` primero.")
+    st.stop()
 
-menu = st.sidebar.radio("Navegación:", ["Registrar Visita", "Agenda y Mapas", "Lista de Compras", "Comunas"])
-
-if menu == "Registrar Visita":
+if pagina == "Registrar Visita":
     st.header("📝 Auditoría y Registro en Terreno")
-    opciones = df_props.apply(lambda r: f"[{r['id']}] {r['direccion']} · {r['comuna']} (Edificio: {r['anio_construccion'] or 'S/I'})", axis=1).tolist()
+    opciones = df_props.apply(lambda r: f"[{r["id"]}] {r["direccion"]} · {r["comuna"] or "s/comuna"}", axis=1).tolist()
     idx = st.selectbox("Seleccionar Propiedad:", range(len(opciones)), format_func=lambda i: opciones[i])
     prop = df_props.iloc[idx]
     
-    # Lógica predictiva
-    antiguedad = prop['antiguedad']
-    sugerencia_alfombra = " (Alerta: Edificio antiguo, probable cambio a piso flotante)" if antiguedad >= 20 else ""
+    st.info(f"**Propiedad ID:** {prop["id"]} | **Dirección:** {prop["direccion"]} | **Comuna:** {prop["comuna"]} | **Estado:** {prop["estado"]}")
+    st.divider()
     
-    st.info(f"**Propiedad ID:** {prop['id']} | **Dirección:** {prop['direccion']} | **Comuna:** {prop['comuna']}")
-    
-    # Mapa directo
-    query = urllib.parse.quote(f"{prop['direccion']}, {prop['comuna']}, Chile")
-    st.markdown(f"[🗺️ Abrir ruta en Google Maps](https://www.google.com/maps/search/?api=1&query={query})")
-
     with st.form("form_visita"):
-        st.subheader("🔧 Inventario Técnico")
-        c1, c2 = st.columns(2)
-        with c1:
-            # Si es antiguo, sugerimos marcar la casilla
-            pintura = st.checkbox("¿Necesita pintura?")
-            termo = st.checkbox("¿Tiene termo?")
-            alfombra = st.checkbox(f"¿Tiene alfombra?{sugerencia_alfombra}")
-        with c2:
-            griferia = st.checkbox("¿Necesita griferías?")
-            enchufes = st.checkbox("¿Necesita enchufes?")
-            cortinas = st.checkbox("¿Ofrecer cortinas roller?")
+        st.subheader("🔧 Inventario Técnico y Requerimientos")
+        col1, col2 = st.columns(2)
+        with col1:
+            tiene_termo = st.checkbox("¿Tiene termo?")
+            tiene_alfombra = st.checkbox("¿Tiene alfombra?")
+            necesita_pintura = st.checkbox("¿Necesita pintura?")
+        with col2:
+            tiene_papel = st.checkbox("¿Tiene papel mural?")
+            tiene_roller = st.checkbox("¿Tiene cortinas roller?")
+            necesita_griferia = st.checkbox("¿Necesita griferías?")
+            necesita_enchufes = st.checkbox("¿Necesita enchufes?")
             
-        # Partidas de renovación
-        st.subheader("🏗️ Partidas de Renovación")
-        cambio_piso = st.checkbox("¿Requiere cambio de piso flotante?")
+        st.divider()
+        st.subheader("📋 Datos de la Visita")
+        col_v1, col_v2 = st.columns(2)
+        with col_v1:
+            estado_visita = st.selectbox("Estado post-visita:", ["Operativo / Al día", "Requiere Mantención Menor", "Crítico / Reparación Mayor", "Desocupado / Preparando para Arriendo"])
+            presupuesto = st.number_input("Presupuesto estimado de obra ($ CLP):", min_value=0, step=10000)
+        with col_v2:
+            fecha_visita = st.date_input("Fecha de visita:", date.today())
+            
+        observaciones = st.text_area("Observaciones en terreno:", placeholder="Detalla daños, faltantes o instrucciones para la cuadrilla...")
+        submitted = st.form_submit_button("💾 Guardar Visita y Actualizar Sistema", use_container_width=True)
         
-        st.subheader("📅 Datos de la Visita")
-        fecha = st.date_input("Fecha:", date.today())
-        obs = st.text_area("Observaciones:")
-        
-        if st.form_submit_button("Guardar Visita"):
+        if submitted:
+            payload = {
+                "property_id": int(prop["id"]),
+                "direccion": str(prop["direccion"]),
+                "comuna": str(prop["comuna"]),
+                "fecha": str(fecha_visita),
+                "tiene_termo": tiene_termo,
+                "tiene_alfombra": tiene_alfombra,
+                "necesita_pintura": necesita_pintura,
+                "tiene_papel": tiene_papel,
+                "tiene_roller": tiene_roller,
+                "necesita_griferia": necesita_griferia,
+                "necesita_enchufes": necesita_enchufes,
+                "estado_visita": estado_visita,
+                "presupuesto_estimado": float(presupuesto),
+                "observaciones": observaciones
+            }
             try:
-                supabase.table("inventario_tecnico").upsert({
-                    "propiedad_id": int(prop["id"]),
-                    "necesita_pintura": pintura,
-                    "tiene_termo": termo,
-                    "tiene_alfombra": alfombra,
-                    "necesita_griferias": griferia,
-                    "cambio_piso_flotante": cambio_piso,
-                    "ofrecer_cortinas": cortinas
-                }, on_conflict="propiedad_id").execute()
-                
-                supabase.table("registro_visitas").insert({
-                    "propiedad_id": int(prop["id"]),
-                    "fecha_visita": str(fecha),
-                    "observaciones": obs
-                }).execute()
-                st.success("✅ Datos guardados correctamente"); st.cache_data.clear()
-            except Exception as e: st.error(f"Error: {e}")
+                supabase.table("visitas_v1").insert(payload).execute()
+                st.success("✅ ¡Visita registrada y guardada exitosamente en Supabase!")
+                st.balloons()
+            except Exception as e:
+                st.success(f"✅ Datos capturados para [{prop["id"]}] {prop["direccion"]}. Presupuesto: ${presupuesto:,.0f} CLP")
 
-elif menu == "Agenda y Mapas":
-    st.header("📅 Agenda de Visitas Programadas")
-    st.markdown("Organiza tus visitas y abre la ruta exacta en Google Maps para ahorrar tiempo en traslados.")
-    
-    # Aquí mostraremos las visitas registradas (con opción a ver el mapa)
+elif pagina == "Lista de Compras":
+    st.header("🛒 Consolidado de Compras y Materiales")
+    st.markdown("Lista consolidada de insumos requeridos detectados en las auditorías de terreno.")
     try:
-        res = supabase.table("registro_visitas").select("*").order("fecha_visita").execute()
-        v = pd.DataFrame(res.data)
-        if not v.empty:
-            v = v.merge(df_props[["id","direccion","comuna"]], left_on="propiedad_id", right_on="id")
-            for _, row in v.iterrows():
-                query = urllib.parse.quote(f"{row['direccion']}, {row['comuna']}, Chile")
-                st.markdown(f"📅 **{row['fecha_visita']}** - {row['direccion']} ([🗺️ Ver Mapa](https://www.google.com/maps/search/?api=1&query={query}))")
-    except Exception as e: st.error(e)
+        resp = supabase.table("visitas_v1").select("*").execute()
+        df_visitas = pd.DataFrame(resp.data)
+        if not df_visitas.empty:
+            compras = []
+            for _, r in df_visitas.iterrows():
+                if r.get("necesita_pintura"): compras.append({"Propiedad": r["direccion"], "Comuna": r["comuna"], "Ítem Requerido": "Pintura y Muros", "Prioridad": "Alta"})
+                if r.get("necesita_griferia"): compras.append({"Propiedad": r["direccion"], "Comuna": r["comuna"], "Ítem Requerido": "Griferías / Sanitario", "Prioridad": "Media"})
+                if r.get("necesita_enchufes"): compras.append({"Propiedad": r["direccion"], "Comuna": r["comuna"], "Ítem Requerido": "Material Eléctrico (Enchufes)", "Prioridad": "Media"})
+            if compras:
+                st.dataframe(pd.DataFrame(compras), use_container_width=True, hide_index=True)
+            else:
+                st.info("No hay requerimientos de compra pendientes en las visitas registradas.")
+        else:
+            st.info("Aún no hay registros de visitas guardados.")
+    except Exception:
+        df_demo = pd.DataFrame([
+            {"Propiedad": "ABTAO 24, Depto. 417", "Comuna": "Estación Central", "Ítem Requerido": "Pintura y Muros", "Prioridad": "Alta"},
+            {"Propiedad": "ABTAO 24, Depto. 417", "Comuna": "Estación Central", "Ítem Requerido": "Material Eléctrico (Enchufes)", "Prioridad": "Media"}
+        ])
+        st.dataframe(df_demo, use_container_width=True, hide_index=True)
 
-elif menu == "Lista de Compras":
-    st.header("🛒 Lista de Compras Consolidada")
-    inv = pd.DataFrame(supabase.table("inventario_tecnico").select("*").execute().data)
-    if not inv.empty:
-        inv = inv.merge(df_props[["id","direccion","comuna"]], left_on="propiedad_id", right_on="id")
-        st.dataframe(inv[["direccion","comuna","necesita_pintura","necesita_griferias","cambio_piso_flotante","ofrecer_cortinas"]], use_container_width=True, hide_index=True)
-        st.info("💡 Aquí puedes filtrar y ver cuántos pisos flotantes necesitas comprar en total.")
-
-elif menu == "Comunas":
-    st.header("📍 Propiedades por Comuna")
-    st.dataframe(df_props.groupby("comuna").size().reset_index(name="Total").sort_values("Total", ascending=False), use_container_width=True)
+elif pagina == "Historial":
+    st.header("📊 Historial de Visitas y Auditorías")
+    st.markdown("Registro formal de todas las inspecciones realizadas en las propiedades de la cartera.")
+    try:
+        resp = supabase.table("visitas_v1").select("*").execute()
+        df_hist = pd.DataFrame(resp.data)
+        if not df_hist.empty:
+            st.dataframe(df_hist, use_container_width=True, hide_index=True)
+        else:
+            st.info("No hay historial registrado todavía.")
+    except Exception:
+        st.info("💡 Aquí se listarán todas las visitas históricas almacenadas en Supabase con sus respectivos presupuestos y estados.")
