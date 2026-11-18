@@ -1,0 +1,12 @@
+{
+  "nombre": "[Poner Nombre]",
+  "rubro": "[Poner Rubro]",
+  "edad": null,
+  "info_clave": "[Poner info TSV]",
+  "eneatipo_inferido": "3",
+  "confianza": "baja",
+  "motivo": "Fallback comercial por campos vacíos; validar en primer contacto",
+  "speech_whatsapp": "4 líneas según Eneatipo 3",
+  "solucion_rapida": "Diagnóstico express + quick win 72h + propuesta 1 página",
+  "requiere_validacion": true
+}

@@ -1,0 +1,9 @@
+SKU,descripcion,unidad,precio_neto,proveedor,vigencia
+PINT-001,Pintura Latex Blanca 1 Galón,Galón,18500,Sodimac,2026-12-31
+PINT-002,Pintura Latex Blanca 5 Galones,Balde,85000,Sodimac,2026-12-31
+PINT-003,Imprimante Muro 1 Galón,Galón,12000,Imperial,2026-12-31
+PINT-004,Rodillo Profesional 23cm,Unidad,8500,Sodimac,2026-12-31
+PINT-005,Brocha 4 Pulgadas,Unidad,3500,Imperial,2026-12-31
+TAB-001,Volcanita 15mm 1.2x2.4m,Plancha,12500,Sodimac,2026-12-31
+TAB-002,Tornillo Volcanita 6x1 1/4,Unidad,15,Sodimac,2026-12-31
+TAB-003,Perfil Metalcon 60x38x0.85,Tira,4800,Sodimac,2026-12-31

@@ -1,0 +1,5 @@
+Los modelos de lenguaje grandes (LLM) han transformado la forma en que interactuamos con la información. Gracias al entrenamiento con grandes volúmenes de datos, estos modelos pueden comprender contexto, generar texto coherente y responder a consultas complejas con gran precisión.
+
+La indexación vectorial es fundamental para construir sistemas de recuperación de información eficientes. Al convertir fragmentos de texto en embeddings numéricos, podemos buscar similitud semántica entre consultas y documentos, lo cual permite respuestas más relevantes que la búsqueda por palabras clave.
+
+La automatización con agentes de IA permite combinar múltiples herramientas para resolver tareas complejas. Al orquestar llamadas a APIs, procesamiento de documentos y razonamiento iterativo, estos sistemas pueden ejecutar flujos de trabajo completos con mínima intervención humana.

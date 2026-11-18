@@ -1,0 +1,10 @@
+nombre,rubro,edad,speech_generado,estado
+Abogado Perez,abogado,45,"**Respuesta del Coach Automatización (Elemento Fuego) y Coach Copywriting (Elemento Aire)**
+
+---
+
+Hola Abogado Pérez, espero que estés bien. Quiero hablarte sobre cómo la automatización con inteligencia artificial puede transformar tu práctica legal. Imagina tener un sistema que gestione tus consultas iniciales, responda preguntas frecuentes y te ayude a captar más clientes sin que tengas que estar presente todo el tiempo.
+
+Con la implementación de un asistente virtual, podrás optimizar tu tiempo y enfocarte en los casos que realmente importan. Este sistema no solo te permitirá atender a más clientes, sino que también mejorará la experiencia del usuario, aumentando la satisfacción y la retención de tus clientes.
+
+Si estás interesado, me encantaría mostrarte cómo podemos integrar esta tecnología en tu práctica. ¿Te gustaría agendar una llamada para discutirlo más a fondo? ¡Espero tu respuesta!",generado_por_rag

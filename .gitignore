@@ -1,7 +1,31 @@
+# Entornos y secretos (nunca versionar)
 .env
+.env.*
+!.env.example
 .venv/
+.venv*/
+*.venv*
+.venv-dashboard/
+cookies.txt
+
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Temporales y pruebas
+tmp/
+*.tmp
+*.temp
+*.log
+logs/
+test_*.log
+*_smoke.log
+smoke_*.log
+
+# Legado existente
 monitoreo.log
 datos_btc_1h.csv
 freqtrade/
@@ -12,7 +36,3 @@ jesse/
 *.bak
 *.bak_*
 *.save
-logs/
-tmp/
-.venv-dashboard/
-cookies.txt

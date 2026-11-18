@@ -1,8 +1,12 @@
+import logging
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, ConfigDict
-from typing import List
 from supabase import AsyncClient
 from app.core.database import get_db
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/cotizaciones", tags=["Cotizaciones"])
 
@@ -30,3 +34,22 @@ async def crear_cotizacion(payload: PresupuestoCreate, db: AsyncClient = Depends
         return {"status": "success", "data": response.data[0]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+
+@router.get("/")
+async def listar_cotizaciones(db: AsyncClient = Depends(get_db)):
+    try:
+        response = (
+            await db.table("cotizaciones")
+            .select("*")
+            .order("created_at", desc=True)
+            .limit(50)
+            .execute()
+        )
+        return {"status": "success", "data": response.data or []}
+    except Exception as exc:
+        logger.warning("No se pudieron listar cotizaciones: %s", type(exc).__name__)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al listar cotizaciones ({type(exc).__name__}).",
+        ) from exc

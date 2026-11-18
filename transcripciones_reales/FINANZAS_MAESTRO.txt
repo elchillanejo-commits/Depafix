@@ -1,0 +1,89 @@
+================================================================
+GANTT VIDA — FINANZAS Y MATRIZ DE ACCIÓN
+Actualizado: 17-oct-2026
+================================================================
+
+1. LA FOTO REAL (DASHBOARD)
+----------------------------------------------------------------
+INGRESOS DEL MES: $1.257.000
+- Arriendo Depto 1:      $390.000
+- Arriendo Depto 806:    $300.000
+- Arriendo Depto 1305:   $267.000
+- Comisión corretaje:    $300.000
+
+EGRESOS DEL MES: -$2.154.753
+[Gastos Personales y Operativos]
+- Pago hijo:             $400.000
+- Pago colegio:          $100.000
+- Club de tenis:         $176.000 (Último mes)
+- Contador:              $50.000
+- TAG autopista:         $49.500
+- Internet:              $15.000
+- Celular:               $15.000
+- Luz:                   $15.000
+- Supermercado y vega:   $150.000
+- Transporte:            $40.000
+- Gastos comunes:        $70.000
+- Cosas hijo (varios):   $4.100
+
+[Dividendos Hipotecarios]
+- Dividendo Santander:   $369.345
+- Dividendo Itaú:        $391.949
+- Dividendo BCI:         $408.859
+(Total Dividendos:       $1.170.153)
+
+NETO MENSUAL: -$897.753 (Déficit)
+
+Mis 3 Deptos:
+- Depto 1 (Santander): +$20.655/mes  [SALVAR]
+- Depto 806 (Itaú):    -$91.949/mes  [VENDER - Capital ~$26M]
+- Depto 1305 (BCI):   -$141.859/mes  [MANTENER]
+
+Deuda Total: $4.702.786
+(Santander, Itaú, BCI, Contador, Profe, Implementador)
+
+2. MATRIZ DE EISENHOWER (ACCIÓN)
+----------------------------------------------------------------
+[Q1] URGENTE + IMPORTANTE (Hacer YA)
+- Atacar a los interesados de los 2 deptos (Agendar visitas).
+- Llamar a Carola y Daniel (Ley del Mono).
+- Llamar a Rodrigo Marín (Asistencia Técnica).
+- Preparar carpeta para el Experto (Bancos) para el Miércoles 22.
+- Pagar SII ($82.115).
+- Pagar Hijo, Colegio y Club de Tenis.
+
+[Q2] NO URGENTE + IMPORTANTE (Programar)
+- Plan de Prospección Face-to-Face (Ver 4 personas/semana).
+- Vender el Depto 806 (Con el OK del experto).
+- Desbloquear la OTEC (Cursos).
+- Acuerdos de pago (Deudas chicas a cuotas).
+- Deportes (Tenis 3x, Gym 2x).
+- Tiempo de calidad con tu Hijo.
+- Proyectos Futuro (Gestalt, Fobosis, CEO).
+
+[Q3] URGENTE + NO IMPORTANTE (Automatizar)
+- Pagar TAG, Luz, Internet, Celular (Débito automático).
+- Trámites bancarios (Agrupar en un solo día).
+
+[Q4] NO URGENTE + NO IMPORTANTE (Eliminar)
+- Preocuparse sin actuar.
+- WhatsApp masivos fríos.
+- Scroll sin propósito.
+- Reuniones sin agenda.
+
+3. ESTRATEGIA DE SALIDA (3 MOVIMIENTOS)
+----------------------------------------------------------------
+1. VENDER el Depto 806 (Con el OK del experto).
+2. PAGAR las moras de los 3 bancos con esa venta.
+3. CERRAR 1 operación de corretaje al mes (vía red de tenis).
+
+4. REGLA DE ORO
+----------------------------------------------------------------
+Si estás abrumado, haz solo 3 cosas hoy:
+1. Algo que traiga plata (Q1).
+2. Algo que ordene finanzas (Q1).
+3. Algo que siembre futuro (Q2).
+
+================================================================
+FIN DEL DOCUMENTO
+================================================================

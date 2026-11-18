@@ -1,18 +1,23 @@
 import io
+import logging
 import os
 import traceback
 from typing import List
 
-from fastapi import FastAPI, Depends, UploadFile, File, HTTPException
+from fastapi import FastAPI, Depends, UploadFile, File, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 from app.auth_supabase import get_current_user
+from app.core.database import get_db
+from app.core.security import enforce_rate_limit, verify_api_key
 from app.presupuesto_csv import router as presupuesto_csv_router
 from app.routers import cotizaciones as cotizaciones_router
 from app.routers import rag as rag_router
 from weasyprint import HTML
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="DepaFix SaaS API",
@@ -20,19 +25,26 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS: permitir el frontend en localhost:3000
+# CORS configurable (fallback seguro para el dashboard Streamlit local)
+def _cors_origins() -> list[str]:
+    raw = os.getenv("CORS_ORIGINS", "http://localhost:8501,http://localhost:8502")
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3100"],
+    allow_origins=_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Routers de la API unificada
-app.include_router(cotizaciones_router.router)
-app.include_router(presupuesto_csv_router)
-app.include_router(rag_router.router)
+# Routers públicos protegidos con X-API-Key (si está configurada) + rate limit
+_public_dependencies = [Depends(verify_api_key), Depends(enforce_rate_limit)]
+
+app.include_router(cotizaciones_router.router, dependencies=_public_dependencies)
+app.include_router(presupuesto_csv_router, dependencies=_public_dependencies)
+app.include_router(rag_router.router, dependencies=_public_dependencies)
 
 
 # ==========================================
@@ -41,6 +53,21 @@ app.include_router(rag_router.router)
 @app.get("/health", tags=["Health"])
 async def health():
     return {"status": "ok", "service": "depafix-api"}
+
+
+@app.get("/ready", tags=["Health"])
+async def ready():
+    """Deep check: comprueba que Supabase responde y los permisos son válidos."""
+    try:
+        db = await get_db()
+        await db.table("cotizaciones").select("id").limit(1).execute()
+    except Exception as exc:
+        logger.warning("Ready check fallido: %s", type(exc).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Base de datos no disponible ({type(exc).__name__}).",
+        ) from exc
+    return {"status": "ready", "database": "connected"}
 
 
 # ==========================================

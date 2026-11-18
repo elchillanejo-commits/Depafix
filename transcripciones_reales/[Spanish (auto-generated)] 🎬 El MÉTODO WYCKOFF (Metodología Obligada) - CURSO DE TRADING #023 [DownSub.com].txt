@@ -1,0 +1,604 @@
+¿Qué tal, amigos de Trading y otras
+cosas? Bienvenidos a un nuevo episodio
+de nuestro curso de análisis técnico. En
+esta ocasión aprenderemos una
+metodología que se basa prácticamente de
+la mezcla de varios capítulos que ya
+hemos visto en el curso y que se
+establece bajo el concepto de la teoría
+de DU del episodio anterior. Por esto es
+tan importante entender todos los
+conceptos desde cero. Hoy hablaremos de
+Wikof, uno de los pioneros del estudio
+de los mercados que decidió crear las
+reglas de juego para detectar los
+movimientos que practican las
+instituciones, llamado dinero
+inteligente. Por lo que para este
+episodio debes tener muy claro capítulos
+como fases de mercado, oferta y demanda
+y acción del precio. Así que si aún no
+los has visto, regresa a repasarlos
+porque los necesitamos conocer para
+entender el porqué del método Wikof. El
+mercado financiero es el mayor juego que
+existe en el que intervienen las
+personas más ricas, expertas y poderosas
+del mundo. Y nosotros debemos ser igual
+de inteligentes, astutos y perspicaces.
+Hoy hablaremos del método Wikov. Richard
+Wikov fue un pionero de principios del
+siglo XX en la especulación bursátil y
+es considerado uno de los hombres más
+influyentes del análisis técnico. Es uno
+de los cinco titanes del análisis
+técnico junto con Dow, Gan, Elliot y
+Merril. A los 15 años empezó en un
+trabajo como corredor para una compañía
+de bolsa de Nueva York. Más tarde se
+convertiría en el director de su propia
+firma cuando tenía 20 años. Wikov tuvo
+la suerte de trabajar durante muchos
+años en grandes casas de bolsa al lado
+de los grandes especuladores de la
+época. Esto le permitió aprender de
+primera mano cómo se organizaban y
+actuaban los grandes especuladores para
+conseguir ganar en los mercados
+financieros. Desde su posición, el señor
+Wikov observó que numerosos inversores
+minoristas eran estafados repetidamente.
+En consecuencia, se dedicó a instruir al
+público sobre las verdaderas reglas del
+juego en el que participan los grandes
+operadores, el dinero inteligente. dio a
+conocer su sistema en un conjunto de
+cursos por correspondencia, como era la
+práctica del día, para educar al público
+y ayudarlos a evitar las estafas y
+fraudes que eran tan frecuentes en ese
+momento. Veamos algunas de sus
+enseñanzas más importantes. Wikov
+postuló que cualquier activo financiero
+se regía por tres leyes fundamentales.
+Ley de oferta y demanda. Esta ley, un
+concepto que ya comentamos en un
+episodio anterior de este mismo curso,
+propone que la discrepancia entre la
+oferta y la demanda afecta directamente
+el valor de un activo. El precio de un
+activo financiero subirá por un aumento
+de la demanda o una retirada de la
+oferta y que el precio de un activo
+financiero bajará por un aumento de la
+oferta o una retirada de la demanda. Ley
+de causa y efecto. Esta ley enfatiza que
+debe existir una causa directa para que
+ocurra un efecto correspondiente.
+Cada acción del precio de un activo debe
+haber sido efectuada por una causa
+preexistente.
+Cualquier escenario que se desarrolle es
+también una causa potencial para un
+efecto venidero. Por ejemplo, una
+acumulación para el efecto de una fuerte
+tendencia alcista. Así, analizar con
+antelación los posibles efectos de una
+causa es clave para rentabilizar en el
+mercado. Ley de esfuerzo versus
+resultado. En el mercado, el esfuerzo
+está representado por el volumen,
+mientras que el resultado está
+representado por la acción del precio.
+Cuanto mayor sea el esfuerzo, mayor será
+el resultado. Si hay armonía entre el
+volumen y la acción del precio, la
+tendencia continuará. Sin embargo, si
+hay alguna diferencia entre el precio y
+el volumen, la tendencia del mercado
+finalmente se detendrá o cambiará de
+dirección. Aquí podemos ver las tres
+leyes mencionadas anteriormente.
+En primer lugar, hubo un fuerte
+movimiento alcista en el que la demanda
+prevalecía sobre la oferta. Luego se
+muestran los primeros signos de
+debilidad a mediano plazo, picos de la
+oferta creciente. Estos signos dieron
+como resultado la ruptura de la EMA a
+corto plazo que anteriormente estaba
+completamente intacta y que confirmó el
+cambio de carácter y el establecimiento
+del rango. Más tarde hubo un intento de
+romper el rango, pero apareció una
+fuerte demanda y el precio volvió al
+rango. Si aún no sabes que es una EMA
+acrónimo de una media móvil exponencial,
+no te preocupes porque lo veremos en
+detalle en nuestro curso de indicadores
+y estrategias.
+Luego podemos ver un aumento de volumen
+y el precio se movió en consecuencia,
+por lo que el resultado fue igual al
+esfuerzo y fue una buena señal de
+continuación alcista en el futuro. Esta
+consolidación terminó con una ruptura y
+provocó el siguiente movimiento alcista.
+Wikov propuso un método heurístico para
+ayudar a comprender los movimientos de
+los precios de las acciones individuales
+y del mercado en su conjunto, al que
+denominó el hombre compuesto. Propuso
+que los inversores y comerciantes
+deberían estudiar el mercado de valores
+como si una sola entidad lo controlara.
+En esencia, el hombre compuesto
+representa a los principales creadores
+de mercado, como los grandes fondos de
+inversión e instituciones. Todas las
+fluctuaciones en el mercado y en todas
+las diversas acciones deben estudiarse
+como si fueran el resultado de las
+operaciones de un solo hombre.
+llamémosle el hombre compuesto. Es en
+teoría el que mueve y manipula las
+acciones para tu desventaja. Por eso has
+llegado hasta aquí para comprender el
+juego tal como se juega y será un gran
+beneficio para ti si lo entiendes.
+Basado en sus años de observación de las
+actividades de mercado de los grandes
+operadores, Wikof enseñó que el hombre
+compuesto planea, ejecuta y concluye
+cuidadosamente sus partidas. El hombre
+compuesto atrae al público a comprar una
+acción en la que ya ha acumulado una
+cantidad considerable de acciones.
+Realiza una gran cantidad de
+transacciones que involucran muchas
+acciones, creando la apariencia de un
+mercado amplio. Esto lo vimos en el
+capítulo de oferta y demanda. Uno debe
+estudiar los gráficos de acciones
+individuales con el fin de juzgar el
+comportamiento de las acciones y los
+motivos de los grandes operadores que
+las dominan. Con estudio y práctica, uno
+puede adquirir la habilidad de
+interpretar los motivos detrás de la
+acción que representa un gráfico. Wikof
+y sus socios creían que si uno podía
+entender el comportamiento de mercado
+del hombre compuesto, podía identificar
+muchas oportunidades comerciales y de
+inversión lo suficientemente pronto como
+para beneficiarse de ellas. Ciclos de
+mercado WikoV. Los ciclos de mercado o
+ciclos de precios de Wikof son su
+principal contribución. El ciclo de
+precios es un algoritmo que construye
+una relación entre los cambios de
+precios, las fases del mercado y los
+flujos de dinero institucionales.
+Según el ciclo de precios de Wof, el
+ciclo de precios de un instrumento
+consta de las siguientes cuatro etapas:
+acumulación, markup, distribución y
+markdown. Una vez que se completa el
+ciclo de precios, todo el ciclo se
+vuelve a repetir a partir de la primera
+fase de acumulación. Ahora veamos en qué
+consiste cada fase. La fase de
+acumulación es un rango lateral en el
+que los grandes jugadores compran con
+cuidado y habilidad, intentando no mover
+el precio. El público no se da cuenta de
+lo que está pasando. El mercado está
+fuera del radar y fuera del foco público
+mientras está bajo acumulación. Se trata
+de una transferencia desde las manos
+débiles a las manos fuertes. La fase
+markup es la tendencia alcista clásica.
+En este punto, el público se da cuenta
+del movimiento del precio y su compra
+sirve para impulsar los precios al alza.
+Los jugadores del dinero inteligente que
+compraron en la fase de acumulación
+pueden vender algunas de sus acciones en
+la fuerza de la tendencia alcista o
+simplemente esperar precios más altos.
+Fase de distribución. Eventualmente la
+tendencia alcista termina y el mercado
+entra en una fase de distribución en la
+que los jugadores del dinero inteligente
+venden el resto de sus acciones al
+público, que en general sigue
+anticipando precios más altos.
+Operadores de dinero realmente
+inteligente incluso abren operaciones en
+corto en este rango. La fase Markdown es
+la tendencia bajista que sigue a la
+distribución. Operadores de dinero
+inteligente que entraron en corto en la
+fase de distribución van soltando
+ganancias. Eventualmente el público se
+da cuenta de que los precios más altos
+no llegarán, por lo que entran en pánico
+y venden sus posiciones. Este pánico, la
+mayoría de las veces marca el final de
+la tendencia bajista. Los esquemas de
+acumulación y distribución son
+probablemente la parte más popular del
+trabajo de Wikof. De esta teoría
+proviene la famosa frase de Warren
+Buffett. Se temeroso cuando otros son
+codiciosos y codicioso cuando otros son
+temerosos.
+Estos modelos dividen las fases de
+acumulación y distribución en secciones
+más pequeñas. Las secciones se dividen
+en cinco fases de la A a la E, junto con
+varios eventos Wof que describiremos a
+continuación. Fase A, parada de la
+tendencia previa. Fase B, construcción
+de la causa. Fase C, testeo o prueba.
+Fase D, tendencia dentro del rango. Fase
+E, tendencia fuera del rango. Comencemos
+con el esquema de acumulación. Fase A.
+Esta fase marca el final de la tendencia
+a la baja. Hasta ahora la oferta ha
+dominado. PS Preliminary Support o
+soporte preliminar en castellano y el SC
+sell Selling Climax o Clímax de ventas
+en castellano indican una disminución en
+la oferta. Generalmente estos eventos se
+pueden ver muy claramente en los
+gráficos. Los grandes movimientos de
+precios y el volumen alto indican
+transferencia de un número significativo
+de acciones del público en general a las
+grandes instituciones y profesionales.
+Esta intensa fuerza de venta es seguida
+por una R A automatic Rally o Rally
+automático en castellano, donde los
+compradores absorben el exceso de oferta
+y los inversores cierran sus posiciones
+cortas. A continuación se produce el ST
+Secundary Testo, una prueba secundaria
+en castellano alrededor del área del SC,
+clímax de ventas. El volumen de
+negociación tiende a ser menor. Por lo
+general, el ST está en el nivel SC o
+justo por encima del mismo. Los mínimos
+de SC y ST y el nivel de AR determinan
+los límites de la zona de acumulación.
+Luego se pueden dibujar líneas de
+soporte y resistencia para resaltar el
+primer máximo y mínimo. A veces la
+tendencia bajista termina sin una
+actividad de volumen significativa.
+En general, es mejor observar los puntos
+PS, SC, AR y ST, ya que no solo brindan
+una imagen más precisa, sino que también
+indican que los grandes inversores se
+han movido al modo de acumulación. Fase
+B. La función de la fase B puede
+denominarse la fase de construir un caso
+para una nueva tendencia alcista.
+Recuerde, esta es la segunda ley de
+causa y efecto de Wikof. En la fase B,
+los grandes inversores acumulan acciones
+relativamente baratas en previsión del
+próximo aumento de precios. El proceso
+de acumulación institucional puede durar
+mucho tiempo, a veces un año o más. Las
+acciones se compran a precios más bajos
+y las fluctuaciones de precios se
+controlan tomando posiciones cortas. Se
+producen varias pruebas secundarias ST
+en la fase B, así como rupturas alcistas
+en el lado superior de la zona de
+acumulación. Los grandes inversores
+compran acciones a medida que avanza la
+acumulación con el objetivo de absorber
+la mayor cantidad posible de la oferta
+restante.
+La compraventa institucional genera los
+movimientos al alza y a la baja que
+caracterizan a esta zona. Al comienzo de
+la zona, las fluctuaciones de precios ya
+son significativas y van acompañadas de
+un gran volumen. A medida que más
+inversores profesionales absorben la
+oferta, el volumen en la zona de
+acumulación disminuye. Una vez que se
+agota el suministro, la acción está
+lista para pasar a la siguiente fase, la
+fase C. Esta es la fase en la que el
+precio se somete a una prueba de fuego
+de la oferta restante, lo que permite a
+los inversores institucionales ver si la
+acción está lista para iniciar una nueva
+tendencia alcista. Esta fase normalmente
+contiene un sprint. Este es un
+movimiento de precios por debajo del
+nivel de soporte de la zona de
+acumulación que rápidamente se revierte
+dentro de la zona. Este es un ejemplo de
+una trampa o fakeout para los osos, ya
+que la caída debajo del área de soporte
+parecerá indicar una reanudación de la
+tendencia bajista. En realidad, esto
+marca el comienzo de una nueva tendencia
+alcista. Los pequeños inversores a
+menudo son engañados y abandonan sus
+posiciones. Si el volumen del sprint y
+de la prueba son bajos, significa que
+las acciones probablemente estén listas
+para comenzar una nueva tendencia
+alcista. Fase D. Si el análisis se ha
+hecho correctamente, entonces debería
+quedar claro un desarrollo de que la
+demanda gradualmente supera a la oferta.
+La fase D tiene lo que se llama un SOS
+sain of strength o señal de fuerza en
+castellano, es decir, un importante
+aumento de volumen, por lo que nos
+dejaría con anterioridad un last point
+of support, un LPS, que sería un último
+punto de soporte en castellano. Los
+niveles de resistencia anteriores se
+convierten en los nuevos niveles de
+soporte. En la fase de los oso LPS, si
+los llegamos a identificar son
+excelentes puntos de entrada para
+iniciar lucrativas posiciones largas.
+Fase E. En la fase E, la acción sale de
+la zona de acumulación. Los compradores
+han recuperado el control total y la
+nueva tendencia alcista está claramente
+en marcha. Las acciones suelen ser de
+corta duración y se forman nuevas zonas
+de consolidación en niveles cada vez más
+altos. Lo que se conoce como
+reacumulación puede ocurrir en cualquier
+momento de la fase E. Retomemos los
+acrónimos.
+PS: soporte preliminar. SC Clímax de
+ventas. AR rally automático. ST prueba
+secundaria LPS último punto de soporte.
+SOS señal de fuerza.
+Ahora veamos el esquema de distribución.
+Comenzando igualmente por la fase A.
+Esta fase marca el final de la tendencia
+alcista. Hasta ahora la demanda ha sido
+dominante y la primera prueba
+significativa de la entrada de oferta en
+el mercado la proporcionan un PSY,
+preliminar y supply o la oferta
+preliminar en castellano y el BC by
+climax o clímax de compra que sugieren
+un aumento en la oferta o el comienzo de
+la fuerza de venta. Estos eventos se
+pueden ver muy claramente en los
+gráficos. A menudo le sigue una AR, al
+igual que en la acumulación un rally o
+reacción automática y un ST como prueba
+secundaria del BC a menudo con volumen
+reducido. También es posible un final de
+la tendencia alcista sin mucha acción.
+En este caso habrá un agotamiento de la
+demanda con volumen decreciente. Cada
+nuevo movimiento alcista va perdiendo
+impulso y debería parecer una oferta
+considerable. Fase B. La fase B sirve
+para construir una causa y prepararse
+para una nueva tendencia bajista. Los
+creadores de mercado venden gradualmente
+sus acciones e inician posiciones cortas
+anticipándose a la próxima tendencia
+bajista. Las características de la fase
+B son comparables a las de la fase B de
+acumulación, excepto que aquí los
+grandes inversores son los vendedores de
+valores con el objetivo de agotar la
+demanda restante. El equilibrio entre la
+oferta y la demanda parece haberse
+desplazado hacia el lado de la oferta,
+no hacia el lado de la demanda. El
+movimiento de ST al SW se ofakness o
+signo debilidad en castellano suele ir
+acompañado de un volumen
+significativamente mayor. En la última
+parte de esta fase podríamos observar un
+UTE aptostion que en castellano es una
+acción de empuje hacia arriba, que es la
+venta que no esperaba la mayoría de los
+inversores. Rápidamente comienza a crear
+inquietud y surge el área de reducción o
+markdown para dar entrada a la siguiente
+fase. La fase C. que ya es la mejor fase
+de distribución en el método de Wikof y
+puede manifestarse mediante un impulso
+ascendente UTA. Aptrost after
+distribución o impulso después de la
+distribución en castellano, que sería lo
+opuesto a un sprint de acumulación y
+corresponde a un movimiento de precios
+por encima de la resistencia de
+distribución que regresa rápidamente.
+Representa una prueba final de la
+demanda después de una ruptura por
+encima de la resistencia del rango. En
+la mayoría de los casos, esta es una
+prueba de la demanda restante. Esto
+también es una trampa para los toros
+alcistas, porque parece indicar una
+reanudación de la tendencia alcista,
+pero en realidad se utiliza para engañar
+a los inversores desinformados o con
+poca información. Un Nut permite a los
+grandes inversores engañar al público
+sobre la dirección futura de la
+tendencia. Esto a su vez les permite
+vender acciones adicionales a precios
+más altos a inversores desinformados o
+con poca información antes de que
+comience la tendencia bajista. Además,
+un UTA puede inducir a los pequeños
+inversores posicionados en corto a
+cubrir sus acciones y transferirlas a
+los grandes inversores que han diseñado
+este movimiento. La fase D llega después
+de que las pruebas o test de la fase C
+nos muestra los últimos rastros de la
+demanda. Durante la fase D, el precio
+cae hacia el área de soporte de
+distribución. Una clara ruptura del
+soporte o una caída por debajo de la
+mitad de la zona de distribución después
+de un UTA muestra que ahora domina la
+oferta. Esta fase se caracteriza por
+varios apuntes débiles. Estos LPSY o
+últimos puntos de suministro son buenas
+oportunidades para iniciar posiciones
+cortas rentables o aumentar sus
+posiciones cortas existentes. Los
+comerciantes que aún no hayan vendido
+sus acciones durante la fase D pueden
+encontrarse en una situación difícil en
+la fase E, que ya sería la última etapa
+de una distribución y marca el comienzo
+de una tendencia bajista. La acción sale
+de la zona de distribución y los
+vendedores tienen el control. Tan pronto
+como el área de soporte de distribución
+es rota por el SW.
+Es la ruptura que es testeada por un
+pequeño movimiento alcista del precio
+que falla cerca o en el área de soporte.
+Esta es una oportunidad para ir corto y
+vender las acciones. Los movimientos
+subsiguientes de precios alcistas en
+esta tendencia bajista muy a menudo
+serán bastante pequeños. Después de un
+considerable movimiento hacia abajo, un
+clímax bien puede indicar el comienzo de
+una redistribución o acumulación.
+Retomemos los acrónimos.
+PSY, oferta preliminar. BC, clímax de
+compra. AR, rally automático. ST, prueba
+secundaria. SW, signo de debilidad. UT,
+acción de empuje hacia arriba. UTA,
+impulso después de la distribución.
+LPSy, último punto de suministro. Ahora
+quiero felicitarte por llegar hasta
+aquí, ya que sé que es bastante teoría,
+pero te puedo asegurar que todos estos
+conceptos son conocimiento fundamental
+para todo aspirante a trader. Entonces,
+continuemos con dos reglas de Richard
+Wikov y se basan principalmente en la
+acción del precio y las diferentes
+etapas o fases cíclicas en las que cae
+el mercado. conceptos que ya comentamos
+en episodios anteriores, pero es
+esencial que discutamos estas dos reglas
+importantes establecidas en su libro
+Charting de stock Market. Estas dos
+reglas esenciales se parafrasean a
+continuación. La primera establece que
+el mercado nunca se comporta de la misma
+manera. La acción del precio nunca
+creará un movimiento exactamente de la
+misma forma que lo hizo en el pasado. El
+mercado es verdaderamente único. Y la
+segunda regla, que está relacionada con
+la primera, establece que, dado que cada
+movimiento de precios es único, su
+importancia analítica surge cuando se
+compara con el comportamiento de precios
+anterior. Aunque el ciclo de WOV
+proporciona un marco útil, existen
+muchas limitaciones y problemas para
+aplicarlo en el comercio práctico. Una
+sería que es difícil reconocer
+correctamente la fase de acumulación y
+distribución. A veces lo que parece una
+acumulación resulta ser distribución.
+Por otra parte, también es difícil
+cronometrar las entradas de acumulación
+y distribución. Comprar dentro de la
+acumulación o vender dentro de la
+distribución no es sencillo, ya que no
+existen niveles claros para colocar
+stoploss. Establecer stoploss en torno
+al soporte y la resistencia suele ser
+incorrecto y está sujeto a trampas. Otro
+hecho importante es que el ciclo no
+siempre sigue el orden como acumulación,
+markup, distribución, markdown. También
+puede ser aleatorio, como acumulación,
+markdown, markup, etcétera. El ciclo de
+precios de Wof es un buen concepto
+teórico, pero en la práctica el precio
+no se apega a las reglas puestas en
+papel y podría tomar un curso aleatorio.
+Por ejemplo, en Trading View podrías
+buscar y observar ideas de traders que
+creyeron o identificaron que el mercado
+estaba en una parte distinta del ciclo.
+A pesar de todos estos inconvenientes,
+el ciclo comercial de Wikof es un gran
+marco de trabajo para analizar y
+comprender el comportamiento del
+mercado. Es necesario entender y
+combinar las técnicas enseñadas por
+Richard Wikov con estrategias de la
+acción del precio y estructura del
+mercado. La aplicabilidad práctica del
+ciclo de negociación de Richard Wikov es
+limitada en los mercados modernos. No
+obstante, sigue siendo un marco poderoso
+para un comerciante que sabe cómo
+usarlo. Para ayudarte a intentar
+encontrar e identificar en qué fase de
+cada ciclo una acción podría estar en
+acumulación o distribución, hemos creado
+un indicador de metodología básica donde
+explicaremos con más detalle cómo
+funciona en un próximo capítulo para que
+así puedas conseguirlo gratuitamente con
+solo seguirnos, ya que como hemos
+comentado, uno de los principios más
+importantes de las enseñanzas de Wikof
+reca los ciclos del mercado, sus
+movimientos que pasan de equilibrio a
+desequilibrio.
+de consolidación a expansión. Como
+analistas iremos poco a poco
+desarrollando una intuición donde cada
+vez serán más claros estos movimientos.
+Aprovechemos estos tiempos de la
+información al alcance de todos.
+Pensemos en estos grandes traders de
+hace casi un siglo. Ellos lograron hacer
+dinero con recursos muy limitados, pero
+escucharon al mercado y sacaron provecho
+de estos movimientos. Estudia y sigue
+estudiando. Ahora, cuando termines este
+capítulo, vea los gráficos que ya
+utilizas desde el principio de este
+curso. Practica en ellos, porque estos
+gráficos te estarán ofreciendo toda la
+información que necesitas y que a partir
+de ahora puedas identificar dónde se
+encuentra una acumulación o una
+distribución para ganar en tus
+operaciones. Recuerda suscribirte y
+darle me gusta a este capítulo para
+marcarlo como visto para tu seguimiento.
+Te felicito por seguir estudiando y
+muchas gracias por ser una parte tan
+importante de nuestra comunidad. Nos
+vemos dentro del siguiente.

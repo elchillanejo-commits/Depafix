@@ -1,0 +1,780 @@
+¿Qué tal, amigos de Trading y otras
+cosas? Este nuevo episodio será quizás
+el mejor consejo que alguien te podrá
+dar. Y no podíamos dejar de cerrar el
+curso de análisis técnico gratuito sin
+intentar ofrecerte la información que
+hará el clic final en tu cabeza para
+desarrollar correctamente tu carrera en
+el negocio del trading. Y para esto
+tenemos que hablar de algunas de las
+fórmulas matemáticas que debes conocer y
+entender si deseas convertirte en un
+trader rentable. Ahora que has
+finalizado el curso y tienes todos los
+conceptos claros que se deben tener como
+base para empezar a desarrollar tu
+propia estrategia, entendemos que ya
+sabes que debes dominar muy bien la
+gestión de riesgo y suponemos que ya has
+visto nuestros episodios del curso sobre
+este tema. El trading es un negocio
+arriesgado y muchas personas que
+ingresan fracasan perdiendo grandes
+cantidades de dinero en el proceso. Es
+por esto que hoy queremos resumir en
+este capítulo los términos claves y
+fórmulas que debes tener controlados
+para poder ser rentable en el largo
+plazo. Lo primero que queremos destacar
+es que para todos los cálculos que
+explicaremos hoy, será necesario tener
+un gran número de muestra de trades. Es
+indispensable tener en cuenta un gran
+volumen de operaciones para que también
+las pérdidas del sistema sean
+representativas. Por esta razón, si
+utilizas nuestra plantilla de Notion
+para realizar un back testing, deberá
+ser bastante arduo. Así nos permitirá
+tener un volumen estimado de cuántas
+serán las ganancias y las pérdidas y
+poder acercar los cálculos a una
+realidad más notable en todo el sistema.
+La plantilla la hemos explicado en
+profundidad en el capítulo de plan de
+trading del curso. Realizará todos los
+cálculos que vamos a comentar
+automáticamente y la podrás encontrar en
+nuestra página web trading y
+otrascosas.com.
+Empecemos por términos sencillos como el
+ROIY return of investment que sería el
+retorno porcentual de la inversión. Es
+un indicador para saber cuánto dinero
+está ganando o perdiendo nuestro sistema
+de trading contra el total de la
+inversión. Una de las medidas para
+calcular el potencial de rentabilidad de
+una inversión y saber si es atractiva o
+si ha sido una buena decisión. Esta
+métrica se usa para saber cuánto se está
+ganando porcentualmente en todo tu
+sistema de trading, teniendo en cuenta
+la ganancia del total de la cantidad de
+trad versus el capital inicial. La
+fórmula para calcular el roll es la
+siguiente. Ganancia total de la
+inversión, que es igual al total más la
+ganancia menos el total inicial entre el
+coste de la inversión inicial por 100. A
+modo de ejemplo, imagina que haces una
+inversión de 1,000 € y consigues un
+rendimiento de 11100 €. En este caso, la
+fórmula sería $1,100 - $1,000 entre el
+total inicial, que son los mismos
+$1,000, igual a 0,1% que es igual el 10%
+de retorno. Otro concepto es el ratio
+riesgo beneficio, que no explicaremos en
+detalle porque ya lo comentamos en
+nuestro episodio de gestión de riesgos,
+pero es importante que tengas claro que
+es la comparación de cuánto estás
+dispuesto a perder en una operación
+contra su posible ganancia. si arriesgas
+uno para ganar dos o si arriesgas uno
+para ganar tres veces el mismo valor de
+riesgo. Teniendo este término claro,
+podemos pasar al término de win rate o
+porcentaje de efectividad, otro concepto
+que vimos brevemente en el segundo
+episodio del indicador de gestión de
+riesgos. Pero como ya debes saber, no es
+más que la tasa de aciertos que
+desarrolla nuestra estrategia. Se
+refiere al porcentaje de operaciones en
+las que un inversor o trader obtiene
+beneficios. En sí, es el porcentaje de
+efectividad de una estrategia. Es la
+fórmula más simple y se calcula
+dividiendo el número de operaciones
+ganadoras entre el número total de
+operaciones por 100 para determinar su
+porcentaje. Por poner un ejemplo, si con
+tu estrategia ejecutas 10 trades, de los
+cuales si contamos los verdes son los
+take profits y los rojos son los stops,
+el porcentaje de efectividad o win rate
+de tu estrategia sería 7 sobre 10% que
+te daría un 70% de efectividad. Este es
+un ejemplo básico. Como comentamos al
+inicio, 10 trades son muy pocos para
+determinar una estadística, pero ese es
+el ejercicio que tienes que hacer con
+más de 100 o 200 trades o con los que el
+back testing te permita para obtener un
+buen dato. Ahora pongamos un ejemplo
+empresarial. Imagina que tienes $,000 y
+decides montar una empresa de traders
+que trabajen para tu modelo de negocio y
+contratas a cinco empleados: Luis,
+Mateo, Miriam, Julio y Victoria. A cada
+uno de ellos le entregas tu sistema de
+trading y les das las siguientes
+directrices. Uno, tendrán $800 cada uno
+para operar. Dos, deben operar solo una
+vez por semana. Tres, solo podrán abrir
+operaciones de $100. Cuatro, deben
+operar con un riesgo beneficio de uno a
+dos. Les dejas claro a tus empleados que
+esta última regla no la deben romper. El
+peor de los escenarios de este negocio
+será que un empleado pierda todas las
+semanas quedándose con ó de su capital
+entregado. En la primera semana, Luis
+falla, Mateo falla, Miriam gana, Julio
+falla y Victoria gana. Piensas y te
+dices, "Bueno, vamos a darles una
+oportunidad y comienza la siguiente
+semana." Luis esta vez gana, pero el
+resto de empleados lo hacen fatal y
+pierden. Te dices a ti mismo, "Vaya, no
+debí crear esta empresa." Les das a tus
+empleados un discurso motivacional para
+decirles que no pasa nada, que deben
+cumplir las reglas y dejar las emociones
+a un lado, pero que deben ser más
+disciplinados. En la tercera semana ves
+que el discurso ha funcionado y lo hacen
+mejor. Luis pierde, Mateo gana, Miriam
+pierde, Julio gana y Victoria gana. Esto
+te da ánimos y dices, "Vamos a ver qué
+pasa en la última semana del mes." Pero
+no remontan. Los cuatro primeros
+empleados ejecutan las acciones igual
+que la semana pasada donde Luis pierde,
+Mateo gana, Miriam pierde, Julio gana,
+pero Victoria se ha distraído por un
+problema personal y pierde. Si ves el
+panorama general, todo el sistema está
+en rojo y a simple vista podrías decir,
+"Lo he perdido todo." Pero aquí es donde
+entra en juego el riesgo beneficio.
+Suponiendo que todos los empleados
+respetaron la regla esencial que
+indicaste que era inquebrantable y que
+nunca debían romper, operar con un
+riesgo beneficio de uno a dos. Podemos
+calcular que fueron 12 días en pérdidas
+y 8 días en los que llegaron a take
+profit. Volviendo a la fórmula, el win
+rate es 8 sobre 20, donde indica que el
+porcentaje de efectividad del sistema es
+de un 40%. Pero en cuanto a riesgo
+beneficio, el panorama general ha sido
+positivo, porque el cálculo de las 12
+pérdidas por $100 es igual a una pérdida
+de menos $1,200
+y los ocho aciertos, como se tenía que
+ganar el doble, sumarían una ganancia de
+$1,600.
+Por lo tanto, hemos tenido una ganancia
+de $400, con lo que para el cálculo del
+retorno por inversión lo dividimos entre
+la inversión inicial que nos da un 0,1%
+ofreciéndonos un ROY mensual del 10%. Lo
+que ofrece el SPI 500 al año por una
+inversión. Ahora queremos que te
+imagines que para evitar los gastos
+relacionados a un negocio, digamos entre
+comillas normal. [música] En vez de
+contratar y pagar a los empleados, pagar
+los servicios de luz y agua, gastos
+administrativos, alquiler de un local,
+compra de equipos para los empleados,
+que todo este emprendimiento lo llevas
+por tu cuenta y los empleados se
+convierten en días de la semana para
+operar solo por tu cuenta. ¿Qué modelo
+de negocio te ofrece este beneficio?
+Significaría que el sistema lo podrías
+ejecutar por tu parte operando una buena
+estrategia que te ofrezca un 40% de
+efectividad con un riesgo recompensa de
+uno a dos con solo una operación por día
+de la semana. Ahora realiza los cálculos
+mensuales imaginando que logras llegar
+en un futuro a un capital de $40,000. Si
+la estrategia no le afecta una alta
+varianza y es mantenible en el tiempo un
+10% mensual, te arrojaría una media de
+poco menos de $4,000. Recuerda que el
+trading es un negocio de renta variable
+y no podemos establecer un sueldo fijo
+mensual, pero queda de tu parte restar
+el importe de las declaraciones fiscales
+del país donde te encuentres. gastos de
+vida personal, incluyendo la luz e
+internet para tu negocio. Y si no es
+suficiente, deberás sumar más capital si
+es una cifra con la cual no puedas
+vivir. Para tus apuntes, ya que hemos
+comentado el término de varianza y que
+lo tengas en cuenta en el contexto de tu
+backtesting, se refiere al grado de
+fluctuación o dispersión en los
+rendimientos porcentuales de la
+estrategia durante un periodo
+específico. Una alta varianza indica que
+los rendimientos del activo fluctúan
+significativamente, sugiriendo un mayor
+riesgo, mientras que una baja varianza
+implica rendimientos más estables. El
+cálculo de la varianza es necesario para
+calcular la desviación estándar, que a
+su vez se utilizaría para calcular la
+volatilidad de tu portafolio de
+inversión o estrategia de trading. No
+entraremos al detalle en estos
+conceptos, pero tenlos en cuenta si
+quieres realizar un mejor análisis de
+tus estadísticas y probabilidades como
+medida para calcular la dispersión de la
+muestra de tus datos. Para lograr ser
+rentable en el contexto del trading, es
+importante controlar tanto la tasa de
+aciertos que ya hemos dicho que se
+utiliza como una métrica de rendimiento
+para evaluar el éxito de cada trader en
+la realización de operaciones rentables.
+Y aquí es donde muchos fallan, como has
+visto en el ejemplo anterior, porque no
+solo serás rentable por tener una tasa
+de aciertos alta, sino que también debes
+valorar el riesgo beneficio que estamos
+tomando a la hora de operar con nuestro
+sistema de trading. Con estos dos
+conceptos claros, ya podremos calcular
+el valor que tendrá y desarrollará
+nuestra operativa en el futuro. ¿Cómo
+calculamos este valor a futuro? Con
+estos dos conceptos claros, el de ratio,
+riesgo, beneficio y porcentaje de
+efectividad se podrá consolidar en uno
+solo, formando lo que se llama la
+esperanza matemática. Y este es el
+cálculo verdaderamente importante. La
+esperanza matemática mide la
+rentabilidad promedio esperada de una
+estrategia a largo plazo. Una esperanza
+matemática positiva significa que la
+estrategia generará ganancias netas con
+el tiempo. Entonces, básicamente lo que
+dice es que hay que tener una esperanza
+matemática positiva. Pero, ¿qué es una
+esperanza matemática? Una esperanza
+matemática es la relación que existe
+entre tu porcentaje de efectividad con
+respecto al ratio, riesgo beneficio. Por
+esta razón es que decimos que no es que
+hay que tener una efectividad o winrate
+alto o solo buscar tener un buen ratio,
+riesgo beneficio. Hay que tener una
+combinación de las dos cuyo resultado
+nos dé positivo, porque de nada sirve,
+por ejemplo, tener una efectividad del
+70%, pero cuando pierdes pierdes toda tu
+cuenta. Esto no sirve, tiene que haber
+una relación. Entonces, esta relación se
+refleja en esta fórmula de esperanza,
+que es básicamente tu porcentaje de
+efectividad por tu ganancia promedio
+menos el porcentaje de pérdida por tu
+pérdida promedio. Por ejemplo, si
+tenemos una efectividad del 40%, es
+decir, que con cada lote de 10 trades
+que se entran al mercado se tiene una
+probabilidad de ganar del 40%, pero
+también la probabilidad de perder del
+60%. Se pierden seis de cada cuatro y te
+dices, "Pierdo muchas veces de las que
+gano." No puede ser. Pero ya te hemos
+demostrado en el ejemplo de la empresa
+que si tenemos en cuenta su relación con
+el ratio de riesgo beneficio, que para
+el ejemplo utilizamos de uno a dos, que
+cuando pierdes pierdes un ratio y cuando
+ganas ganas dos de ese mismo ratio, es
+cuando el escenario toma sentido. Por
+poner otro ejemplo, si cuando pierdes
+pierdes $100, cuando ganas ganas $200.
+Entonces, la fórmula de la esperanza
+matemática nos dice, si en ese
+porcentaje de efectividad del 40% se
+ganan dos, se le debe restar el 60%, que
+es el porcentaje de pérdida por el ratio
+que se pierde, en este caso uno. Si se
+calcula, te dará una esperanza
+matemática del 0 con2. Eso quiere decir
+que eres rentable con esa estrategia.
+¿Por qué? Porque la esperanza matemática
+es positiva. En resumidas cuentas, eres
+rentable con esa estrategia porque en
+promedio se espera ganar 0.2 unidades
+monetarias en el largo plazo con el
+sistema. La clave será mantener la
+consistencia y la disciplina en la
+ejecución de la estrategia. No sirve
+entrar al mercado sin base ni reglas
+bien definidas de salida, porque si no
+la esperanza matemática no se expresaría
+correctamente. Explicarlo es algo
+complicado, por lo que queremos
+mostrarte la siguiente tabla donde
+puedes ver la relación que existe entre
+el porcentaje de efectividad y el ratio
+de riesgo beneficio. [música]
+Básicamente podrás validar la esperanza
+matemática de forma visual y que, por
+ejemplo, con un 60% de efectividad y un
+ratio de riesgo beneficio de 0.5 no
+serás rentable. La esperanza matemática
+será negativa. Perderás dinero cada vez
+que entres al mercado. Entonces, toda
+estrategia que arroje una esperanza que
+se muestre en rojo o amarillo son
+estrategias que no nos sirven. No
+podemos tener, por ejemplo, ganar un
+ratio 2s a un y ganar un 30% de las
+veces. Ya lo explicamos brevemente con
+la tabla de relación de riesgo
+recompensa del episodio de gestión de
+riesgos. No nos sirve. Nos tocará ganar
+un poco más. A largo plazo, la esperanza
+matemática nos dice lo contrario, que
+debemos intentar tener un valor de las
+zonas en verde oscuro, que es donde se
+mantienen los traders rentables con un
+número mayor a 0,05 o por lo menos por
+encima de cero. Los traders rentables se
+mantienen en esta franja donde
+básicamente estarás siempre en positivo.
+Es decir, a partir de cero como traders
+ganaremos dinero. Pero, ¿por qué
+hablamos solo de la zona en verde oscuro
+si todos queremos ganar más dinero?
+Porque lo que hay que buscar siempre son
+resultados positivos en línea. La zona
+verde claro es la zona trampa. Es la
+zona que te prometerán muchos gurús del
+trading ofreciéndote Lamborghinis,
+mansiones y vida de lujos, pero no es
+real y simplemente no existe. Esta
+esperanza, nunca mejor dicho, no se
+sostiene a largo plazo. Puede que uno o
+dos trades te arrojen estas
+estadísticas, pero la realidad es que no
+es sostenible en el tiempo y no vas a
+poder llegar a generar dinero en el
+trading de forma constante si continúas
+buscando este tipo de estrategias.
+Muchos que analicen esta tabla dirán,
+"La zona verde oscuro donde dices que
+los traders ganan es demasiado poco,
+pero nada más lejos de la realidad. Este
+negocio no va de golpes de suerte, va de
+disciplina y seguridad para mantener
+portafolios de muchísimo dinero donde
+las pérdidas sean insignificantes. Un
+trader que gestiona grandes importes de
+dinero no lo hace porque tiene un 3 a1
+con un 70% de efectividad. Un 0.4 o un
+0.5
+ya es difícil de sostener a largo plazo.
+Si mantienes un ratio de uno a dos, solo
+necesitas que el 40% de las veces sean
+ganadoras. No tienes que ir a buscar 50,
+60, 70 u 80%. Reflexiona sobre la
+comparación que hicimos del ejemplo del
+10% mensual de la empresa contra el 10%
+anual del SP500. Si tienes un 0,01 de
+esperanza matemática, eres un trader
+rentable. ¿Qué es muy poco, no importa?
+Tu efectividad del 70% hace que tu
+esperanza matemática te dé dinero.
+Entonces, [música]
+si tu estrategia se encuentra aquí en
+este promedio, no te preocupes, no eres
+un mal trader. Todos los traders
+rentables, reales, nos encontramos aquí
+en este rango. Como te hemos comentado,
+lo importante es que seas disciplinado
+para poder expresar tu esperanza
+matemática. Cuando obtengas y midas este
+valor, lo único que necesitas es
+incrementar poco a poco tu capital.
+Pequeña esperanza matemática, pero con
+mayor capital. Aquí está la clave. No te
+salgas de tu estrategia. Deja de ser el
+eterno novato que por andar buscando
+estrategias en la zona trampa o de
+fantasía se mantiene cambiando y no deja
+que su estrategia se exprese solo porque
+tiene una racha negativa. Así que
+calcula muy bien tu riesgo. Pero, ¿cómo
+se calcula este riesgo? Para ello
+debemos pasar a la siguiente fórmula
+matemática que es el profit factor.
+También explicado rápidamente en el
+episodio del plan de trading, pero ahora
+entraremos en profundidad, ya que el
+profit factor o factor de ganancia o
+beneficio es una unidad de medida que
+nos permite cuantificar cuál es ese
+riesgo que estamos tomando. La relación
+entre las ganancias brutas y las
+pérdidas brutas producidas por nuestra
+estrategia. El profit factor lo podemos
+calcular tomando nuestras ganancias y
+dividiéndolas por todas las pérdidas que
+hemos acumulado con nuestro sistema.
+Veámoslo con un ejemplo. Si tu sistema
+ha generado $2,000, pero también ha
+tenido unas pérdidas de $1,000,
+podríamos decir que por cada dólar que
+arriesgarías estarías ganando dos con tu
+sistema, lo cual nos daría un profit
+factor de dos, lo cual es una señal de
+una excelente rentabilidad que se puede
+sostener en el tiempo, especialmente si
+los datos provienen de una muestra
+significativa. Como ya hemos comentado,
+si al hacer un análisis del profit
+factor de nuestra estrategia, el valor
+se encuentra por valores menores a uno,
+significa que nuestra estrategia no está
+siendo rentable a largo plazo. Si el
+valor de profit factor es igual o mayor
+a uno, se podría decir que la estrategia
+es rentable a largo plazo. Algo
+importante a tener en cuenta es que si
+el profit factor es igual a un, al tener
+en cuenta las comisiones, el spread u
+otros gastos, podría reflejar que
+nuestro sistema de trading no es tan
+efectivo como pensábamos, por lo que
+debemos tenerlo en cuenta. Ahora, si
+encontramos que el profit factor se
+encuentra por encima de uno, ya nos
+avisa de que nuestra estrategia se puede
+calificar dependiendo del rango en la
+que se encuentre. Si está entre 1 y 1.2
+es una estrategia en la que debemos
+estar muy pendientes de su desviación o
+cualquier cambio la varianza, pero de
+igual forma se considera una estrategia
+buena para operar. Si el valor se
+encuentra entre el 1.2 y el 1.4, podemos
+decir que la estrategia es muy buena. Si
+está entre el 1.5 al 1.6 es una
+estrategia excelente. Y si se encuentra
+por encima del 1.7 podemos decir que la
+estrategia es sublime y está por encima
+de muchas otras estrategias. Para ser
+sinceros, llegar a este último rango es
+difícil de conseguir. Conocer este
+cálculo nos da una tranquilidad de saber
+que nuestro sistema está siendo rentable
+y que si estamos en el rango bajo nos dé
+un abanico de posibilidades para pagar
+las comisiones, pagar el spread o para
+cualquier otro inconveniente que pueda
+ocurrir con nuestro sistema. El segundo
+aporte que nos da un profit factor mayor
+es saber que podemos combinarlo con
+otras estrategias, ya que esto hace que
+el drauddown combinado con otras
+estrategias no nos acumule pérdidas
+generales en nuestro portafolio. El
+draudown es un término que también hemos
+explicado y que sabes que mide el
+retroceso del precio en una parte de la
+curva de resultados respecto al máximo
+anterior y podemos verlo reflejado en
+cualquier parte de la curva de
+rendimiento total de una inversión a
+largo plazo, ya que todas pasan por
+estas etapas de pérdidas porque ninguna
+es completamente plana o perfecta.
+Siguiendo con otro beneficio que podemos
+encontrar en controlar nuestro profit
+factor es la posibilidad de ver cuando
+se comienza a deteriorar la estrategia.
+Si sabemos que el profit factor se
+encontraba en un rango de 1.3 y vemos
+que constantemente está bajando, pasa al
+1.2, luego pasa al 1.1, podríamos tomar
+decisiones respecto a nuestro sistema,
+bien sea para hacerle ajustes o
+sencillamente para pararlo y analizar el
+porqué de este cambio. Teniendo esto en
+cuenta, debes saber que no porque un
+sistema tenga un factor de beneficio
+igual o superior a dos, nos quiere decir
+que sea invencible y que nos durará toda
+la vida. Bien, sabemos que los sistemas
+de trading tienen un ciclo dependiendo
+de cuál sea la profundidad de la
+construcción de cada uno. Es importante
+que estemos constantemente vigilando
+nuestro sistema y verificando el
+porcentaje de efectividad de tu
+estrategia para controlar que no se
+pueda llegar a un riesgo de ruina.
+Riesgo de ruina. Sí, los traders pierden
+sus cuentas porque la mayoría no tiene
+ni idea de este concepto que es clave.
+El riesgo de ruina es un modelo
+estadístico que cuantifica la
+probabilidad de que pierdas dinero hasta
+el punto en donde ya no puedas seguir
+operando con tu estrategia. Este nivel
+de ruina generalmente se identifica como
+una pérdida del 25% al 35% del capital
+inicial. En nuestra plantilla de Notion,
+este es un valor que deberás cambiar si
+deseas realizar el cálculo con 25%, 30%
+o 35%. En este caso lo dejaremos en 30%
+abriendo el panel de la cuenta y
+colocando así en el valor de Drauddown
+esperado 0.3 para que realice
+correctamente el cálculo. Pero en
+términos sencillos, el riesgo de ruina
+calcula la probabilidad de que la curva
+de capital llegue al nivel de ruina
+indicado. Ya mostramos una tabla que
+ofrece un primer panorama del porcentaje
+que deberíamos volver a ganar para
+recuperar una cuenta. Y es que si una
+estrategia llega a estos porcentajes,
+será prácticamente imposible poder
+recuperarse si se mantienen las mismas
+reglas de entrada y salida para volver
+al punto de inicio. Este nivel de ruina
+se determina como una reducción
+porcentual del capital inicial. ¿Cuándo
+debemos calcular la probabilidad de
+ruina de nuestro sistema? Pues antes de
+intentar alcanzar nuestro objetivo, ya
+sea pasar una cuenta de fondeo o pensar
+en un porcentaje de rendimiento a
+nuestro capital propio. Cuanto más
+grande sea el riesgo que asumimos, es
+mucho más probable que nuestra carrera
+de trading termine antes de lo planeado.
+Y aquí no hablamos de intuiciones o
+algún tipo de sesgo, hablamos con
+números y como dice el dicho, las
+matemáticas no mienten porque los
+números son fríos. Pero, ¿y entonces qué
+necesitamos para calcular el riesgo de
+ruina? Lo que vamos a necesitar para
+esta última receta son tres factores
+clave. El primero es el porcentaje de
+aciertos que ya hemos explicado. Lo
+segundo es el ratio riesgo, beneficio
+que se asume, cualquiera que sea la
+relación que decidas usar en tu
+operativa y por último el riesgo que
+asumimos por cada operación al entrar el
+mercado. En el caso de nuestra plantilla
+de diario Trading en Notion, los valores
+los tomamos calculados de todas las
+operaciones que ejecutamos y
+registramos. será lo más real posible,
+ya que el valor del riesgo beneficio se
+obtiene de la media de todas las
+ganancias y pérdidas realizadas, por lo
+que el valor será lo más optimizado
+posible y más cerca del ratio real que
+se está ejecutando. Si tu estrategia de
+trading, manual o algorítmica acierta el
+60% de las veces, pero cuando pierde lo
+hace en grande, tu riesgo de ruina puede
+ser muy alto y pasa totalmente al revés.
+Un sistema con menor tasa de aciertos,
+pero con ganancias mayores que las
+pérdidas, puede sobrevivir con mayor
+probabilidad. El cálculo del riesgo de
+ruina más común fue desarrollada por
+Perry Kaufman ideando la siguiente
+fórmula. La ventaja se calcula como el
+porcentaje de aciertos por la ganancia
+media, porcentaje de fallos por la
+pérdida media. Puede sonar intimidante,
+pero piensa en esto como una receta. Los
+ingredientes ya los tenemos y
+simplemente es reemplazar las variables.
+Una de las deficiencias de la fórmula de
+Kaufman es que solo toma en cuenta el
+porcentaje de ganancia y el porcentaje
+de pérdida y no tiene en cuenta el
+promedio de ganancias y el promedio de
+pérdidas. Datos muy importantes para la
+esperanza matemática de un sistema. Otra
+debilidad es que toma un riesgo fijo por
+operación y es por esto que Ralph Beans
+ideión mejorada para calcular el riesgo
+de ruina. La fórmula de la receta se
+vuelve un poco compleja, pero nos otorga
+resultados más precisos y sería la
+siguiente. Riesgo de ruina es ig a 1 - p
+so p elevado al exponente fraccionario
+de nuestra reducción máxima porcentual
+sobre a y a que es igual p es = 0.5 5 *
+1 + Z sobre A. Z es igual a la
+probabilidad de ganancias por la media
+porcentual de ganancias menos la
+probabilidad de perder por la media
+porcentual de pérdidas. Y A es igual a
+la probabilidad de ganancias por la
+media porcentual de ganancias al
+cuadrado más la probabilidad de pérdida
+por la media porcentual de pérdida al
+cuadrado y el resultado elevado a 0.5.
+La media porcentual de ganancias es
+igual a la media de ganancias sobre el
+capital y la media porcentual de
+pérdidas es igual a la media de pérdidas
+sobre el capital. Puede sonar
+complicado, pero si no te queda claro,
+no te preocupes por las fórmulas, ya que
+nuestra plantilla los calculará
+automáticamente. Si ya nos sigues y le
+das un buen like a este episodio, puedes
+pasar por nuestra web para descargarla.
+La razón por la que este cálculo es
+crucial es que este negocio no va solo
+de acertar operaciones, sino que lo
+fundamental es sobrevivir lo suficiente
+para que la estadística de nuestra
+estrategia juegue a nuestro favor.
+Muchos traders con buenos sistemas se
+equivocan simplemente por no saber
+gestionar muy bien su riesgo. En otras
+palabras, no es la cantidad de
+victorias, sino cómo manejas tus
+derrotas lo que te mantendrá vivo. Te
+dejo la siguiente reflexión. Sabiendo
+antes de subirte a un avión que su
+riesgo de caída es de un 98%, ¿te
+subirías? Un punto importante es que un
+riesgo de ruina del 0% no existe.
+Siempre hay una mínima probabilidad de
+que el mercado se comporte de manera
+inusual y nos saque de las
+probabilidades. Pero si podemos reducir
+ese porcentaje a un nivel tan bajo que
+sea prácticamente irrelevante. En la
+práctica, muchos traders apuntan a
+tenerlo por debajo del 1%, lo que
+significa que estadísticamente podrían
+operar toda su vida sin quebrar. Puedes
+reducir tu riesgo de ruina, pero no es
+gratis, ya que implica arriesgar menos
+por operación y eso puede ralentizar
+mucho tu crecimiento. Pero volvemos al
+mismo punto que comentamos en la
+esperanza matemática. Es el típico apuro
+por llegar rápido, arriesgarlo todo o ir
+un poco más despacio, pero con más
+seguridad. Esto es lo que le ofrecerá la
+seguridad a los inversores que confíen
+en ti para poner a tu disposición su
+capital. Pero aquí entra el perfil
+psicológico y de inversor de cada
+trader. Los más agresivos aceptarán más
+riesgo, mientras que los conservadores
+prefieren dormir mucho más tranquilos
+yendo un poquito más lento. El riesgo de
+ruina lo podríamos comparar mucho con
+los videojuegos si lo viéramos como una
+barra de vida que tenemos sobre nuestras
+cuentas. Cada operación perdedora nos
+quitará puntos de vida y cada ganadora
+los recuperará. Un trader que gestiona
+bien su riesgo. Juega con una barra de
+vida tan grande que los enemigos no
+podrán eliminarlo tan fácilmente. Uno
+que no lo gestiona está constantemente a
+un golpe de perder la partida. Lo hemos
+querido explicar con esta analogía tan
+sencilla que ilustra mejor cómo afectará
+tu trading. Y si quieres que tu trading
+sea más como una maratón y menos como un
+campo de fuego cruzado, este es un
+cálculo que debes dominar. Tienes que
+confiar en tu estrategia. Tienes que
+confiar en tu esperanza matemática con
+la confianza de tu factor de beneficio y
+la tranquilidad del valor de tu riesgo
+de ruina. Deja de buscar el Santo Grial,
+la superestrategia rentable. La
+superganadora que te va a hacer
+millonario no existe. Deja de buscar
+ratios uno a 8 o de un a 10 con una
+efectividad del 80 o 90%. tampoco existe
+y si has entendido los conceptos de hoy,
+mucho menos sostenible en el largo
+plazo, por lo que esta búsqueda
+constante de la superestrategia solo te
+va a conducir a la frustración y vas a
+terminar perdiendo tu tiempo y dinero,
+cuando lo único que tenías que enfocarte
+es en que todos los conceptos aquí
+explicados vayan de la mano y de la
+forma más positiva posible y ya verás
+que poco a poco irá creciendo tu
+capital. Nos hubiese gustado saber todo
+lo que estamos intentando transmitirte
+cuando empezamos y es por esto que hoy
+te hemos regalado el mejor consejo que
+nadie te dará. Utiliza las fórmulas,
+utiliza nuestra plantilla y obtén buenos
+números, porque el trading tiene ese
+terrible factor que es la incertidumbre,
+la aleatoriedad, el riesgo implícito.
+Debes aprender y saber qué hacer en cada
+momento. Como cuando un doctor se gradúa
+con la especialidad de cirujano, al
+entrar a un quirófano tiene que saber
+qué hacer en cada momento, sin titubeos.
+En el trading entran tantos factores de
+tanta gente comprando y vendiendo por
+indicadores, por teoremas, por
+algoritmos. Operan noticias
+fundamentales, operan empresas. Así se
+mueve la economía. Por esto existe esa
+incertidumbre, esa aleatoriedad del
+mercado, hace que esa zona de trampa de
+la que hablamos en la esperanza
+matemática no sea sostenible en largo
+tiempo. Por eso, la invitación final es
+deja de buscar fantasías y enfócate en
+tener medidos todos los conceptos de
+este capítulo de cierre de curso, porque
+la naturaleza del trading te va a
+demostrar que las fantasías no son
+posibles. La clave está en mantener la
+consistencia y la disciplina en la
+ejecución de tu estrategia. Suponemos
+que ya debes estar siguiéndonos para
+mantenerte informado de nuevos
+episodios, así que elige y desarrolla tu
+estrategia y realiza tu propio back test
+antes de poner en marcha cualquier
+operativa. Te felicito por seguir
+estudiando y muchas gracias por ser una
+parte tan importante de nuestra
+comunidad. Nos vemos dentro del
+siguiente.

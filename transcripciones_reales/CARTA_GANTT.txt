@@ -1,0 +1,53 @@
+================================================================
+CARTA GANTT: SISTEMA CRM LOCAL & PROSPECCIÓN STADE
+================================================================
+Recurso: 1 Persona (Ibar)
+Tiempo diario: 30 minutos (0.5 Horas Hombre / HH)
+Meta: Procesar y contactar 148 prospectos del Club Stade.
+Esfuerzo total estimado: ~28.5 HH (57 días a 30 min/día)
+
+1. DIAGRAMA DE GANTT (Cronograma Semanal)
+----------------------------------------------------------------
+Tarea                             | S1 | S2 | S3 | S4 | S5+ |
+----------------------------------|----|----|----|----|-----|
+Fase 1: Infraestructura Web       | == |    |    |    |     |
+Fase 2: Población Rápida (Fichas) | == | == | == | == | ==  |
+Fase 3: Análisis Táctico (.md)    |    | == | == | == | ==  |
+Fase 4: Ejecución (Contactos)     |    |    | == | == | ==  |
+Fase 5: Control y Backup (Git)    | == | == | == | == | ==  |
+
+2. DESGLOSE DE TAREAS Y HORAS HOMBRE (HH)
+----------------------------------------------------------------
+[FASE 1: INFRAESTRUCTURA]
+- Instalar Streamlit y crear dashboard web: 1.0 HH (Días 1-2)
+- Crear enlace automatizado (Sheets a TSV): 0.5 HH (Día 2)
+
+[FASE 2: POBLACIÓN DE DATOS]
+- Llenar 5 Fichas Básicas diarias: 15.0 HH (Días 3 al 30)
+  (Meta: 148 prospectos)
+
+[FASE 3: ANÁLISIS TÁCTICO]
+- Crear Dossier .md (Eneatipo + Estrategia): 10.0 HH (Días 3 al 30)
+  (Meta: 30 Dossieres Top)
+
+[FASE 4: EJECUCIÓN Y VENTA]
+- Contactar vía WhatsApp/Tenis (Top 10): 1.0 HH (Fines de semana)
+- Registrar respuestas en el sistema: 0.5 HH
+
+[FASE 5: CONTROL DE GESTIÓN]
+- Guardar en GitHub y revisar Web Local: 0.5 HH (Viernes)
+
+3. RUTINA DIARIA (30 MINUTOS EXACTOS)
+----------------------------------------------------------------
+[00:00 - 05:00] SINCRONIZACIÓN
+- Descargar TSV de Google Sheets y guardar en ~/gantt/control/
+- Abrir la Web Local (streamlit run dashboard.py)
+
+[05:00 - 25:00] TRABAJO BRUTO (Según fase del día)
+- Llenar 5 fichas en Google Sheets, o
+- Crear 3 Dossieres en nano (Terminal).
+
+[25:00 - 30:00] CONTROL Y CIERRE
+- Revisar que la Web Local actualizó los gráficos.
+- git add . && git commit -m "Avance diario" && git push
+================================================================

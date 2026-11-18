@@ -1,0 +1,7 @@
+{{Ediciones}}
+
+== Traducciones ==
+* [[El príncipe (1854)|El Príncipe]] de Maquiavelo,​ precedido de la biografia del autor y seguido del anti-Maquiavelo o exámen del Príncipe, por Federico, el Grande, rey de Prusia, con un prefacio de Voltaire, y varias cartas de este hombre ilustre al primer editor de este libro, no publicado hasta ahora en España  (1854)
+* {{cita libro|título=[[El príncipe (Sánchez Rojas tr.)|El príncipe]]|traductor=[[José Sánchez Rojas]]|serie=[[Portal:Colección Universal|Colección Universal]] N° 953|editorial=[[Portal:Editorial Calpe|Editorial Calpe]]|ubicación=Madrid|año=1924}} {{at|El príncipe - Colección Universal Nro. 953 (1924).pdf}}
+
+[[Categoría:Obras de Nicolás Maquiavelo]]

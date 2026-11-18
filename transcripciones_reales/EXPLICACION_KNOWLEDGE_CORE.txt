@@ -1,0 +1,30 @@
+=== RESUMEN DEL KNOWLEDGE CORE DE DEPAFIX ===
+
+1) ¿QUÉ PASA CON LAS TRANSCRIPCIONES EN TXT?
+Las transcripciones no se guardan como archivos .md en el disco duro. 
+El script "ingest_transcripts.py" las lee, las limpia (quita muletillas, timestamps), 
+las divide en pedazos de ~500 palabras (chunks) y las inserta directamente en una 
+base de datos en la nube llamada Supabase.
+
+2) ¿QUEDA EN UNA BASE DE DATOS HOMOGÉNEA?
+Sí. Todos los pedazos (chunks) van a la misma tabla (knowledge_chunks_v2). 
+El script detecta de qué carpeta venía el archivo original y le asigna un "dominio":
+- Si venía de data/transcripciones/marketing/ -> domain = 'marketing'
+- Si venía de data/transcripciones/trading/   -> domain = 'trading'
+Esto permite tener todo en un solo lugar, pero clasificado y filtrable.
+
+3) ¿CÓMO FUNCIONA EL CHAT RAG?
+Cuando haces una pregunta, el sistema la convierte en un vector (número de mapa). 
+Luego busca en Supabase los pedazos de texto cuyo vector sea más parecido al de tu 
+pregunta. Finalmente, le envía esos pedazos a Kimi (el LLM) para que redacte una 
+respuesta basándose SOLO en esa información.
+
+=== COMANDOS ÚTILES ===
+- Preguntar al sistema:
+  PYTHONPATH=. venv/bin/python knowledge/chat_knowledge.py "Tu pregunta" --domain marketing
+
+- Generar SOPs (Procedimientos):
+  venv/bin/python knowledge/processors/sop_generator.py
+
+- Guardar el estado exacto de las librerías (por si se rompe):
+  venv/bin/pip freeze > requirements.txt
