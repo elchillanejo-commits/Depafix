@@ -7,3 +7,12 @@ datos_btc_1h.csv
 freqtrade/
 freqtrade-strategies/
 jesse/
+
+# Limpieza y respaldos
+*.bak
+*.bak_*
+*.save
+logs/
+tmp/
+.venv-dashboard/
+cookies.txt
