@@ -47,7 +47,10 @@ class BusquedaRagRequest(BaseModel):
         default="general",
         min_length=1,
         max_length=64,
-        description="Filtro de dominio para match_knowledge_v2 (ej. tierra, metal, agua).",
+        description=(
+            "Filtro de dominio para match_knowledge_v2 (ej. tierra, metal, agua). "
+            "'general' significa sin filtro."
+        ),
     )
     match_count: int = Field(default=5, ge=1, le=20)
 
@@ -136,11 +139,12 @@ async def buscar_conocimiento(
             detail="Debes enviar 'consulta' o un 'embedding' precalculado.",
         )
 
-    parametros = {
+    parametros: dict[str, Any] = {
         "query_embedding": vector,
-        "filtro_domain": payload.domain,
         "match_count": payload.match_count,
     }
+    if payload.domain.casefold() != "general":
+        parametros["filtro_domain"] = payload.domain
 
     try:
         respuesta = await asyncio.wait_for(

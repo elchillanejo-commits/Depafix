@@ -1,9 +1,13 @@
 import os
+from pathlib import Path
 from typing import Optional
-from supabase import create_async_client, AsyncClient
-from dotenv import load_dotenv
 
-load_dotenv()
+from dotenv import load_dotenv
+from supabase import AsyncClient, create_async_client
+
+BASE_DIR = Path(__file__).resolve().parents[2]
+load_dotenv(BASE_DIR / ".env")
+
 
 class Database:
     _client: Optional[AsyncClient] = None
@@ -12,9 +16,18 @@ class Database:
     async def get_client(cls) -> AsyncClient:
         if cls._client is None:
             url = os.getenv("SUPABASE_URL")
-            key = os.getenv("SUPABASE_KEY")
+            # Cliente de servidor: match_knowledge_v2 no está ejecutable con
+            # la clave publishable/anon. Nunca exponer esta clave al frontend.
+            key = (
+                os.getenv("SUPABASE_DB_KEY")
+                or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+                or os.getenv("SUPABASE_KEY")
+            )
             if not url or not key:
-                raise ValueError("Faltan SUPABASE_URL o SUPABASE_KEY.")
+                raise ValueError(
+                    "Faltan SUPABASE_URL y una clave de servidor "
+                    "(SUPABASE_DB_KEY, SUPABASE_SERVICE_ROLE_KEY o SUPABASE_KEY)."
+                )
             cls._client = await create_async_client(url, key)
         return cls._client
 
