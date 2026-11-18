@@ -1,18 +1,70 @@
+name: depafix
+
 services:
-  mente-360:
-    image: depafix-mente360:latest
-    container_name: depafix-agente
-    working_dir: /app
-    command: ["python", "-u", "mente_360.py"]
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
     env_file:
-      - /home/ibar/.depafix_secrets
-      - /home/ibar/DepaFix_Maestro/.env
-    volumes:
-      - ./mente_360.py:/app/mente_360.py
-      - ./scripts:/app/scripts
-      - ./data:/app/data
-      - ./coaches:/app/coaches
-      - /home/ibar/.cache/huggingface:/root/.cache/huggingface
-    stdin_open: true
-    tty: true
+      - .env
+    environment:
+      PORT: "8000"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-depafix}:${POSTGRES_PASSWORD:-depafix_dev_password}@db:5432/${POSTGRES_DB:-depafix}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-depafix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-depafix_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-depafix}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-depafix} -d $${POSTGRES_DB:-depafix}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend_depafix
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        NEXT_PUBLIC_SUPABASE_URL: ${SUPABASE_URL:-}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${SUPABASE_KEY:-}
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NEXT_PUBLIC_SUPABASE_URL: ${SUPABASE_URL:-}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${SUPABASE_KEY:-}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1));"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  pgdata:

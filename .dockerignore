@@ -3,6 +3,8 @@
 .venv
 venv
 venv_dashboard
+frontend_depafix
+node_modules
 __pycache__
 *.py[cod]
 *.bak
