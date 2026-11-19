@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, Iterable, Mapping
+from operacion_terreno.uf_provider import obtener_uf_vigente
 
 COMISION_CORREDOR = Decimal("0.10")
 MONEY_QUANT = Decimal("1")
@@ -49,6 +50,13 @@ class ItemCatalogo:
             cantidad_txt = cantidad_txt.rstrip("0").rstrip(".")
         return f"{self.codigo} - {self.nombre} ({cantidad_txt} {self.unidad})"
 
+
+    def precio_venta_desde_uf(self, uf_override=None):
+        uf_val, fecha, fuente = obtener_uf_vigente(uf_override=uf_override)
+        from decimal import ROUND_HALF_UP, Decimal as D
+        uf_ref = D("38377.09")
+        nuevo = (self.precio_venta * uf_val / uf_ref).quantize(D("1"), rounding=ROUND_HALF_UP)
+        return nuevo
 
 ITEMS: dict[str, ItemCatalogo] = {
     "SPC-001": ItemCatalogo(

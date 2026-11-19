@@ -1,6 +1,6 @@
 # Propuesta Comercial — Corredor Santiago Centro
 
-**Fecha:** 2026-11-18  
+**Fecha:** 2026-11-19  
 **Unidades incluidas:** 7  
 **Unidades con medición pendiente:** 3  
 **Moneda:** CLP neto. **Comisión corredor:** 10% sobre venta neta.

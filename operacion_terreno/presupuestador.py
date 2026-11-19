@@ -5,6 +5,7 @@ import sys
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
+from operacion_terreno.uf_provider import obtener_uf_vigente
 from pathlib import Path
 from typing import Iterable
 
