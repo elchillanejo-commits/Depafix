@@ -1,0 +1,434 @@
+{
+  "Blanco Encalada 1771, Depto. 1313": {
+    "lat": -33.4584959,
+    "lon": -70.6750487,
+    "display_name": "Avenida Almirante Blanco Encalada, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "baja",
+    "query": "Blanco Encalada 1771, Santiago Centro, Chile",
+    "type": "primary",
+    "variant": 0
+  },
+  "Blanco Encalada 1771, Depto. 1605": {
+    "lat": -33.4584959,
+    "lon": -70.6750487,
+    "display_name": "Avenida Almirante Blanco Encalada, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "baja",
+    "query": "Blanco Encalada 1771, Santiago Centro, Chile",
+    "type": "primary",
+    "variant": 0
+  },
+  "Blanco Encalada 1771, Depto. 1607": {
+    "lat": -33.4584959,
+    "lon": -70.6750487,
+    "display_name": "Avenida Almirante Blanco Encalada, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "baja",
+    "query": "Blanco Encalada 1771, Santiago Centro, Chile",
+    "type": "primary",
+    "variant": 0
+  },
+  "Blanco Encalada 1771, Depto. 2002": {
+    "lat": -33.4584959,
+    "lon": -70.6750487,
+    "display_name": "Avenida Almirante Blanco Encalada, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "baja",
+    "query": "Blanco Encalada 1771, Santiago Centro, Chile",
+    "type": "primary",
+    "variant": 0
+  },
+  "Blanco Encalada 1771, Depto. 2003": {
+    "lat": -33.4584959,
+    "lon": -70.6750487,
+    "display_name": "Avenida Almirante Blanco Encalada, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "baja",
+    "query": "Blanco Encalada 1771, Santiago Centro, Chile",
+    "type": "primary",
+    "variant": 0
+  },
+  "Blanco Encalada 1771, Depto. 2201": {
+    "lat": -33.4584959,
+    "lon": -70.6750487,
+    "display_name": "Avenida Almirante Blanco Encalada, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "baja",
+    "query": "Blanco Encalada 1771, Santiago Centro, Chile",
+    "type": "primary",
+    "variant": 0
+  },
+  "Blanco Encalada 1771, Depto. 509": {
+    "lat": -33.4584959,
+    "lon": -70.6750487,
+    "display_name": "Avenida Almirante Blanco Encalada, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "baja",
+    "query": "Blanco Encalada 1771, Santiago Centro, Chile",
+    "type": "primary",
+    "variant": 0
+  },
+  "Blanco Encalada 1771, Depto. 803": {
+    "lat": -33.4584959,
+    "lon": -70.6750487,
+    "display_name": "Avenida Almirante Blanco Encalada, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "baja",
+    "query": "Blanco Encalada 1771, Santiago Centro, Chile",
+    "type": "primary",
+    "variant": 0
+  },
+  "Blanco Encalada 1771, Depto. 911": {
+    "lat": -33.4584959,
+    "lon": -70.6750487,
+    "display_name": "Avenida Almirante Blanco Encalada, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "baja",
+    "query": "Blanco Encalada 1771, Santiago Centro, Chile",
+    "type": "primary",
+    "variant": 0
+  },
+  "Blanco Encalada 1797, Depto. 203": {
+    "lat": -33.4588558,
+    "lon": -70.677417,
+    "display_name": "Avenida Almirante Blanco Encalada, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "baja",
+    "query": "Blanco Encalada 1797, Santiago Centro, Chile",
+    "type": "tertiary",
+    "variant": 0
+  },
+  "Avenida Ejército Libertador 650, Depto. 303": {
+    "lat": -33.4549109,
+    "lon": -70.6597849,
+    "display_name": "Edificio Los Parques II, 650, Avenida Ejército Libertador, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Avenida Ejército Libertador 650, Santiago Centro, Chile",
+    "type": "apartments",
+    "variant": 0
+  },
+  "Avenida Ejército Libertador 650, Depto. 304": {
+    "lat": -33.4549109,
+    "lon": -70.6597849,
+    "display_name": "Edificio Los Parques II, 650, Avenida Ejército Libertador, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Avenida Ejército Libertador 650, Santiago Centro, Chile",
+    "type": "apartments",
+    "variant": 0
+  },
+  "Avenida Ejército Libertador 650, Depto. 405": {
+    "lat": -33.4549109,
+    "lon": -70.6597849,
+    "display_name": "Edificio Los Parques II, 650, Avenida Ejército Libertador, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Avenida Ejército Libertador 650, Santiago Centro, Chile",
+    "type": "apartments",
+    "variant": 0
+  },
+  "Avenida Ejército Libertador 650, Depto. 406": {
+    "lat": -33.4549109,
+    "lon": -70.6597849,
+    "display_name": "Edificio Los Parques II, 650, Avenida Ejército Libertador, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Avenida Ejército Libertador 650, Santiago Centro, Chile",
+    "type": "apartments",
+    "variant": 0
+  },
+  "Avenida Ejército Libertador 650, Depto. 505": {
+    "lat": -33.4549109,
+    "lon": -70.6597849,
+    "display_name": "Edificio Los Parques II, 650, Avenida Ejército Libertador, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Avenida Ejército Libertador 650, Santiago Centro, Chile",
+    "type": "apartments",
+    "variant": 0
+  },
+  "Avenida Ejército Libertador 650, Depto. 506": {
+    "lat": -33.4549109,
+    "lon": -70.6597849,
+    "display_name": "Edificio Los Parques II, 650, Avenida Ejército Libertador, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Avenida Ejército Libertador 650, Santiago Centro, Chile",
+    "type": "apartments",
+    "variant": 0
+  },
+  "Avenida Ejército Libertador 650, Depto. 603": {
+    "lat": -33.4549109,
+    "lon": -70.6597849,
+    "display_name": "Edificio Los Parques II, 650, Avenida Ejército Libertador, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Avenida Ejército Libertador 650, Santiago Centro, Chile",
+    "type": "apartments",
+    "variant": 0
+  },
+  "Avenida Ejército Libertador 650, Depto. 605": {
+    "lat": -33.4549109,
+    "lon": -70.6597849,
+    "display_name": "Edificio Los Parques II, 650, Avenida Ejército Libertador, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Avenida Ejército Libertador 650, Santiago Centro, Chile",
+    "type": "apartments",
+    "variant": 0
+  },
+  "Avenida Ejército Libertador 650, Depto. 606": {
+    "lat": -33.4549109,
+    "lon": -70.6597849,
+    "display_name": "Edificio Los Parques II, 650, Avenida Ejército Libertador, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Avenida Ejército Libertador 650, Santiago Centro, Chile",
+    "type": "apartments",
+    "variant": 0
+  },
+  "Avenida Ejército Libertador 650, Depto. 803": {
+    "lat": -33.4549109,
+    "lon": -70.6597849,
+    "display_name": "Edificio Los Parques II, 650, Avenida Ejército Libertador, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Avenida Ejército Libertador 650, Santiago Centro, Chile",
+    "type": "apartments",
+    "variant": 0
+  },
+  "Avenida Ejército 520, Depto. 51-B": {
+    "lat": -33.4533936,
+    "lon": -70.6601126,
+    "display_name": "520, Avenida Ejército Libertador, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Avenida Ejército 520, Santiago Centro, Chile",
+    "type": "house",
+    "variant": 0
+  },
+  "Avenida Ejército 520, Depto. 81-B": {
+    "lat": -33.4533936,
+    "lon": -70.6601126,
+    "display_name": "520, Avenida Ejército Libertador, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Avenida Ejército 520, Santiago Centro, Chile",
+    "type": "house",
+    "variant": 0
+  },
+  "Toesca 2002, Depto. 704": {
+    "lat": -33.4540695,
+    "lon": -70.6630189,
+    "display_name": "Edificio Carrera/Toesca, 2002, Toesca, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Toesca 2002, Santiago Centro, Chile",
+    "type": "apartments",
+    "variant": 0
+  },
+  "Toesca 2002, Depto. 904": {
+    "lat": -33.4540695,
+    "lon": -70.6630189,
+    "display_name": "Edificio Carrera/Toesca, 2002, Toesca, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Toesca 2002, Santiago Centro, Chile",
+    "type": "apartments",
+    "variant": 0
+  },
+  "Avenida España 397, Depto. 702": {
+    "lat": -33.4536369,
+    "lon": -70.6695814,
+    "display_name": "Edificio Barcelona, 397, Avenida España, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Avenida España 397, Santiago Centro, Chile",
+    "type": "apartments",
+    "variant": 0
+  },
+  "Morandé 707, Depto. 1405": {
+    "lat": -33.4354693,
+    "lon": -70.654023,
+    "display_name": "707, Morandé, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Morandé 707, Santiago Centro, Chile",
+    "type": "house",
+    "variant": 0
+  },
+  "Catedral 1350, Depto. 1504": {
+    "lat": -33.4382179,
+    "lon": -70.6563893,
+    "display_name": "1350, Catedral, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "baja",
+    "query": "Catedral 1350, Santiago Centro, Chile",
+    "type": "yes",
+    "variant": 0
+  },
+  "Santo Domingo 756, Depto. 1508": {
+    "lat": -33.435938,
+    "lon": -70.6480495,
+    "display_name": "756, Santo Domingo, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Santo Domingo 756, Santiago Centro, Chile",
+    "type": "house",
+    "variant": 0
+  },
+  "Santo Domingo 756, Depto. 1608": {
+    "lat": -33.435938,
+    "lon": -70.6480495,
+    "display_name": "756, Santo Domingo, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Santo Domingo 756, Santiago Centro, Chile",
+    "type": "house",
+    "variant": 0
+  },
+  "Santo Domingo 1890, Depto. 405-B": {
+    "lat": -33.4376077,
+    "lon": -70.6637463,
+    "display_name": "1890 casa, Santo Domingo, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Santo Domingo 1890, Santiago Centro, Chile",
+    "type": "house",
+    "variant": 0
+  },
+  "Lord Cochrane 184, Depto. 312": {
+    "lat": -33.4485565,
+    "lon": -70.6547513,
+    "display_name": "184, Lord Cochrane, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Lord Cochrane 184, Santiago Centro, Chile",
+    "type": "house",
+    "variant": 0
+  },
+  "Lord Cochrane 252, Depto. 1111": {
+    "lat": -33.4496528,
+    "lon": -70.6545899,
+    "display_name": "252, Lord Cochrane, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Lord Cochrane 252, Santiago Centro, Chile",
+    "type": "house",
+    "variant": 0
+  },
+  "Sazié 1738, Depto. 704": {
+    "lat": -33.4495162,
+    "lon": -70.6602249,
+    "display_name": "1738, Sazié, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Sazié 1738, Santiago Centro, Chile",
+    "type": "apartments",
+    "variant": 0
+  },
+  "San Ignacio 1498, Depto. 701": {
+    "lat": -33.4665515,
+    "lon": -70.6547999,
+    "display_name": "1498, San Ignacio de Loyola, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "San Ignacio 1498, Santiago Centro, Chile",
+    "type": "house",
+    "variant": 0
+  },
+  "Tarapacá 1331, Depto. 304": {
+    "lat": -33.4476726,
+    "lon": -70.6534737,
+    "display_name": "1331, Tarapacá, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Tarapacá 1331, Santiago Centro, Chile",
+    "type": "house",
+    "variant": 0
+  },
+  "Aldunate 1525, Depto. 1603": {
+    "lat": -33.4669827,
+    "lon": -70.6537046,
+    "display_name": "1525, Aldunate, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Aldunate 1525, Santiago Centro, Chile",
+    "type": "house",
+    "variant": 0
+  },
+  "San Diego 2381, Depto. 616-A": {
+    "lat": -33.4750609,
+    "lon": -70.6483957,
+    "display_name": "San Diego, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "baja",
+    "query": "San Diego 2381, Santiago Centro, Chile",
+    "type": "primary",
+    "variant": 0
+  },
+  "Franklin 200, Depto. 806, Torre B": {
+    "lat": -33.4715688,
+    "lon": -70.6283342,
+    "display_name": "200, Franklin, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Franklin 200, Santiago Centro, Chile",
+    "type": "house",
+    "variant": 0
+  },
+  "Nataniel Cox (sin número)": {
+    "lat": -33.4716515,
+    "lon": -70.6498501,
+    "display_name": "Nataniel Cox, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "baja",
+    "query": "Nataniel Cox, Santiago Centro, Chile",
+    "type": "primary",
+    "variant": 0
+  },
+  "San Francisco 467, Depto. 1804": {
+    "lat": -33.4502136,
+    "lon": -70.6469995,
+    "display_name": "467, San Francisco, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "San Francisco 467, Santiago Centro, Chile",
+    "type": "house",
+    "variant": 0
+  },
+  "San Isidro 96, Depto. 1806": {
+    "lat": -33.4445244,
+    "lon": -70.6443308,
+    "display_name": "SyC Apartments Ilusión, 96, San Isidro, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8330093, Chile",
+    "confidence": "baja",
+    "query": "San Isidro 96, Santiago Centro, Chile",
+    "type": "apartment",
+    "variant": 0
+  },
+  "San Isidro 379, Depto. 151": {
+    "lat": -33.4486327,
+    "lon": -70.6436005,
+    "display_name": "379, San Isidro, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "San Isidro 379, Santiago Centro, Chile",
+    "type": "house",
+    "variant": 0
+  },
+  "Santa Isabel 326, Depto. 210": {
+    "lat": -33.4484914,
+    "lon": -70.6360577,
+    "display_name": "326, Avenida Santa Isabel, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Santa Isabel 326, Santiago Centro, Chile",
+    "type": "house",
+    "variant": 0
+  },
+  "Santa Victoria 562, Depto. 421": {
+    "lat": -33.4490275,
+    "lon": -70.6429187,
+    "display_name": "562, Santa Victoria, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Santa Victoria 562, Santiago Centro, Chile",
+    "type": "house",
+    "variant": 0
+  },
+  "Santa Rosa 991, Depto. 2109-A": {
+    "lat": -33.4568084,
+    "lon": -70.6437829,
+    "display_name": "Escuela Básica Antonio Borquez Solar, 991, Avenida Santa Rosa, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "baja",
+    "query": "Santa Rosa 991, Santiago Centro, Chile",
+    "type": "school",
+    "variant": 0
+  },
+  "Carmen 110, Depto. 2215": {
+    "lat": -33.4446753,
+    "lon": -70.6428234,
+    "display_name": "110, Carmen, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "alta",
+    "query": "Carmen 110, Santiago Centro, Chile",
+    "type": "house",
+    "variant": 0
+  },
+  "Vicuña Mackenna 920, Depto. 1202": {
+    "lat": -33.4682412,
+    "lon": -70.6263162,
+    "display_name": "Avenida Vicuña Mackenna, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "baja",
+    "query": "Vicuña Mackenna 920, Santiago Centro, Chile",
+    "type": "primary",
+    "variant": 0
+  },
+  "Diagonal Vicuña Mackenna 2004, Depto. 1110": {
+    "lat": -33.470273,
+    "lon": -70.626344,
+    "display_name": "Diagonal Vicuña Mackenna, Santiago, Provincia de Santiago, Región Metropolitana de Santiago, 8320000, Chile",
+    "confidence": "baja",
+    "query": "Diagonal Vicuña Mackenna 2004, Santiago Centro, Chile",
+    "type": "secondary",
+    "variant": 0
+  }
+}
