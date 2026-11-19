@@ -26,3 +26,13 @@
 - Caso válido: `Easy Maipú` / `Maipú` / falla "Sin stock cerámica 60x60" / producto "Cerámica 60x60 beige" / precio 18990.00 → INSERTADO (exit 0).
 - Idempotencia: mismo `almacen+comuna+fecha` → ACTUALIZADO (exit 0), precio actualizado a 19500.00.
 - Datos de prueba limpiados (sin registros basura permanentes).
+
+## Commit local (00edc57)
+- `feat(obreros): gobernanza y obrero almacenes — plantilla, spec, script CLI validado y resumen operativo (DepaFix 3.0)` (5 archivos, 329 inserciones).
+- Sin `git push` (pendiente).
+
+## Pendientes de regreso
+- **Push:** ejecutar `git push origin main` cuando se autorice.
+- **Re-etiquetado:** dominio `negocio` (9 chunks eneatipos) → `eneatipo`/`metal` en ingesta controlada.
+- **SENCE dual:** verificar sincronización `coach_sence` (1.926) vs `coach_otec` (80) — auditoría profunda pendiente.
+- **Auditoría profunda:** revisar smoke residual en `fuego` (1 filler) y `tierra` (1 chunk corto).
