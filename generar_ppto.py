@@ -1,49 +1,64 @@
+import argparse
 import os
+import sys
 import webbrowser
-import yaml
+from pathlib import Path
 
-def generar_presupuesto_html(codigo_partida, comuna, magnitud):
-    # 1. Leer el catálogo base SERVIU
-    with open("serviu_precios.yml", "r", encoding="utf-8") as f:
-        datos = yaml.safe_load(f)
-    
-    # 2. Extraer la partida exacta
-    partidas = datos.get("partidas", [])
-    partida = next((p for p in partidas if p["codigo"] == codigo_partida), None)
-    
-    if not partida:
-        print(f"❌ Error: Código {codigo_partida} no existe en la base SERVIU.")
-        return
+from app.core.serviu import PartidaNoEncontrada, PrecioNoConfiable, calcular
 
-    nombre = partida["nombre"]
-    unidad = partida["unidad"]
-    precio_unitario = partida["precio_unitario"]
-    
-    # 3. Cálculos matemáticos limpios
-    total_neto = magnitud * precio_unitario
-    iva = int(total_neto * 0.19)
-    total_final = total_neto + iva
-    
-    # 4. Inyectar datos reales en el Template HTML
-    with open("presupuesto_template.html", "r", encoding="utf-8") as f:
-        template = f.read()
-        
-    html = template.replace("{comuna}", comuna)\
-                   .replace("{partida}", nombre)\
-                   .replace("{magnitud}", f"{magnitud} {unidad}")\
-                   .replace("{precio_unitario}", f"{precio_unitario:,}")\
-                   .replace("{total_neto}", f"{total_neto:,}")\
-                   .replace("{iva}", f"{iva:,}")\
-                   .replace("{total_final}", f"{total_final:,}")
-                   
-    # 5. Guardar output modular y abrir
-    output_file = f"presupuesto_{codigo_partida.lower()}.html"
-    with open(output_file, "w", encoding="utf-8") as f:
-        f.write(html)
-        
-    print(f"✅ Cotización blindada: {output_file} (Valor SERVIU aplicado: ${precio_unitario:,})")
-    webbrowser.open(f"file://{os.path.abspath(output_file)}")
+RAIZ = Path(__file__).resolve().parent
+TEMPLATE = RAIZ / "presupuesto_template.html"
+
+
+def generar_presupuesto_html(codigo_partida: str, comuna: str, magnitud: float, abrir: bool = False) -> Path:
+    """Genera el presupuesto SERVIU validando precio y usando Decimal."""
+    resultado = calcular(codigo_partida, magnitud, comuna)
+
+    with TEMPLATE.open("r", encoding="utf-8") as archivo:
+        template = archivo.read()
+
+    html = (
+        template.replace("{comuna}", resultado["comuna"])
+        .replace("{partida}", resultado["nombre"])
+        .replace(
+            "{magnitud}",
+            f"{resultado['magnitud']:g} {resultado['unidad']}",
+        )
+        .replace("{precio_unitario}", f"{resultado['precio_unitario']:,.0f}")
+        .replace("{total_neto}", f"{resultado['total_neto']:,.2f}")
+        .replace("{iva}", f"{resultado['iva']:,.2f}")
+        .replace("{total_final}", f"{resultado['total_final']:,.2f}")
+    )
+
+    output_file = RAIZ / f"presupuesto_{codigo_partida.lower()}.html"
+    output_file.write_text(html, encoding="utf-8")
+
+    print(
+        f"OK {output_file.name} | {resultado['nombre']} | "
+        f"precio SERVIU ${resultado['precio_unitario']:,.0f} | "
+        f"neto ${resultado['total_neto']:,.2f} | "
+        f"IVA ${resultado['iva']:,.2f} | total ${resultado['total_final']:,.2f}"
+    )
+    if abrir:
+        webbrowser.open(f"file://{output_file}")
+    return output_file
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Cotizador local con precios oficiales SERVIU")
+    parser.add_argument("codigo", nargs="?", default="CER-001", help="Código de partida (ej. CER-001)")
+    parser.add_argument("comuna", nargs="?", default="Ñuñoa", help="Comuna de la obra")
+    parser.add_argument("magnitud", nargs="?", type=float, default=50.0, help="Superficie o cantidad")
+    parser.add_argument("--open", action="store_true", help="Abrir el HTML en el navegador")
+    args = parser.parse_args()
+
+    try:
+        generar_presupuesto_html(args.codigo, args.comuna, args.magnitud, args.open)
+    except (PartidaNoEncontrada, PrecioNoConfiable, ValueError) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
 
 if __name__ == "__main__":
-    print("=== MOTOR COTIZADOR DEPAFIX (MODO SERVIU) ===")
-    generar_presupuesto_html("CER-001", "Ñuñoa", 50)
+    sys.exit(main())

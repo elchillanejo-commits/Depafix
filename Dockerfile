@@ -47,6 +47,7 @@ COPY --from=builder /opt/venv /opt/venv
 WORKDIR /app
 
 COPY app ./app
+COPY serviu_precios.yml ./serviu_precios.yml
 COPY start.sh ./start.sh
 RUN chmod +x start.sh
 
