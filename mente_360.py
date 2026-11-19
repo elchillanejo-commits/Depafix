@@ -3,7 +3,10 @@ import json
 import sys
 from dotenv import load_dotenv
 from supabase import create_client
-from sentence_transformers import SentenceTransformer
+try:
+    from sentence_transformers import SentenceTransformer
+except ImportError:
+    SentenceTransformer = None
 
 # langchain solo es necesario para el flujo conversacional (Router/Coach/Sintesis).
 # Si no esta instalado, el modo --saldo-sence sigue funcionando.
@@ -19,8 +22,12 @@ try:
     from langchain_openai import ChatOpenAI
 except ImportError:
     ChatOpenAI = None
-from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import StrOutputParser
+try:
+    from langchain_core.prompts import PromptTemplate
+    from langchain_core.output_parsers import StrOutputParser
+except ImportError:
+    PromptTemplate = None
+    StrOutputParser = None
 
 load_dotenv()
 
@@ -185,7 +192,7 @@ Respuesta:
 # ==========================================
 # TOOL: SALDO SENCE POR RUT (mock + búsqueda real)
 # ==========================================
-def calcular_saldo_sence(rut, trabajadores=None):
+def calcular_saldo_sence(rut, trabajadores=None, modalidad: str = "online"):
     """
     Tool de cálculo de saldo SENCE por RUT.
 
@@ -204,7 +211,7 @@ def calcular_saldo_sence(rut, trabajadores=None):
     """
     from sence_tools import calcular_saldo_franquicia
 
-    saldo = calcular_saldo_franquicia(rut, trabajadores or [])
+    saldo = calcular_saldo_franquicia(rut, trabajadores or [], modalidad=modalidad)
 
     # Contexto normativo (RAG coach_sence). No bloquea la tool: si falla, [].
     fragmentos = []
@@ -231,7 +238,7 @@ def calcular_saldo_sence(rut, trabajadores=None):
 # ==========================================
 # MAIN
 # ==========================================
-def main():
+def main(preguntas_override: list[str] | None = None) -> None:
     if not os.getenv("OPENCODE_API_KEY"):
         print("❌ ERROR: Falta OPENCODE_API_KEY en .env")
         return
@@ -243,7 +250,9 @@ def main():
     print(f"✅ Recursos listos: {sum(1 for r in recursos.values() if r['tipo']=='faiss')} cerebros FAISS | Supabase: conectado.\n")
 
     # Modo CLI: pregunta por argumento o interactivo
-    if len(sys.argv) > 1:
+    if preguntas_override is not None:
+        preguntas = preguntas_override
+    elif len(sys.argv) > 1:
         preguntas = [" ".join(sys.argv[1:])]
     else:
         preguntas = None
@@ -292,19 +301,55 @@ def main():
             break
 
 if __name__ == "__main__":
-    # Modo tool: python3 mente_360.py --saldo-sence <RUT> [--masa <CLP>]
-    #   --masa <CLP>: masa remuneracional anual en CLP, para que la
-    #   estimación (RUT sin registro) sea distinta de 0.
-    #   Ej: python3 mente_360.py --saldo-sence 77253931-2 --masa 5000000
-    if len(sys.argv) >= 3 and sys.argv[1] == "--saldo-sence":
-        rut = sys.argv[2].strip()
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="mente_360",
+        description="CEO Mente 360 - DepaFix (Elemento SENCE / OTEC).",
+    )
+    parser.add_argument(
+        "--saldo-sence",
+        metavar="RUT",
+        default=None,
+        help="Modo tool: saldo SENCE para RUT (ej: 76.123.456-7). Con --masa <CLP> estima la franquicia.",
+    )
+    parser.add_argument(
+        "--masa",
+        type=float,
+        default=None,
+        help="Masa remuneracional anual en CLP para la estimacion de franquicia.",
+    )
+    parser.add_argument(
+        "--modalidad",
+        choices=["online", "presencial"],
+        default="online",
+        help="Modalidad SENCE/OTEC (cursos online o presenciales).",
+    )
+    parser.add_argument(
+        "pregunta",
+        nargs="*",
+        help="Pregunta para el modo conversacional (opcional).",
+    )
+
+    def _error(mensaje: str) -> None:
+        parser.print_usage(sys.stderr)
+        print(f"ERROR: {mensaje}", file=sys.stderr)
+        sys.exit(1)
+
+    parser.error = _error
+
+    args = parser.parse_args()
+
+    if args.saldo_sence is not None:
+        rut = (args.saldo_sence or "").strip()
+        if not rut:
+            print("ERROR: RUT requerido para --saldo-sence (ej: --saldo-sence 76.123.456-7)")
+            sys.exit(1)
         trabajadores = []
-        if len(sys.argv) >= 5 and sys.argv[3] == "--masa":
-            try:
-                trabajadores = [{"remuneracion": float(sys.argv[4])}]
-            except ValueError:
-                print("ERROR: --masa debe ser un numero en CLP (ej: --masa 5000000)")
-                sys.exit(2)
-        print(json.dumps(calcular_saldo_sence(rut, trabajadores), ensure_ascii=False, indent=2))
+        if args.masa is not None:
+            trabajadores = [{"remuneracion": float(args.masa)}]
+        resultado = calcular_saldo_sence(rut, trabajadores, modalidad=args.modalidad)
+        print(json.dumps(resultado, ensure_ascii=False, indent=2))
         sys.exit(0)
-    main()
+
+    main([" ".join(args.pregunta)] if args.pregunta else None)

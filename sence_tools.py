@@ -2,21 +2,26 @@
 
 import os
 from datetime import datetime
+from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
-UTM_DEFAULT = 67000.0
-TOPE_UTM = 4.5
-TASA_FRANQUICIA = 0.06
+UTM_DEFAULT = Decimal("67000")
+TOPE_UTM = Decimal("4.5")
+TASA_FRANQUICIA = Decimal("0.06")
 
 
-def _utm_valor() -> float:
+def _redondear(valor: Decimal, exponente: str = "1") -> Decimal:
+    return valor.quantize(Decimal(exponente), rounding=ROUND_HALF_UP)
+
+
+def _utm_valor() -> Decimal:
     try:
-        return float(os.getenv("UTM_VALOR", str(UTM_DEFAULT)))
-    except (TypeError, ValueError):
+        return Decimal(str(os.getenv("UTM_VALOR", str(UTM_DEFAULT))))
+    except Exception:
         return UTM_DEFAULT
 
 
@@ -44,7 +49,7 @@ def _remuneracion(trabajador) -> float:
         return 0.0
 
 
-def calcular_saldo_franquicia(rut_empresa, trabajadores) -> dict:
+def calcular_saldo_franquicia(rut_empresa, trabajadores, modalidad: str = "online") -> dict:
     """
     Calcula la franquicia tributaria anual SENCE y el saldo disponible.
 
@@ -68,11 +73,11 @@ def calcular_saldo_franquicia(rut_empresa, trabajadores) -> dict:
 
     if isinstance(trabajadores, int):
         cantidad = trabajadores
-        masa_imponible = 0.0
+        masa_imponible = Decimal(0)
     else:
         lista = trabajadores or []
         cantidad = len(lista)
-        masa_imponible = sum(_remuneracion(t) for t in lista)
+        masa_imponible = sum((Decimal(str(_remuneracion(t))) for t in lista), Decimal(0))
 
     utm = _utm_valor()
     tope_anual = TOPE_UTM * utm
@@ -95,13 +100,13 @@ def calcular_saldo_franquicia(rut_empresa, trabajadores) -> dict:
             registro = None
 
     if registro:
-        franquicia_anual = float(registro.get("franquicia_anual") or franquicia_anual)
-        usado = float(registro.get("usado") or 0)
+        franquicia_anual = Decimal(str(registro.get("franquicia_anual") or franquicia_anual))
+        usado = Decimal(str(registro.get("usado") or 0))
         disponible = registro.get("disponible")
         disponible = (
-            float(disponible)
+            Decimal(str(disponible))
             if disponible is not None
-            else max(franquicia_anual - usado, 0)
+            else max(franquicia_anual - usado, Decimal(0))
         )
         anio = registro.get("año") or datetime.now().year
         razon_social = registro.get("razon_social") or "Desconocida"
@@ -109,8 +114,8 @@ def calcular_saldo_franquicia(rut_empresa, trabajadores) -> dict:
         es_estimacion = False
         nota = "Registro oficial encontrado en franquicia_empresas."
     else:
-        usado = 0.0
-        disponible = max(franquicia_anual - usado, 0)
+        usado = Decimal(0)
+        disponible = max(franquicia_anual - usado, Decimal(0))
         anio = datetime.now().year
         razon_social = "Desconocida"
         fuente = "estimacion"
@@ -126,12 +131,13 @@ def calcular_saldo_franquicia(rut_empresa, trabajadores) -> dict:
         "rut": rut,
         "razon_social": razon_social,
         "trabajadores": cantidad,
-        "masa_imponible": round(masa_imponible, 0),
-        "utm_valor": round(utm, 0),
-        "tope_anual": round(tope_anual, 0),
-        "franquicia_anual": round(franquicia_anual, 0),
-        "usado": round(usado, 0),
-        "disponible": round(disponible, 0),
+        "masa_imponible": float(_redondear(masa_imponible)),
+        "utm_valor": float(_redondear(utm)),
+        "tope_anual": float(_redondear(tope_anual)),
+        "franquicia_anual": float(_redondear(franquicia_anual)),
+        "usado": float(_redondear(usado)),
+        "disponible": float(_redondear(disponible)),
+        "modalidad": modalidad,
         "año": anio,
         "fuente": fuente,
         "es_estimacion": es_estimacion,
