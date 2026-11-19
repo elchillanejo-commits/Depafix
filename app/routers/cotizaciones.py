@@ -13,7 +13,9 @@ router = APIRouter(prefix="/api/v1/cotizaciones", tags=["Cotizaciones"])
 
 
 class ItemPresupuesto(BaseModel):
+    codigo: str | None = Field(default=None, min_length=1)
     desc: str = Field(..., min_length=1)
+    cantidad: float | None = Field(default=None, gt=0)
     precio: float = Field(..., gt=0)
 
 
@@ -90,7 +92,7 @@ async def crear_cotizacion(payload: PresupuestoCreate, db: AsyncClient = Depends
         else:
             direccion = payload.direccion
             total_neto = payload.total_neto
-            items = [item.model_dump() for item in payload.items]
+            items = [item.model_dump(exclude_none=True) for item in payload.items]
             logger.warning(
                 "Cotización con precios aportados por el cliente (sin validar SERVIU)."
             )

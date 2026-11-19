@@ -172,7 +172,7 @@
 ```text
 Resumen para WhatsApp:
 Propiedades Ready-to-Rent priorizadas: 7
-Inversión total estimada: $3.756.300
+Costo mayorista total: $3.756.300
 Venta neta total: $7.652.500
 Comisión corredor (10%): $765.250
 Margen DepaFix: $3.130.950 (40.9%)

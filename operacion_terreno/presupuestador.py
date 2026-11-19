@@ -282,7 +282,7 @@ def render_reporte(generados: list[PresupuestoGenerado]) -> str:
     lineas_whatsapp = [
         "Resumen para WhatsApp:",
         f"Propiedades Ready-to-Rent priorizadas: {len(generados)}",
-        f"Inversión total estimada: {formato_clp(total_costo)}",
+        f"Costo mayorista total: {formato_clp(total_costo)}",
         f"Venta neta total: {formato_clp(total_venta)}",
         f"Comisión corredor (10%): {formato_clp(total_comision)}",
         f"Margen DepaFix: {formato_clp(total_margen)} ({margen_pct:.1f}%)",

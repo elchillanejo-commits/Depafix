@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal, ROUND_HALF_UP
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 COMISION_CORREDOR = Decimal("0.10")
 MONEY_QUANT = Decimal("1")
@@ -193,6 +193,83 @@ def item(codigo: str) -> ItemCatalogo:
         raise KeyError(f"Ítem de catálogo no encontrado: {codigo}") from exc
 
 
+def crear_linea(
+    codigo: str,
+    desc: str,
+    unidad: str,
+    cantidad: Decimal | int | float | str,
+    precio_unitario: Decimal | int | float | str,
+    costo_unitario: Decimal | int | float | str,
+) -> LineaPresupuesto:
+    cantidad_d = _d(cantidad)
+    precio_d = _d(precio_unitario)
+    costo_d = _d(costo_unitario)
+    if cantidad_d <= 0:
+        raise ValueError("La cantidad debe ser mayor a cero.")
+    if precio_d <= 0:
+        raise ValueError("El precio unitario debe ser mayor a cero.")
+    if costo_d < 0:
+        raise ValueError("El costo unitario no puede ser negativo.")
+    subtotal = _money(precio_d * cantidad_d)
+    costo_total = _money(costo_d * cantidad_d)
+    return LineaPresupuesto(
+        codigo=codigo,
+        desc=desc,
+        unidad=unidad,
+        cantidad=cantidad_d,
+        precio_unitario=precio_d,
+        costo_unitario=costo_d,
+        subtotal_neto=subtotal,
+        costo_total=costo_total,
+        margen_bruto=_money(subtotal - costo_total),
+    )
+
+
+def linea_personalizada(
+    codigo: str,
+    desc: str,
+    cantidad: Decimal | int | float | str,
+    precio_unitario: Decimal | int | float | str,
+    costo_unitario: Decimal | int | float | str = 0,
+    unidad: str = "un",
+) -> LineaPresupuesto:
+    codigo = codigo.strip()
+    desc = desc.strip()
+    if not codigo:
+        raise ValueError("El código de la partida ad-hoc no puede estar vacío.")
+    if not desc:
+        raise ValueError("La descripción de la partida ad-hoc no puede estar vacía.")
+    desc_completa = desc if desc.startswith(codigo) else f"{codigo} - {desc}"
+    return crear_linea(
+        codigo=codigo,
+        desc=desc_completa,
+        unidad=unidad or "un",
+        cantidad=cantidad,
+        precio_unitario=precio_unitario,
+        costo_unitario=costo_unitario,
+    )
+
+
+def totalizar(lineas: Iterable[LineaPresupuesto]) -> CalculoPresupuesto:
+    lineas_tuple = tuple(lineas)
+    if not lineas_tuple:
+        raise ValueError("El presupuesto no tiene partidas con cantidad mayor a cero.")
+
+    total_neto = _money(sum(linea.subtotal_neto for linea in lineas_tuple))
+    costo_mayorista = _money(sum(linea.costo_total for linea in lineas_tuple))
+    comision = _money(total_neto * COMISION_CORREDOR)
+    margen_bruto = _money(total_neto - costo_mayorista)
+    margen_depafix = _money(margen_bruto - comision)
+    return CalculoPresupuesto(
+        lineas=lineas_tuple,
+        total_neto=total_neto,
+        costo_mayorista=costo_mayorista,
+        comision_corredor=comision,
+        margen_bruto=margen_bruto,
+        margen_depafix=margen_depafix,
+    )
+
+
 def calcular(requerimientos: Mapping[str, Decimal | int | float | str]) -> CalculoPresupuesto:
     lineas: list[LineaPresupuesto] = []
     for codigo, cantidad_raw in requerimientos.items():
@@ -200,37 +277,17 @@ def calcular(requerimientos: Mapping[str, Decimal | int | float | str]) -> Calcu
         if cantidad <= 0:
             continue
         catalogo = item(codigo)
-        subtotal = _money(catalogo.precio_venta * cantidad)
-        costo_total = _money(catalogo.costo_mayorista * cantidad)
         lineas.append(
-            LineaPresupuesto(
+            crear_linea(
                 codigo=catalogo.codigo,
                 desc=catalogo.descripcion(cantidad),
                 unidad=catalogo.unidad,
                 cantidad=cantidad,
                 precio_unitario=catalogo.precio_venta,
                 costo_unitario=catalogo.costo_mayorista,
-                subtotal_neto=subtotal,
-                costo_total=costo_total,
-                margen_bruto=_money(subtotal - costo_total),
             )
         )
-    if not lineas:
-        raise ValueError("El presupuesto no tiene partidas con cantidad mayor a cero.")
-
-    total_neto = _money(sum(linea.subtotal_neto for linea in lineas))
-    costo_mayorista = _money(sum(linea.costo_total for linea in lineas))
-    comision = _money(total_neto * COMISION_CORREDOR)
-    margen_bruto = _money(total_neto - costo_mayorista)
-    margen_depafix = _money(margen_bruto - comision)
-    return CalculoPresupuesto(
-        lineas=tuple(lineas),
-        total_neto=total_neto,
-        costo_mayorista=costo_mayorista,
-        comision_corredor=comision,
-        margen_bruto=margen_bruto,
-        margen_depafix=margen_depafix,
-    )
+    return totalizar(lineas)
 
 
 def construir_payload(

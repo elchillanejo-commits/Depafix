@@ -48,4 +48,4 @@
   }
   ```
 
-* **Regla de Negocio:** Al aprobarse un presupuesto en estado `BORRADOR` dentro de SQLite, el script debe calcular automáticamente el `total_neto` exacto (usando `Decimal`), generar la tabla resumen en Markdown para enviar por WhatsApp al corredor y disparar el `POST` a Railway guardando el `uuid` retornado en SQLite para trazabilidad.
+* **Regla de Negocio:** Los presupuestos se pre-cargan en estado `SIMULACION_CORREDOR`. Cuando un presupuesto pasa a `APROBADO` en SQLite, el CLI `sync_railway` calcula/valida el `total_neto` exacto con `Decimal`, permite revisar el payload en dry-run y, con `--send`, dispara el `POST` a Railway guardando el `uuid` retornado en SQLite para trazabilidad.
