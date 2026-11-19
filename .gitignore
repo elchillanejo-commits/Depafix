@@ -36,3 +36,11 @@ jesse/
 *.bak
 *.bak_*
 *.save
+
+# Módulo Terreno - Datos locales
+*.db
+*.xlsx
+datos/catastro_referencial_stgo_centro.csv
+datos/geocoding_stgo_centro.json
+datos/rutas_google_maps.json
+datos/terreno_stgo_centro_normalizado.csv
