@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>DepaFix · Propuesta Ejecutiva Corredor</title>
+<style>
+
+:root {
+  --bg: #080d16;
+  --panel: #101a2b;
+  --panel-2: #152238;
+  --line: #263650;
+  --text: #e8eef7;
+  --muted: #94a6bf;
+  --gold: #d8b26a;
+  --teal: #55c7b7;
+  --warm: #f0ad68;
+  --ok: #73d6a4;
+  --danger: #ff8b8b;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(85, 199, 183, 0.13), transparent 32rem),
+    radial-gradient(circle at 88% 4%, rgba(216, 178, 106, 0.11), transparent 30rem),
+    var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+}
+a { color: var(--teal); }
+.page { width: min(1180px, calc(100% - 40px)); margin: 0 auto; padding: 28px 0 44px; }
+.hero {
+  display: grid;
+  grid-template-columns: 1.6fr 0.8fr;
+  gap: 28px;
+  padding: 38px 40px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background:
+    linear-gradient(135deg, rgba(21, 34, 56, 0.98), rgba(10, 17, 30, 0.96)),
+    var(--panel);
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.38);
+}
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--gold);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+}
+h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.7rem); line-height: 1.04; letter-spacing: -0.035em; }
+h1 span { color: var(--gold); }
+h2 { margin: 0; font-size: clamp(1.55rem, 3vw, 2.4rem); line-height: 1.12; letter-spacing: -0.02em; }
+h3 { margin: 0 0 10px; font-size: 1.02rem; color: var(--gold); }
+.lead { max-width: 58ch; margin: 18px 0 0; color: #b9c8dc; font-size: 1.02rem; }
+.hero-side {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(8, 13, 22, 0.46);
+}
+.stamp {
+  display: inline-block;
+  padding: 6px 9px;
+  border: 1px solid rgba(216, 178, 106, 0.55);
+  border-radius: 999px;
+  color: var(--gold);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+.hero-date { margin: 10px 0 0; font-size: 1.55rem; font-weight: 800; }
+.hero-meta, .hero-source, .muted { color: var(--muted); }
+.hero-meta { margin: 0; font-size: 0.86rem; }
+.hero-source { margin: 0; font-size: 0.72rem; overflow-wrap: anywhere; }
+.topnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 18px 0 32px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(16, 26, 43, 0.8);
+}
+.topnav a {
+  padding: 7px 14px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.topnav a:hover { background: var(--panel-2); color: var(--text); }
+section { margin: 42px 0 0; scroll-margin-top: 18px; }
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 28px;
+  margin-bottom: 18px;
+}
+.section-note { max-width: 42ch; margin: 0; color: var(--muted); font-size: 0.86rem; }
+.kpi-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.kpi {
+  min-height: 118px;
+  padding: 16px 15px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(21, 34, 56, 0.95), rgba(16, 26, 43, 0.92));
+}
+.kpi.accent { border-color: rgba(85, 199, 183, 0.42); }
+.kpi.accent-warm { border-color: rgba(240, 173, 104, 0.45); }
+.kpi-label { display: block; color: var(--muted); font-size: 0.67rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.kpi-value { display: block; margin-top: 10px; font-size: 1.24rem; line-height: 1.12; }
+.kpi-note { margin: 8px 0 0; color: var(--muted); font-size: 0.68rem; }
+.panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+.panel, .fin-panel {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: rgba(16, 26, 43, 0.86);
+}
+.panel p { margin: 0 0 10px; }
+.panel p:last-child { margin-bottom: 0; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 15px; background: rgba(16, 26, 43, 0.9); }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 11px 12px; border-bottom: 1px solid rgba(38, 54, 80, 0.78); text-align: left; vertical-align: top; }
+th { color: var(--muted); font-size: 0.67rem; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+td { font-size: 0.82rem; }
+tbody tr:hover { background: rgba(85, 199, 183, 0.05); }
+tfoot td { border-top: 1px solid var(--gold); border-bottom: 0; background: rgba(216, 178, 106, 0.06); }
+.num { text-align: right; white-space: nowrap; }
+.center { text-align: center; }
+.mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 0.76rem; }
+.strong { color: #fff; font-weight: 800; }
+.badge {
+  display: inline-block;
+  padding: 3px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.badge-warn { border-color: rgba(240, 173, 104, 0.6); color: var(--warm); background: rgba(240, 173, 104, 0.08); }
+.badge-ok { border-color: rgba(115, 214, 164, 0.5); color: var(--ok); background: rgba(115, 214, 164, 0.07); }
+.priority { display: inline-grid; place-items: center; width: 25px; height: 25px; border: 1px solid var(--gold); border-radius: 50%; color: var(--gold); font-weight: 800; font-size: 0.72rem; }
+.summary-strip { display: flex; flex-wrap: wrap; gap: 10px 24px; margin-top: 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 13px; color: var(--muted); font-size: 0.8rem; }
+.summary-strip strong { color: var(--text); }
+.roi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.roi-card { padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(150deg, rgba(21, 34, 56, 0.98), rgba(16, 26, 43, 0.9)); }
+.roi-card span { display: block; color: var(--muted); font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.roi-card strong { display: block; margin: 8px 0 7px; color: var(--gold); font-size: 1.75rem; line-height: 1; }
+.roi-card p { margin: 0; color: var(--muted); font-size: 0.78rem; }
+.assumption { margin: 12px 0; padding: 13px 15px; border-left: 3px solid var(--gold); background: rgba(216, 178, 106, 0.07); color: #cbd8e8; font-size: 0.8rem; }
+.compare-table th, .compare-table td { font-size: 0.8rem; }
+.fin-panel { margin-top: 14px; }
+.compact th, .compact td { padding: 9px 11px; }
+.route-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.route-card { display: flex; flex-direction: column; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(160deg, rgba(21, 34, 56, 0.97), rgba(10, 17, 30, 0.94)); }
+.route-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.route-code { color: var(--gold); font-size: 1.7rem; font-weight: 900; letter-spacing: -0.04em; }
+.route-block { color: var(--muted); font-size: 0.68rem; font-weight: 800; text-transform: uppercase; }
+.route-metrics { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 12px 0 8px; color: var(--muted); font-size: 0.7rem; }
+.route-metrics strong { color: var(--text); }
+.route-path { flex: 1; margin: 0 0 16px; color: #c4d2e3; font-size: 0.76rem; }
+.btn { display: inline-flex; justify-content: center; align-items: center; min-height: 36px; padding: 8px 12px; border: 1px solid rgba(85, 199, 183, 0.55); border-radius: 9px; background: rgba(85, 199, 183, 0.1); color: #9be9de; font-size: 0.72rem; font-weight: 800; text-decoration: none; }
+.btn:hover { background: rgba(85, 199, 183, 0.2); }
+footer { margin-top: 42px; padding-top: 18px; border-top: 1px solid var(--line); color: #c6d3e4; font-size: 0.78rem; }
+footer p { margin: 4px 0; }
+@media (max-width: 980px) {
+  .hero { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  .roi-grid, .route-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 620px) {
+  .page { width: min(100% - 22px, 1180px); padding-top: 14px; }
+  .hero { padding: 24px 20px; }
+  .section-head { display: block; }
+  .section-note { margin-top: 8px; }
+  .kpi-grid, .panel-grid, .roi-grid, .route-grid { grid-template-columns: 1fr; }
+  .kpi { min-height: 0; }
+}
+@media print {
+  @page { size: A4 portrait; margin: 12mm; }
+  :root {
+    --bg: #ffffff;
+    --panel: #ffffff;
+    --panel-2: #f5f7fa;
+    --line: #c9d2de;
+    --text: #111820;
+    --muted: #546273;
+    --gold: #765515;
+    --teal: #0c675d;
+    --warm: #8a4d14;
+    --ok: #17663f;
+  }
+  body { background: #fff; color: #111820; font-size: 10.5pt; }
+  .page { width: 100%; padding: 0; }
+  .hero { padding: 20px; border-radius: 10px; box-shadow: none; background: #fff; }
+  .hero-side, .panel, .fin-panel, .kpi, .roi-card, .route-card, .table-wrap { background: #fff; box-shadow: none; }
+  .topnav, .no-print { display: none !important; }
+  section { margin-top: 24px; }
+  .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  .roi-grid, .route-grid { grid-template-columns: repeat(2, 1fr); }
+  .kpi, .roi-card, .route-card, .panel, .fin-panel, tr { break-inside: avoid; page-break-inside: avoid; }
+  .table-wrap { overflow: visible; }
+  table { font-size: 8.7pt; }
+  th, td { padding: 6px 7px; }
+  a { color: #111820; text-decoration: none; }
+  .btn { background: #fff; color: #111820; border: 1px solid #7d8b9c; }
+  .badge { border-color: #8b98a8; color: #333; background: #fff; }
+  footer { color: #333; }
+  .muted, .section-note, .kpi-note { color: #546273; }
+}
+
+</style>
+</head>
+<body>
+<div class="page">
+<header class="hero">
+  <div>
+    <p class="eyebrow">DEPAFIX · OPERACIÓN TERRENO</p>
+    <h1>Propuesta Ejecutiva<br><span>Corredor Santiago Centro</span></h1>
+    <p class="lead">Paquete Ready-to-Rent de 7 vacantes con mejora de piso SPC,
+    iluminación LED y terminaciones. Cifras netas en CLP, calculadas con Decimal.</p>
+  </div>
+  <div class="hero-side">
+    <span class="stamp">DOSSIER CONFIDENCIAL</span>
+    <p class="hero-date">19-11-2026</p>
+    <p class="hero-meta">50 propiedades · 4 rutas · 7 vacantes</p>
+    <p class="hero-source">Fuente: terreno_stgo_centro.db</p>
+  </div>
+</header>
+
+<nav class="topnav no-print">
+  <a href="#resumen">Resumen</a>
+  <a href="#vacantes">Vacantes</a>
+  <a href="#retorno">Retorno</a>
+  <a href="#rutas">Rutas</a>
+</nav>
+
+<section id="resumen">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">01 · RESUMEN EJECUTIVO</p>
+      <h2>Un paquete listo para competir</h2>
+    </div>
+    <p class="section-note">Venta neta, comisión y margen consolidados de los presupuestos
+    vigentes. 3 vacantes requieren confirmación de metraje.</p>
+  </div>
+  <div class="kpi-grid"><article class="kpi accent"><span class="kpi-label">Venta neta</span><strong class="kpi-value">$7.652.500</strong><p class="kpi-note">7 vacantes</p></article><article class="kpi"><span class="kpi-label">Comisión corredor</span><strong class="kpi-value">$765.250</strong><p class="kpi-note">10% de la venta neta</p></article><article class="kpi"><span class="kpi-label">Margen DepaFix</span><strong class="kpi-value">$3.130.950</strong><p class="kpi-note">40.9% de la venta</p></article><article class="kpi"><span class="kpi-label">Costo mayorista</span><strong class="kpi-value">$3.756.300</strong><p class="kpi-note">CAPEX del paquete</p></article><article class="kpi"><span class="kpi-label">ROI bruto</span><strong class="kpi-value">103.7%</strong><p class="kpi-note">Margen bruto / costo</p></article><article class="kpi accent-warm"><span class="kpi-label">Medición pendiente</span><strong class="kpi-value">3</strong><p class="kpi-note">Presupuestos por confirmar</p></article></div>
+  <div class="panel-grid">
+    <article class="panel">
+      <h3>Oferta consolidada</h3>
+      <p>Mejorar el estándar de las unidades antes de publicar acorta el tiempo de vacancia:
+      piso SPC resistente al agua, plafones LED, módulos eléctricos, soporte TV, mantención
+      de termo y sellado antihongo.</p>
+      <p class="muted">El paquete incluye 0 termos detectados;
+      49 de 49 unidades visitables aún están
+      sin revisión de agua caliente. El registro administrativo NO_APLICA se excluye
+      de este conteo.</p>
+    </article>
+    <article class="panel">
+      <h3>Lectura comercial</h3>
+      <p>El corredor recibe una comisión de $765.250 sobre una venta neta
+      de $7.652.500. El margen DepaFix asciende a $3.130.950
+      (40.9%).</p>
+      <p class="muted">Los montos no incluyen IVA ni gastos no especificados. La medición real
+      se confirma antes de cerrar la propuesta definitiva.</p>
+    </article>
+  </div>
+</section>
+
+<section id="vacantes">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">02 · VACANTES PRIORITARIAS</p>
+      <h2>7 unidades Ready-to-Rent</h2>
+    </div>
+    <p class="section-note">Ordenadas por prioridad y score. Las filas con
+    <span class="badge badge-warn">PENDIENTE_MEDICION</span> usan 35 m² referenciales.</p>
+  </div>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th><th>Dirección</th><th class="num">m²</th><th>Dorm/Baños</th>
+          <th class="center">Prioridad</th><th class="center">Ruta</th><th>Medición</th>
+          <th class="num">Venta neta</th><th class="num">Comisión</th><th class="num">Margen</th>
+        </tr>
+      </thead>
+      <tbody><tr><td class="mono">64364</td><td>Blanco Encalada 1771, Depto. 1605</td><td class="num">42 m²</td><td>1D/1B</td><td class="center"><span class="priority">A</span></td><td class="center">B1A</td><td><span class="badge badge-ok">MEDIDO</span></td><td class="num">$1.068.000</td><td class="num">$106.800</td><td class="num strong">$431.200</td></tr><tr><td class="mono">85099</td><td>Avenida España 397, Depto. 702</td><td class="num">35 m² ref.</td><td>s/d</td><td class="center"><span class="priority">A</span></td><td class="center">B1A</td><td><span class="badge badge-warn">PENDIENTE_MEDICION</span></td><td class="num">$950.000</td><td class="num">$95.000</td><td class="num strong">$393.500</td></tr><tr><td class="mono">49005</td><td>San Ignacio 1498, Depto. 701</td><td class="num">35 m² ref.</td><td>s/d</td><td class="center"><span class="priority">A</span></td><td class="center">B2A</td><td><span class="badge badge-warn">PENDIENTE_MEDICION</span></td><td class="num">$950.000</td><td class="num">$95.000</td><td class="num strong">$393.500</td></tr><tr><td class="mono">98856</td><td>Santa Isabel 326, Depto. 210</td><td class="num">35 m² ref.</td><td>s/d</td><td class="center"><span class="priority">A</span></td><td class="center">B3A</td><td><span class="badge badge-warn">PENDIENTE_MEDICION</span></td><td class="num">$950.000</td><td class="num">$95.000</td><td class="num strong">$393.500</td></tr><tr><td class="mono">49002</td><td>Carmen 110, Depto. 2215</td><td class="num">30 m²</td><td>s/d</td><td class="center"><span class="priority">B</span></td><td class="center">B3A</td><td><span class="badge badge-ok">MEDIDO</span></td><td class="num">$840.000</td><td class="num">$84.000</td><td class="num strong">$352.000</td></tr><tr><td class="mono">49015</td><td>Toesca 2002, Depto. 704</td><td class="num">34 m²</td><td>s/d</td><td class="center"><span class="priority">B</span></td><td class="center">B1A</td><td><span class="badge badge-ok">MEDIDO</span></td><td class="num">$928.000</td><td class="num">$92.800</td><td class="num strong">$385.200</td></tr><tr><td class="mono">94769</td><td>San Isidro 379, Depto. 151</td><td class="num">80 m²</td><td>3D/2B</td><td class="center"><span class="priority">B</span></td><td class="center">B3A</td><td><span class="badge badge-ok">MEDIDO</span></td><td class="num">$1.966.500</td><td class="num">$196.650</td><td class="num strong">$782.050</td></tr></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="7"><strong>TOTAL PAQUETE</strong></td>
+          <td class="num"><strong>$7.652.500</strong></td>
+          <td class="num"><strong>$765.250</strong></td>
+          <td class="num"><strong>$3.130.950</strong></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  <div class="summary-strip">
+    <span><strong>7</strong> vacantes</span>
+    <span><strong>291</strong> m² SPC</span>
+    <span><strong>3</strong> mediciones pendientes</span>
+    <span><strong>$3.756.300</strong> compra mayorista</span>
+  </div>
+</section>
+
+<section id="retorno">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">03 · ARGUMENTO DE RETORNO</p>
+      <h2>Invertir antes de publicar<br>para arrendar mejor</h2>
+    </div>
+    <p class="section-note">ROI del paquete sobre costo mayorista y payback estimado para el
+    propietario. La mejora se traduce en fotos más competitivas y menor fricción comercial.</p>
+  </div>
+  <div class="roi-grid">
+    <article class="roi-card">
+      <span>ROI bruto del paquete</span>
+      <strong>103.7%</strong>
+      <p>Margen bruto de $3.896.200 sobre una compra mayorista de
+      $3.756.300.</p>
+    </article>
+    <article class="roi-card">
+      <span>ROI neto DepaFix</span>
+      <strong>83.4%</strong>
+      <p>Margen DepaFix de $3.130.950 después de la comisión del corredor.</p>
+    </article>
+    <article class="roi-card">
+      <span>Payback sobre venta neta</span>
+      <strong>21.9 meses</strong>
+      <p>Con $350.000 de uplift mensual agregado para las
+      7 unidades.</p>
+    </article>
+    <article class="roi-card">
+      <span>Payback sobre costo</span>
+      <strong>10.7 meses</strong>
+      <p>Recuperación del CAPEX mayorista con el mismo supuesto de renta.</p>
+    </article>
+  </div>
+  <p class="assumption">Supuesto conservador de +$50.000/mes por unidad, basado en la ficha SPC. El uplift anual agregado sería
+  $4.200.000. No es una garantía de renta; depende de demanda, tasación y
+  condiciones del inmueble.</p>
+  <div class="table-wrap">
+    <table class="compare-table">
+      <thead><tr><th>Antes</th><th>Después</th><th>Impacto técnico</th></tr></thead>
+      <tbody>
+        <tr><td>Alfombra percudida o piso desgastado</td><td>Piso SPC 4-5 mm + manta</td><td>Superficie lavable, instalación rápida y mejor percepción en fotografías.</td></tr>
+        <tr><td>Iluminación antigua y alto consumo</td><td>Plafones LED 18W/24W</td><td>Mayor luminosidad, menor consumo y mejor presentación del aviso.</td></tr>
+        <tr><td>Enchufes sueltos o fuera de norma</td><td>Módulos Bticino/Legrand</td><td>Reduce riesgo eléctrico y mejora la percepción de seguridad.</td></tr>
+        <tr><td>Termo sin mantención</td><td>Ánodo + purga de sarro</td><td>Evita fallas, pérdida de eficiencia y sobreconsumo.</td></tr>
+        <tr><td>Filtraciones en baño o cocina</td><td>Sellado antihongo perimetral</td><td>Protege unidades inferiores y reduce multas de administración.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="fin-panel">
+    <h3>Resumen financiero por estado / sincronización</h3>
+    <div class="table-wrap">
+      <table class="data-table compact">
+        <thead><tr><th>Estado</th><th class="num">N°</th><th class="num">Costo mayorista</th><th class="num">Venta neta</th><th class="num">Comisión 10% corredor</th><th class="num">Margen</th></tr></thead>
+        <tbody><tr><td>SIMULACION_CORREDOR</td><td class="num">7</td><td class="num">$3.756.300</td><td class="num">$7.652.500</td><td class="num">$765.250</td><td class="num strong">$3.130.950</td></tr><tr><td>APROBADO</td><td class="num">0</td><td class="num">$0</td><td class="num">$0</td><td class="num">$0</td><td class="num strong">$0</td></tr><tr><td>SINCRONIZADO</td><td class="num">0</td><td class="num">$0</td><td class="num">$0</td><td class="num">$0</td><td class="num strong">$0</td></tr></tbody>
+        <tfoot><tr><td><strong>TOTAL</strong></td><td class="num"><strong>7</strong></td><td class="num"><strong>$3.756.300</strong></td><td class="num"><strong>$7.652.500</strong></td><td class="num"><strong>$765.250</strong></td><td class="num"><strong>$3.130.950</strong></td></tr></tfoot>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="rutas">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">04 · OPERACIÓN EN TERRENO</p>
+      <h2>Cuatro rutas, una ejecución</h2>
+    </div>
+    <p class="section-note">Enlaces directos a Google Maps para inspección y validación de las
+    unidades. Rutas optimizadas por cercanía.</p>
+  </div>
+  <div class="route-grid"><article class="route-card"><div class="route-head"><span class="route-code">B1A</span><span class="route-block">Bloque 1</span></div><div class="route-metrics"><span><strong>6</strong> paradas</span><span><strong>26</strong> unidades</span><span><strong>4</strong> waypoints</span></div><p class="route-path">Blanco Encalada 1771 → Avenida Ejército Libertador 650</p><a class="btn" href="https://www.google.com/maps/dir/?api=1&amp;origin=-33.458496,-70.675049&amp;destination=-33.454911,-70.659785&amp;travelmode=driving&amp;waypoints=-33.458856,-70.677417|-33.453637,-70.669581|-33.454070,-70.663019|-33.453394,-70.660113" target="_blank" rel="noopener noreferrer">Abrir ruta en Google Maps</a></article><article class="route-card"><div class="route-head"><span class="route-code">B2A</span><span class="route-block">Bloque 2</span></div><div class="route-metrics"><span><strong>11</strong> paradas</span><span><strong>12</strong> unidades</span><span><strong>9</strong> waypoints</span></div><p class="route-path">Morandé 707 → Nataniel Cox</p><a class="btn" href="https://www.google.com/maps/dir/?api=1&amp;origin=-33.435469,-70.654023&amp;destination=-33.471652,-70.649850&amp;travelmode=driving&amp;waypoints=-33.435938,-70.648049|-33.438218,-70.656389|-33.437608,-70.663746|-33.447673,-70.653474|-33.448557,-70.654751|-33.449653,-70.654590|-33.449516,-70.660225|-33.466552,-70.654800|-33.466983,-70.653705" target="_blank" rel="noopener noreferrer">Abrir ruta en Google Maps</a></article><article class="route-card"><div class="route-head"><span class="route-code">B2B</span><span class="route-block">Bloque 2</span></div><div class="route-metrics"><span><strong>2</strong> paradas</span><span><strong>2</strong> unidades</span><span><strong>0</strong> waypoints</span></div><p class="route-path">San Diego 2381 → Franklin 200</p><a class="btn" href="https://www.google.com/maps/dir/?api=1&amp;origin=-33.475061,-70.648396&amp;destination=-33.471569,-70.628334&amp;travelmode=driving" target="_blank" rel="noopener noreferrer">Abrir ruta en Google Maps</a></article><article class="route-card"><div class="route-head"><span class="route-code">B3A</span><span class="route-block">Bloque 3</span></div><div class="route-metrics"><span><strong>9</strong> paradas</span><span><strong>9</strong> unidades</span><span><strong>7</strong> waypoints</span></div><p class="route-path">San Francisco 467 → Diagonal Vicuña Mackenna 2004</p><a class="btn" href="https://www.google.com/maps/dir/?api=1&amp;origin=-33.450214,-70.647000&amp;destination=-33.470273,-70.626344&amp;travelmode=driving&amp;waypoints=-33.449027,-70.642919|-33.448633,-70.643601|-33.444524,-70.644331|-33.444675,-70.642823|-33.448491,-70.636058|-33.456808,-70.643783|-33.468241,-70.626316" target="_blank" rel="noopener noreferrer">Abrir ruta en Google Maps</a></article></div>
+</section>
+
+<section id="compras">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">05 · COMPRA MAYORISTA</p>
+      <h2>Consolidado de materiales</h2>
+    </div>
+    <p class="section-note">Cantidades agregadas de los presupuestos vigentes. Incluye metraje
+    referencial de las unidades pendientes de medición.</p>
+  </div>
+  <div class="table-wrap">
+    <table class="data-table compact">
+      <thead><tr><th>Insumo</th><th class="center">Unidad</th><th class="num">Cantidad</th></tr></thead>
+      <tbody><tr><td>Piso SPC</td><td class="center">m²</td><td class="num strong">291</td></tr><tr><td>Plafones LED</td><td class="center">un</td><td class="num strong">41</td></tr><tr><td>Enchufes/interruptores</td><td class="center">un</td><td class="num strong">42</td></tr><tr><td>Soportes TV</td><td class="center">un</td><td class="num strong">7</td></tr><tr><td>Mantenciones de termo</td><td class="center">un</td><td class="num strong">7</td></tr><tr><td>Sellados de silicona</td><td class="center">gl</td><td class="num strong">7</td></tr></tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <p><strong>DepaFix · Operación Terreno Santiago Centro</strong></p>
+  <p>Documento generado automáticamente desde la base operativa y las rutas de Google Maps.
+  Sin datos personales de propietarios, arrendatarios o contactos.</p>
+  <p class="muted">Montos netos en CLP. La comisión del corredor corresponde al 10% de la venta
+  neta. Las mediciones pendientes deben confirmarse antes del cierre definitivo.</p>
+</footer>
+</div>
+</body>
+</html>
