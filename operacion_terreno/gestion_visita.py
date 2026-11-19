@@ -252,17 +252,23 @@ def _actualizar_inspeccion(
     if args.meses_mantencion is not None:
         insp.intervalo_mantencion_meses = args.meses_mantencion
         changes.append(f"meses_mantencion={args.meses_mantencion}")
-        if args.fecha_ultima_mantencion:
-            insp.fecha_ultima_mantencion_termo = args.fecha_ultima_mantencion
+
+    if args.fecha_ultima_mantencion:
+        insp.fecha_ultima_mantencion_termo = args.fecha_ultima_mantencion
+        changes.append(
+            f"fecha_ultima_mantencion={args.fecha_ultima_mantencion.isoformat()}"
+        )
+
+    if args.meses_mantencion is not None or args.fecha_ultima_mantencion:
+        intervalo = (
+            args.meses_mantencion
+            if args.meses_mantencion is not None
+            else insp.intervalo_mantencion_meses
+        )
+        ultima = insp.fecha_ultima_mantencion_termo
+        if intervalo and ultima:
             insp.fecha_proxima_mantencion_termo = calcular_proxima_mantencion(
-                args.fecha_ultima_mantencion, args.meses_mantencion
-            )
-            changes.append(
-                f"proxima_mantencion={insp.fecha_proxima_mantencion_termo.isoformat()}"
-            )
-        elif insp.fecha_ultima_mantencion_termo:
-            insp.fecha_proxima_mantencion_termo = calcular_proxima_mantencion(
-                insp.fecha_ultima_mantencion_termo, args.meses_mantencion
+                ultima, intervalo
             )
             changes.append(
                 f"proxima_mantencion={insp.fecha_proxima_mantencion_termo.isoformat()}"
