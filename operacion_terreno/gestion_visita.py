@@ -369,7 +369,7 @@ def _recalcular_presupuesto(
     lineas, warnings = _preparar_lineas_extra(calculo_base, args.item_adhoc or [])
     calculo = totalizar(lineas)
 
-    if presupuesto.estado in ESTADOS_PRESUPUESTO_BLOQUEADOS:
+    if presupuesto.estado != "BORRADOR":
         presupuesto.estado = "BORRADOR"
     if presupuesto.sync_status == ESTADO_SINCRONIZADO or args.forzar_medicion:
         presupuesto.sync_status = "NO_SINCRONIZADO"

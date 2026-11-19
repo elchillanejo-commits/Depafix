@@ -114,9 +114,23 @@ def _presupuesto_existente(
     ).first()
 
 
+def _presupuesto_no_simulacion(
+    session: Session, inspeccion_id: int
+) -> PresupuestoObra | None:
+    return session.scalars(
+        select(PresupuestoObra)
+        .where(
+            PresupuestoObra.inspeccion_id == inspeccion_id,
+            PresupuestoObra.estado != ESTADO_SIMULACION,
+        )
+        .order_by(PresupuestoObra.id.desc())
+        .limit(1)
+    ).first()
+
+
 def generar_presupuestos_simulacion(
     db_path: Path = DEFAULT_DB_PATH,
-    output_path: Path = DEFAULT_REPORT_PATH,
+    output_path: Path | None = DEFAULT_REPORT_PATH,
     ids: Iterable[str] | None = None,
 ) -> list[PresupuestoGenerado]:
     engine = init_db(f"sqlite:///{db_path}")
@@ -131,6 +145,16 @@ def generar_presupuestos_simulacion(
             )
 
         for insp in inspecciones:
+            bloqueado = _presupuesto_no_simulacion(session, insp.id)
+            if bloqueado is not None:
+                raise ValueError(
+                    f"La propiedad {insp.propiedad_id} ya tiene presupuesto "
+                    f"{bloqueado.estado} (id={bloqueado.id}); no se genera una nueva "
+                    "simulación. Usa --id para procesar solo las vacantes sin "
+                    "presupuesto o en SIMULACION_CORREDOR, o actualiza la unidad "
+                    "con gestion_visita."
+                )
+
             requerimientos, pendiente = construir_requerimientos(insp)
             calculo = calcular(requerimientos)
             payload = construir_payload(insp.direccion, insp.comuna, calculo)
@@ -156,6 +180,11 @@ def generar_presupuestos_simulacion(
             presupuesto.estado_medicion = "PENDIENTE_MEDICION" if pendiente else "MEDIDO"
             presupuesto.payload_json = payload
             presupuesto.observaciones = _texto_medicion(calculo, pendiente)
+            presupuesto.sync_status = "NO_SINCRONIZADO"
+            presupuesto.sync_error = None
+            presupuesto.uuid_railway = None
+            presupuesto.railway_response = None
+            presupuesto.synced_at = None
 
             session.flush()
             generados.append(
@@ -172,7 +201,8 @@ def generar_presupuestos_simulacion(
             session.refresh(generado.presupuesto)
             session.refresh(generado.inspeccion)
 
-    output_path.write_text(render_reporte(generados), encoding="utf-8")
+    if output_path is not None:
+        output_path.write_text(render_reporte(generados), encoding="utf-8")
     return generados
 
 
@@ -325,8 +355,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--report",
         type=Path,
-        default=DEFAULT_REPORT_PATH,
-        help="Ruta del reporte Markdown de salida.",
+        default=None,
+        help=(
+            "Ruta del reporte Markdown de salida. Por defecto se escribe "
+            "PROPUESTA_COMERCIAL_CORREDOR.md solo cuando no se usa --id."
+        ),
     )
     parser.add_argument(
         "--id",
@@ -339,9 +372,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    report_path = args.report
+    if report_path is None and not args.ids:
+        report_path = DEFAULT_REPORT_PATH
     try:
         generados = generar_presupuestos_simulacion(
-            db_path=args.db, output_path=args.report, ids=args.ids
+            db_path=args.db, output_path=report_path, ids=args.ids
         )
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
@@ -357,7 +393,10 @@ def main(argv: list[str] | None = None) -> int:
             f"margen={formato_clp(generado.calculo.margen_depafix)} | "
             f"{generado.presupuesto.estado_medicion}"
         )
-    print(f"Reporte: {args.report}")
+    if report_path is not None:
+        print(f"Reporte: {report_path}")
+    else:
+        print("Reporte: no generado para subconjunto; usa --report RUTA para forzarlo.")
     return 0
 
 

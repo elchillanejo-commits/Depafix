@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -40,6 +41,11 @@ def _d(value: object) -> Decimal:
         return Decimal(str(value))
     except (InvalidOperation, ValueError) as exc:
         raise SyncError(f"Valor monetario inválido: {value!r}") from exc
+
+
+def _endpoint_local(endpoint: str) -> bool:
+    host = (urlparse(endpoint).hostname or "").lower()
+    return host in {"localhost", "127.0.0.1", "::1"}
 
 
 def _item_codigo(partida: dict[str, Any], index: int) -> str:
@@ -76,6 +82,13 @@ def construir_payload(presupuesto: PresupuestoObra) -> dict[str, Any]:
             "total_neto": float(_d(presupuesto.total or presupuesto.neto)),
         }
     validar_payload(payload)
+    esperado = _d(presupuesto.total or presupuesto.neto)
+    enviado = _d(payload.get("total_neto"))
+    if abs(esperado - enviado) > Decimal("1"):
+        raise SyncError(
+            "El payload no coincide con el total del presupuesto: "
+            f"presupuesto={esperado}, payload={enviado}."
+        )
     return payload
 
 
@@ -172,6 +185,10 @@ def sincronizar(
     send: bool = False,
     timeout: int = 30,
 ) -> dict[str, int]:
+    if send and not api_key and not _endpoint_local(endpoint):
+        raise SyncError(
+            "DEPAFIX_API_KEY no configurada; --send a un endpoint remoto requiere API key."
+        )
     engine = init_db(f"sqlite:///{db_path}")
     stats = {"seleccionados": 0, "enviados": 0, "omitidos": 0, "errores": 0}
 
@@ -295,10 +312,9 @@ def main(argv: list[str] | None = None) -> int:
         level=logging.DEBUG if args.verbose else logging.INFO,
         format="%(levelname)s %(message)s",
     )
-    if args.send and not args.api_key:
+    if args.send and not args.api_key and _endpoint_local(args.endpoint):
         logging.warning(
-            "DEPAFIX_API_KEY no configurada; se enviará sin X-API-Key. "
-            "En producción configura la clave."
+            "DEPAFIX_API_KEY no configurada; se enviará sin X-API-Key al endpoint local."
         )
     try:
         stats = sincronizar(

@@ -30,6 +30,7 @@
 
 ## 3. Especificación Técnica de Sincronización con API Railway
 * **Endpoint Destino:** `POST https://depafix-presupuestos-production.up.railway.app/api/v1/cotizaciones/`
+* **Autenticación:** `sync_railway` lee `DEPAFIX_API_KEY` desde el entorno y envía el header `X-API-Key`; no guardar la clave en el repositorio. `--send` contra un endpoint remoto sin clave se aborta antes de abrir la base.
 * **Base Origen:** `/home/ibar/DepaFix_Maestro/datos/terreno_stgo_centro.db` (tablas `inspecciones_terreno` y `presupuestos_obra`).
 * **Estructura Obligatoria del Payload JSON (Validación Pydantic verificada):**
   ```json
