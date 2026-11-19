@@ -37,6 +37,8 @@
 
 | BUG-032 | 2026-11-18 | motor_sence.py (Módulo 2 / SENCE) | El motor SENCE no expone CLI real: el bloque `__main__` ignora argumentos (`--help` ejecuta el cálculo de prueba, Cod 1915171) y no hay argparse. | Falta capa CLI. | Validado el cálculo: tope = 30h × 20p × $5.000 = $3.000.000; imputable = min(tope, costo_real) = $2.543.172; copago empresa = $0. El `--help` disparó el `__main__` (exit 0). Estado de la lógica: **Resuelto** (CLI pendiente). | Abierto |
 
+| BUG-033 | 2026-11-18 | requirements-dashboard.txt / Módulo Metal | El dashboard del Elemento Metal (`app_metal.py`) no era operable: importa `sentence_transformers` y `openai`, pero `requirements-dashboard.txt` no los declaraba (ni en el venv del dashboard). | Dependencias del módulo Metal ausentes en el entorno del dashboard. | Se declararon `openai==1.50.0` y `sentence-transformers==3.0.1` en `requirements-dashboard.txt`. Pendiente: instalar en `.venv-dashboard` y validar arranque del dashboard Metal. | Abierto |
+
 ## Regla de oro
 
 1. Consultar este archivo antes de proponer o aplicar un fix para no duplicar soluciones.
