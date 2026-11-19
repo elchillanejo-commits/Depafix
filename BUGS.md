@@ -39,6 +39,8 @@
 
 | BUG-033 | 2026-11-18 | requirements-dashboard.txt / Módulo Metal | El dashboard del Elemento Metal (`app_metal.py`) no era operable: importa `sentence_transformers` y `openai`, pero `requirements-dashboard.txt` no los declaraba (ni en el venv del dashboard). | Dependencias del módulo Metal ausentes en el entorno del dashboard. | Se declararon `openai==1.50.0` y `sentence-transformers==3.0.1` en `requirements-dashboard.txt`. Pendiente: instalar en `.venv-dashboard` y validar arranque del dashboard Metal. | Abierto |
 
+| BUG-034 | 2026-11-18 | Cierre operativo (Misiones 1-3) | Cierre del ciclo: regeneracion/validacion SERVIU (BUG-025), auditoria legacy (BUG-028/029) y batería smoke final. | Consolidacion de validaciones previas + acciones finales. | M1: YAML regenerado limpio (253->18, 235 descartadas); M2: legacy auditado, sin creds hardcodeadas y endpoints criticos protegidos por X-API-Key; M3: smoke OK (health 200, ready 200, cotiz 401/422, rag 200, get 200), test Supabase limpio (204 delete). | Resuelto |
+
 ## Regla de oro
 
 1. Consultar este archivo antes de proponer o aplicar un fix para no duplicar soluciones.
