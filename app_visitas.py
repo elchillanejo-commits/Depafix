@@ -1,10 +1,13 @@
 import os
 import math
+import secrets
 import pandas as pd
 import streamlit as st
 from datetime import date
 from dotenv import load_dotenv
 from supabase import create_client
+
+DEPAFIX_VISITAS_PASSWORD = os.getenv("DEPAFIX_VISITAS_PASSWORD", "")
 
 # --- BLOQUEO DE SEGURIDAD ---
 st.set_page_config(page_title="DepaFix · Visitas Pro", page_icon="🏠", layout="wide")
@@ -17,7 +20,13 @@ if not st.session_state.autenticado:
     st.write("Por favor, ingresa la contraseña maestra para acceder al sistema de visitas.")
     password = st.text_input("Contraseña:", type="password")
     if st.button("Ingresar"):
-        if password == "DepaFix2026":
+        cred_ok = False
+        if DEPAFIX_VISITAS_PASSWORD and password:
+            try:
+                cred_ok = secrets.compare_digest(password, DEPAFIX_VISITAS_PASSWORD)
+            except TypeError:
+                cred_ok = False
+        if cred_ok:
             st.session_state.autenticado = True
             st.rerun()
         else:

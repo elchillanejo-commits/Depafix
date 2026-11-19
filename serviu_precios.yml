@@ -19,10 +19,6 @@ partidas:
   nombre: Servicio De Bombeo
   unidad: un
   precio_unitario: 245
-- codigo: SUB-TOTAL DE
-  nombre: nan
-  unidad: un
-  precio_unitario: 245
 - codigo: 1RA10
   nombre: Rodillo Compactador 10 Ton
   unidad: un
